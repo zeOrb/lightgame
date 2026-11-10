@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { visualSample } from './visual-random.js';
 
 // A single draw call of soft, overlapping billboards gives the air some volume.
 export class TowerMist {
@@ -46,7 +47,7 @@ export class TowerMist {
     this.mesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1),this.material,96);
     const dummy=new THREE.Object3D();
     for(let i=0;i<96;i++){
-      const random=offset=>{const n=Math.sin((i+1)*127.1+offset*311.7)*43758.5453;return n-Math.floor(n);};
+      const random=offset=>visualSample('mist',i*8+offset);
       const level=Math.floor(i/4),angle=(i%4)*Math.PI/2+level*.41,radius=10.5+(i%3)*1.1;
       dummy.position.set(Math.cos(angle)*radius,8+level*4.7+(random(1)-.5)*5.8,Math.sin(angle)*radius);
       const tall=i%4===1;

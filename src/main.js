@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import './style.css';
+import './gothic-ui.css';
+import './pixel-ui.css';
+import { createVisualRandom } from './visual-random.js';
 import { END, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, floorAt, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
 import { cameraPose, smoothCameraAnchor } from './camera.js';
 import { PickupEffects } from './pickup-effects.js';
@@ -15,6 +18,7 @@ import { hpBrightness } from './game.js';
 import { shelfInnerRadius } from './game.js';
 import { VitralGlow } from './vitral-glow.js';
 import { ThreatType, createThreats, updateThreats, unsupportedThreat } from './threats.js';
+import { CatcherRay } from './catcher-ray.js';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
@@ -30,15 +34,17 @@ renderer.toneMappingExposure = 1.25;
 const towerMist=new TowerMist(scene);
 const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, .1, 240);
 const ambient=new THREE.HemisphereLight('#a1bdcc', '#5a3849', 2.1);scene.add(ambient);
-const sun = new THREE.DirectionalLight('#ffcf87', 4.1);sun.target.position.set(0,100,0);sun.position.copy(sun.target.position).addScaledVector(SUN_RAY_DIRECTION,-40);scene.add(sun,sun.target);
+const sun = new THREE.DirectionalLight('#ffcf87', 4.1);sun.target.position.set(0,100,0);sun.position.copy(sun.target.position).addScaledVector(SUN_RAY_DIRECTION,-40);
+scene.add(sun,sun.target);
 const warm = new THREE.PointLight('#ffa769', 140, 65, 1.2); warm.position.set(0, 95, -12); scene.add(warm);
 const mat = (color, extra = {}) => applyTowerDepth(new THREE.MeshStandardMaterial({ color, roughness: .75, ...extra }));
 const wood = mat('#66534b'), edgeMat = mat('#b39469', { metalness: .5, roughness: .4 });
 const stone = mat('#454c5a'), dark = mat('#20212e');
 const colors = ['#92785f','#4f7378','#877490','#8b4f56','#b59a69','#53627b'];
 const bookMats=colors.map(c=>mat(c));
-let seed = 42;
-const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+const random=createVisualRandom('decoration');
+const dustRandom=createVisualRandom('dust');
+const sunRandom=createVisualRandom('hud-sun');
 function mesh(geo, material, x=0, y=0, z=0, parent=scene) {
   const o = new THREE.Mesh(geo, material); o.position.set(x,y,z); parent.add(o); return o;
 }
@@ -86,8 +92,10 @@ for(let y=10;y<95;y+=16)for(let i=0;i<8;i++){
 }
 const catcher=new THREE.Group();catcher.position.set(12,107,0);scene.add(catcher);
 const catcherRing=mesh(new THREE.TorusGeometry(1.65,.055,8,64),edgeMat,0,0,0,catcher);
+const catcherGems=[];
 for(let i=0;i<7;i++) {
   const a=i*Math.PI*2/7; const gem=mesh(new THREE.OctahedronGeometry(.35),glassMats[i%4],Math.cos(a)*1.3,Math.sin(a)*1.3,0,catcher);gem.rotation.z=a;
+  catcherGems.push(gem);
   box(.025,1.8,.025,edgeMat,Math.cos(a)*1.3,Math.sin(a)*1.3-1.2,0,catcher);
 }
 const lipGeo = new THREE.CylinderGeometry(SHELF_OUTER_RADIUS+.05,SHELF_OUTER_RADIUS+.05,.1,12,1,true,Math.PI/2-SHELF_HALF_ANGLE,SHELF_HALF_ANGLE*2);
@@ -163,7 +171,18 @@ const glowTexture=new THREE.CanvasTexture(glowCanvas);
 const pickupEffects=new PickupEffects(scene,glowTexture);
 const shadowEffects=new ShadowEffects(scene,glowTexture,$('shadow-vfx'),matchMedia('(prefers-reduced-motion: reduce)').matches);
 const rabbit=new THREE.Group();scene.add(rabbit);
+const catcherRay=new CatcherRay(scene,catcherGems);
 const rabbitVisual=new THREE.Group();rabbit.add(rabbitVisual);
+const rabbitShadowCanvas=document.createElement('canvas');rabbitShadowCanvas.width=rabbitShadowCanvas.height=128;
+const rabbitShadowContext=rabbitShadowCanvas.getContext('2d');
+const rabbitShadowGradient=rabbitShadowContext.createRadialGradient(64,64,3,64,64,64);
+rabbitShadowGradient.addColorStop(0,'rgba(12,8,15,.78)');rabbitShadowGradient.addColorStop(.38,'rgba(12,8,15,.62)');rabbitShadowGradient.addColorStop(.72,'rgba(12,8,15,.24)');rabbitShadowGradient.addColorStop(1,'rgba(12,8,15,0)');
+rabbitShadowContext.fillStyle=rabbitShadowGradient;rabbitShadowContext.fillRect(0,0,128,128);
+const rabbitShadowTexture=new THREE.CanvasTexture(rabbitShadowCanvas);
+const rabbitShadowMaterial=new THREE.MeshBasicMaterial({map:rabbitShadowTexture,color:'#fff',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,fog:false,polygonOffset:true,polygonOffsetFactor:-1});
+const rabbitShadow=mesh(new THREE.PlaneGeometry(1,1),rabbitShadowMaterial,0,0,0);
+rabbitShadow.rotation.x=-Math.PI/2;rabbitShadow.scale.set(1.35,.92,1);rabbitShadow.renderOrder=1;
+const shadowRaycaster=new THREE.Raycaster(),shadowRayOrigin=new THREE.Vector3(),shadowRayDown=new THREE.Vector3(0,-1,0);
 const rabbitEars=[],rabbitPaws=[];
 const rabbitMat=new THREE.MeshStandardMaterial({color:'#fff1bc',emissive:'#ffe4a0',emissiveIntensity:1,roughness:1});
 const rabbitHPFade={value:1};
@@ -195,7 +214,7 @@ const crystal=mesh(new THREE.OctahedronGeometry(1.15),crystalMat,0,1.7,0,crystal
 const crystalLight=new THREE.PointLight('#a2ffeb',20,35,1.3);crystalLight.position.copy(crystalGroup.position).add(new THREE.Vector3(0,3,0));scene.add(crystalLight);
 ring(4,14,.07,edgeMat);
 const dustCount=650,dustArray=new Float32Array(dustCount*3);
-for(let i=0;i<dustCount;i++){const a=random()*Math.PI*2,r=4+random()*13;dustArray[i*3]=Math.cos(a)*r;dustArray[i*3+1]=random()*122;dustArray[i*3+2]=Math.sin(a)*r;}
+for(let i=0;i<dustCount;i++){const a=dustRandom()*Math.PI*2,r=4+dustRandom()*13;dustArray[i*3]=Math.cos(a)*r;dustArray[i*3+1]=dustRandom()*122;dustArray[i*3+2]=Math.sin(a)*r;}
 const dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute('position',new THREE.BufferAttribute(dustArray,3));
 const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f8d8a1',size:.065,transparent:true,opacity:.65,depthWrite:false}));scene.add(dust);
 
@@ -264,13 +283,75 @@ function update(dt){
   shadowEffects.setDamage(inShadow);
   $('effect').textContent=inShadow?'Тень забирает свет!':currentVitralZone?'Витраж · восстановление ×2':invert>0?'Управление отражено':slow>0?'Преломление замедляет':'В свете заката';
   if(light<=0)finish(false);else if(s>=END-.1)finish(true);
-  $('light-value').innerHTML=Math.ceil(light)+'<small>%</small>';$('light-fill').style.width=light+'%';$('progress').style.width=s/END*100+'%';$('floor').textContent='Этаж '+floorAt(s)+' / 12';$('shards').textContent='Блики: '+collected;
+  $('light-value').innerHTML=Math.ceil(light)+'<small>%</small>';
+  const lightFill=$('light-fill');lightFill.style.width=clamp(light,0,100)+'%';lightFill.dataset.empty=String(light<=0);
+  const lightSun=$('light-sun');lightSun.style.left=clamp(light,0,100)+'%';lightSun.hidden=light<=0;
+  lightFill.parentElement.style.setProperty('--sun-position',clamp(light,0,100)+'%');
+  lightFill.parentElement.style.setProperty('--sun-power',light>0?'1':'0');
+  $('progress').style.width=s/END*100+'%';$('floor').textContent='Этаж '+floorAt(s)+' / 12';$('shards').textContent='Блики: '+collected;
 }
 let previous=performance.now(),visualTime=0,viewAnchor=0,smoothAnchor=0,anchorVelocity=0;
+let previousSunLight=100,sunMotion=0,sunOrbit=0,sunWasRegenerating=false;
+const sunParticleColors=['#ff95db','#ad98ff','#7de4ff','#9affca','#fff09a'];
+const sunDisc=document.createElement('span');sunDisc.className='sun-disc';$('light-sun').prepend(sunDisc);
+for(let i=0;i<18;i++){
+  const particle=document.createElement('i');particle.className='sun-particle';
+  const angle=sunRandom()*Math.PI*2,distance=24+sunRandom()*20;
+  particle.style.setProperty('--particle-x',Math.cos(angle)*distance+'px');
+  particle.style.setProperty('--particle-y',Math.sin(angle)*distance-10+'px');
+  particle.style.setProperty('--particle-color',sunParticleColors[Math.floor(sunRandom()*sunParticleColors.length)]);
+  particle.style.setProperty('--particle-delay',(sunRandom()*.3)+'s');
+  $('light-sun').appendChild(particle);
+}
 const target=new THREE.Vector3(),desired=new THREE.Vector3();
+function emitSunParticle(particle,initial=false){
+  const angle=sunRandom()*Math.PI*2,distance=24+sunRandom()*20;
+  const x=Math.cos(angle)*distance,y=Math.sin(angle)*distance-10;
+  const duration=2200+sunRandom()*650;
+  particle.style.setProperty('--particle-color',sunParticleColors[Math.floor(sunRandom()*sunParticleColors.length)]);
+  const animation=particle.animate([
+    {transform:'translate(0px,0px) scale(0)',opacity:0,offset:0,easing:'cubic-bezier(.2,0,.4,1)'},
+    {transform:`translate(${x*.65}px,${y*.65}px) scale(.7)`,opacity:.85,offset:550/duration,easing:'ease-out'},
+    {transform:`translate(${x}px,${y}px) scale(.65)`,opacity:.85,offset:1-360/duration,easing:'cubic-bezier(.2,0,.4,1)'},
+    {transform:'translate(0px,0px) scale(0)',opacity:0,offset:1},
+  ],{duration,delay:sunRandom()*(initial?300:160)});
+  animation.onfinish=()=>{if(sunWasRegenerating)emitSunParticle(particle);};
+}
 let cameraNeedsReset=true;
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.04);previous=now;visualTime+=dt;
   if(state==='playing')update(dt);
+  const sunMoving=state==='playing'&&Math.abs(light-previousSunLight)>dt*.01;
+  previousSunLight=light;
+  sunMotion=THREE.MathUtils.damp(sunMotion,sunMoving?1:0,sunMoving?7:9,dt);
+  sunOrbit+=dt*(2.4+.8*Math.sin(visualTime*.73)+.35*Math.sin(visualTime*1.31))*sunMotion;
+  const sunRadius=2.5*sunMotion*(.75+.25*Math.sin(sunOrbit*1.37));
+  $('light-sun').style.setProperty('--sun-x',(Math.cos(sunOrbit)*sunRadius).toFixed(3)+'px');
+  $('light-sun').style.setProperty('--sun-y',(Math.sin(sunOrbit)*sunRadius).toFixed(3)+'px');
+  const sunHealth=clamp(light/100,0,1);
+  $('light-sun').style.setProperty('--sun-health',sunHealth.toFixed(3));
+  const sunValue=.2+.8*sunHealth;
+  $('light-sun').style.setProperty('--sun-multiply',`rgb(${Math.round(255*sunValue)},${Math.round(255*sunValue*(.47+.53*sunHealth))},${Math.round(255*sunValue*sunHealth)})`);
+  $('light-sun').style.setProperty('--sun-glow',(3+sunHealth*14).toFixed(2)+'px');
+  const sunRegenerating=state==='playing'&&!!currentVitralZone;
+  if(sunRegenerating!==sunWasRegenerating){
+    for(const particle of $('light-sun').querySelectorAll('.sun-particle')){
+      const current=getComputedStyle(particle),transform=current.transform,opacity=current.opacity;
+      for(const animation of particle.getAnimations())animation.cancel();
+      if(sunRegenerating){
+        emitSunParticle(particle,true);
+      }
+      else{
+        particle.style.animation='none';
+        particle.animate([
+          {transform,opacity,offset:0},
+          {transform:'translate(0px,0px) scale(.15)',opacity,offset:.88},
+          {transform:'translate(0px,0px) scale(0)',opacity:0,offset:1},
+        ],{duration:360,easing:'cubic-bezier(.2,0,.4,1)',fill:'forwards'});
+      }
+    }
+    sunWasRegenerating=sunRegenerating;
+  }
+  $('light-sun').classList.toggle('vitral-sun',sunRegenerating);
   towerMist.update(state==='intro'?visualTime:time,state==='won');
   shadowMat.uniforms.clock.value=time;groundSmoke.update(time,innerHeight*renderer.getPixelRatio());
   if(state==='playing'||state==='won'||state==='lost')pickupEffects.update(dt);
@@ -287,6 +368,20 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
   else windowLight.update(0);
   if(toastTime>0){toastTime-=dt;if(toastTime<=0)$('toast').style.opacity=0;}
   const p=route(s,lane);rabbit.position.set(p.x,p.y+.12+height,p.z);
+  const hasFloor=!unsupportedThreat(threats,s,lane);
+  let shadowSurface=null;
+  if(hasFloor){
+    shadowRayOrigin.set(p.x,rabbit.position.y+3,p.z);
+    shadowRaycaster.set(shadowRayOrigin,shadowRayDown);shadowRaycaster.far=18;
+    const nearbyFloors=walkableFloors.filter(floor=>Math.abs(floor.userData.s-s)<1.2);
+    for(const floor of nearbyFloors)floor.updateWorldMatrix(true,false);
+    shadowSurface=shadowRaycaster.intersectObjects(nearbyFloors,false)[0]??null;
+  }
+  const shadowHeight=shadowSurface?Math.max(0,rabbit.position.y-shadowSurface.point.y-.12):0;
+  rabbitShadow.visible=!!shadowSurface&&state!=='won';
+  if(shadowSurface)rabbitShadow.position.set(p.x,shadowSurface.point.y+.012,p.z);
+  rabbitShadow.scale.set(1.35+shadowHeight*.14,.92+shadowHeight*.1,1);
+  rabbitShadowMaterial.opacity=.9*(1-THREE.MathUtils.smoothstep(shadowHeight,0,2.5)*.72);
   shadowEffects.setVisible(state==='playing');
   if(state==='playing')shadowEffects.update(dt,rabbit.position);
   if(state==='playing')facing=turnTowards(facing,facingTarget,dt);
@@ -327,6 +422,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
   camera.lookAt(target);
   if(state==='playing')shadowEffects.applyShake(camera);
   towerMist.renderDepth(renderer,scene,camera);
+  catcherRay.update(dt,visualTime,rabbit,state!=='won'&&state!=='lost',camera);
   renderer.render(scene,camera);
 }
 camera.position.set(3,104,16);requestAnimationFrame(frame);

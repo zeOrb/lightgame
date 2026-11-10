@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createVisualRandom } from './visual-random.js';
+const random=createVisualRandom('glass');
 
 export function glassLayout(width,height){
   return {width:Math.round(width*192),height:Math.round(height*192),columns:Math.max(1,Math.round(width/.5)),rows:Math.max(1,Math.round(height/.5))};
@@ -6,6 +8,7 @@ export function glassLayout(width,height){
 
 export function createGlassTextures(){
   const palette=['#f52c9e','#7244ff','#22bfff','#35e5ad','#ffcf38','#f54b42'];
+  for(let i=palette.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[palette[i],palette[j]]=[palette[j],palette[i]];}
   const makeMosaics=(width,height)=>Array.from({length:4},(_,variant)=>{
     const layout=glassLayout(width,height),canvas=document.createElement('canvas');canvas.width=layout.width;canvas.height=layout.height;
     const ctx=canvas.getContext('2d');ctx.fillStyle='#101224';ctx.fillRect(0,0,canvas.width,canvas.height);

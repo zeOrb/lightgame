@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createVisualRandom } from './visual-random.js';
+const random=createVisualRandom('beast-smoke');
 
 // Unlit black stays black even in the sunset and in the rabbit's point light.
 const fur = new THREE.MeshBasicMaterial({ color: '#000000', fog: false });
@@ -71,11 +73,11 @@ export function createShadowBeast(kind = 'cat') {
   const smoke=Array.from({length:18},(_,i)=>{
     const material=new THREE.SpriteMaterial({map:smokeTexture,color:'#000000',transparent:true,depthWrite:false,fog:false,opacity:0});
     const sprite=new THREE.Sprite(material);o.add(sprite);
-    return {sprite,phase:i/18,life:1.9+(i%4)*.3,angle:i*2.39996};
+    return {sprite,phase:random(),life:1.9+random()*.9,angle:random()*Math.PI*2};
   });
   const circles=Array.from({length:3},(_,i)=>{
     const material=new THREE.SpriteMaterial({map:circleTexture,color:'#000000',transparent:true,depthWrite:false,fog:false,opacity:0});
-    const sprite=new THREE.Sprite(material);o.add(sprite);return {sprite,phase:i*1.7};
+    const sprite=new THREE.Sprite(material);o.add(sprite);return {sprite,phase:random()*5.1};
   });
   const meshes=[];o.traverse(child=>{if(child.isMesh)meshes.push(child);});
   const dissolve={value:-10};

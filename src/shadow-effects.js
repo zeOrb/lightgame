@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createVisualRandom } from './visual-random.js';
+const random=createVisualRandom('damage-motes');
 
 export class ShadowEffects {
   constructor(scene, texture, overlay, reducedMotion = false) {
@@ -10,7 +12,7 @@ export class ShadowEffects {
       const material = new THREE.SpriteMaterial({ map: texture, color: i % 3 ? '#140b25' : '#50305f', transparent: true, depthWrite: false, opacity: 0 });
       const sprite = new THREE.Sprite(material);
       this.group.add(sprite);
-      return { sprite, age: 2, angle: i * 2.39996, life: .7 + (i % 5)*.12 };
+      return { sprite, age: 2, angle: random()*Math.PI*2, life: .7 + random()*.48 };
     });
     this.clear();
   }

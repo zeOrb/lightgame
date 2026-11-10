@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createVisualRandom } from './visual-random.js';
+const random=createVisualRandom('vitral-glow');
 
 export class VitralGlow {
   constructor(parent,texture){
@@ -6,7 +8,7 @@ export class VitralGlow {
     this.bodyColor=new THREE.Color();this.palette=[new THREE.Color('#ffe7ac')];this.rays=[];
     const geometry=new THREE.ConeGeometry(.11,.8,8,1,true);
     for(let i=0;i<12;i++){
-      const y=1-2*(i+.5)/12,a=i*2.399963,r=Math.sqrt(1-y*y),direction=new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r);
+      const y=1-2*(i+.2+random()*.6)/12,a=i*2.399963+random()*.4,r=Math.sqrt(1-y*y),direction=new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r);
       const material=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide});
       const ray=new THREE.Mesh(geometry,material);ray.position.copy(direction).multiplyScalar(.65);ray.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);this.group.add(ray);
       const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}));

@@ -1,3 +1,4 @@
+import { visualSample } from './visual-random.js';
 export const END = 167;
 export const FLOOR_COUNT = 12;
 export function floorAt(s) { return FLOOR_COUNT - Math.min(FLOOR_COUNT-1, Math.floor(clamp(s,0,END)/14)); }
@@ -11,9 +12,7 @@ export const SHELF_HALF_ANGLE = .133;
 export const SHELF_INNER_RADIUS = 9.3;
 export const SHELF_OUTER_RADIUS = 14.7;
 export function shelfInnerRadius(section){
-  let hash=Math.imul(section+1,374761393);
-  hash=Math.imul(hash^(hash>>>13),1274126177);
-  const random=((hash^(hash>>>16))>>>0)/4294967296;
+  const random=visualSample('shelves',section);
   const length=(SHELF_OUTER_RADIUS-SHELF_INNER_RADIUS)*(1+(random*2-1)/8);
   return SHELF_OUTER_RADIUS-length;
 }

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createVisualRandom } from './visual-random.js';
+const random=createVisualRandom('ground-smoke');
 
 export function softShadowMaterial(){
   return new THREE.ShaderMaterial({
@@ -21,9 +23,9 @@ export class GroundShadowSmoke {
     for(const source of sources){
       const count=source.gap?22:13;
       for(let i=0;i<count;i++,index++){
-        const a=i*2.39996,spread=source.gap?1.35:.65;
+        const a=random()*Math.PI*2,spread=source.gap?1.35:.65;
         positions.push(source.x+Math.cos(a)*spread*(.3+(i%5)*.14),source.y+.03,source.z+Math.sin(a)*spread*(.3+(i%4)*.17));
-        phases.push((index*.618034)%1);lives.push(4.8+(i%5)*.65);sizes.push(.38+(i%4)*.12);rises.push(1.7+(i%5)*.29);
+        phases.push(random());lives.push(4.8+random()*2.6);sizes.push(.38+random()*.36);rises.push(1.7+random()*1.16);
       }
     }
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));

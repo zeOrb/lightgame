@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 88" fill="none" shape-rendering="crispEdges">
+ <defs>
+  <linearGradient id="metal" x2="0" y2="1"><stop stop-color="#fff8df"/><stop offset=".42" stop-color="#c9bea0"/><stop offset="1" stop-color="#766b53"/></linearGradient>
+  <g id="vine" stroke-linecap="square" stroke-linejoin="bevel">
+   <path d="M34 34C20 29 18 15 25 9C13 10 7 21 13 31C17 38 27 36 26 29C25 24 19 25 20 29M34 36C32 20 48 16 56 21C45 24 42 30 42 35M45 34C55 13 70 20 79 8C81 21 69 27 61 27M72 34C80 18 96 29 105 15C108 29 96 33 88 34M105 34C118 22 130 33 139 22M140 34C151 24 162 32 171 24M175 34C188 27 197 33 208 27"/>
+   <path d="M34 53C17 51 9 63 14 77C18 67 27 68 27 62C27 57 20 57 19 62M42 53C47 66 58 67 64 61C54 62 55 55 51 54M68 53C74 67 88 60 94 71C98 59 87 56 80 54M102 53C112 64 124 55 134 64M144 53C154 60 164 55 174 61"/>
+   <path d="M35 34C29 24 31 16 38 12C37 22 45 25 39 33M51 30C48 22 53 17 61 16C58 24 61 27 51 30M88 29C85 20 91 16 97 17C94 24 98 27 88 29M117 31C115 23 121 20 127 21C124 28 125 30 117 31M39 55C29 59 29 68 35 74C36 65 43 64 39 55M72 55C68 61 73 67 80 67C76 61 80 57 72 55" fill="currentColor" stroke-width=".8"/>
+   <path d="M7 40L14 34L21 40L14 47Z" fill="#948568"/>
+   <path d="M31 39H213M31 49H213" stroke-width="1" opacity=".65"/>
+  </g>
+  <g id="flower">
+   <path d="M30 44C17 33 19 24 26 26C31 28 30 35 30 36C30 26 35 23 39 27C43 32 36 39 30 44C41 40 46 44 42 49C39 53 33 48 30 44C32 54 27 59 23 54C19 49 24 46 30 44Z" fill="#a99a79" stroke="#f0e5c4" stroke-width="1"/>
+   <path d="M30 39L34 44L30 49L26 44Z" fill="#d0c69a" stroke="#4a4231"/>
+  </g>
+ </defs>
+ <path d="M30 35H610V53H30Z" stroke="#080e12" stroke-width="8"/>
+ <path d="M30 35H610V53H30Z" stroke="#e0d4b4" stroke-width="2"/>
+ <path d="M32 37H608M32 51H608" stroke="#62583f"/>
+ <g color="#d5c9a8" stroke="#080f13" stroke-width="4"><use href="#vine"/><use href="#vine" transform="translate(640 0) scale(-1 1)"/></g>
+ <g color="#d5c9a8" stroke="url(#metal)" stroke-width="1.7"><use href="#vine"/><use href="#vine" transform="translate(640 0) scale(-1 1)"/></g>
+ <use href="#flower"/><use href="#flower" transform="translate(640 0) scale(-1 1)"/>
+</svg>

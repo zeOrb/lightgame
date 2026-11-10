@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createVisualRandom } from './visual-random.js';
+const random=createVisualRandom('pickup-sparks');
 
 const COLLAPSE = .58;
 const BURST = .95;
@@ -29,12 +31,12 @@ export class PickupEffects {
     sparks.frustumCulled = false;
     group.add(sparks);
     const rays = Array.from({ length: 28 }, (_, i) => {
-      const angle = i * 2.399963;
-      const y = .15 + (i % 7) / 7;
+      const angle = random()*Math.PI*2;
+      const y = .15 + random()*.85;
       const radius = Math.sqrt(1-y*y);
       const direction = new THREE.Vector3(Math.cos(angle)*radius, y, Math.sin(angle)*radius);
       sparks.setColorAt(i, new THREE.Color(i % 3 ? '#ffd475' : '#fffbed'));
-      return { direction, speed: 1.2 + (i % 5) * .38, size: .55 + (i % 4) * .25, spin: angle };
+      return { direction, speed: 1.2 + random()*1.52, size: .55 + random()*.75, spin: angle };
     });
     const light = new THREE.PointLight('#ffd47d', 0, 7, 2);
     group.add(light);
