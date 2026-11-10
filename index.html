@@ -49,6 +49,8 @@
   .cta{position:relative;border:0;border-radius:999px;margin-top:25px;padding:14px 32px;background:linear-gradient(110deg,#ffbd70,#ffe6a8);color:#382044;font:800 11px Manrope,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 30px rgba(255,190,111,.24);transition:transform .2s,box-shadow .2s}
   .cta:hover{transform:translateY(-2px);box-shadow:0 12px 38px rgba(255,190,111,.36)}
   .smallnote{position:relative;margin-top:13px;color:rgba(255,236,205,.4);font-size:9px;letter-spacing:.08em}
+  .startupStatus{display:none;position:relative;margin:12px auto 0;max-width:390px;color:#ffd9a0;font-size:11px;line-height:1.55}
+  .cta:disabled{opacity:.72;cursor:wait;transform:none}
   .touchControls{position:fixed;z-index:6;left:16px;bottom:74px;display:none;gap:9px;pointer-events:auto;touch-action:none}
   .touchBtn{width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,230,180,.35);background:rgba(26,18,54,.48);color:#ffe7b8;font-size:18px;backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,.2);touch-action:none}
   .touchBtn:active{background:rgba(255,199,118,.28)}
@@ -99,6 +101,7 @@
       <div class="instruction"><strong>✴ Собирай блики</strong><span>Золотые искры восполняют запас света.</span></div>
     </div>
     <button class="cta" id="startBtn">Начать путешествие</button>
+    <div class="startupStatus" id="startStatus" role="status" aria-live="polite"></div>
     <div class="smallnote">WASD / стрелки · пробел — прыжок · звук не требуется</div>
   </div>
 </div>
@@ -115,8 +118,45 @@
     <button class="cta" id="restartBtn">Попробовать снова</button>
   </div>
 </div>
+<script>
+// The start button is wired independently of Three.js. If the 3D library is
+// still loading, the request is queued and started as soon as the scene is ready.
+(() => {
+  const button = document.getElementById('startBtn');
+  const status = document.getElementById('startStatus');
+  if (!button || !status) return;
+  button.addEventListener('click', () => {
+    if (window.__sunnyFailed) { window.location.reload(); return; }
+    if (window.__sunnyReady) { window.dispatchEvent(new Event('sunny:start')); return; }
+    window.__sunnyStartRequested = true;
+    button.disabled = true;
+    button.textContent = 'ЗАГРУЖАЕМ БАШНЮ…';
+    status.textContent = 'Подготавливаем магический мир…';
+    status.style.display = 'block';
+  });
+})();
+</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+function showStartupError(error) {
+  console.error('Не удалось запустить Солнечного зайчика:', error);
+  window.__sunnyFailed = true;
+  const button = document.getElementById('startBtn');
+  const status = document.getElementById('startStatus');
+  if (button) { button.disabled = false; button.textContent = 'Обновить страницу'; }
+  if (status) {
+    status.textContent = 'Не удалось загрузить 3D-сцену. Проверь подключение к интернету и обнови страницу. Если игра открыта через GitHub Pages, подожди завершения публикации.';
+    status.style.display = 'block';
+  }
+}
+
+try {
+let THREE;
+try {
+  THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+} catch (primaryError) {
+  // A second CDN makes startup more resilient to a blocked or unavailable host.
+  THREE = await import('https://unpkg.com/three@0.160.0/build/three.module.js');
+}
 
 // ---------- Renderer and scene ----------
 const canvas = document.querySelector('#game');
@@ -415,7 +455,7 @@ function finish(won){
   $('endSparks').textContent=`${sparkCollected} из ${TOTAL_SPARKS}`;
   $('endProgress').textContent=`${Math.round(Math.min(1,progress/MAX_T)*100)}%`;
 }
-$('startBtn').addEventListener('click',resetGame);$('restartBtn').addEventListener('click',resetGame);
+window.addEventListener('sunny:start', resetGame);$('restartBtn').addEventListener('click',resetGame);
 
 addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys[e.code]=true;if(e.code==='Space'&&state==='playing'&&jumpY<.08){jumpV=5.2}});
 addEventListener('keyup',e=>{keys[e.code]=false});
@@ -547,6 +587,21 @@ function animate(){
 player.position.copy(trackPos(.35,0,.35));
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.8))});
 updateHUD();animate();
+
+// Mark the scene as ready only after Three.js, the renderer and all game
+// objects have been initialized and the animation loop has started.
+window.__sunnyReady = true;
+const startButton = $('startBtn');
+startButton.disabled = false;
+startButton.textContent = 'Начать путешествие';
+$('startStatus').style.display = 'none';
+if (window.__sunnyStartRequested) {
+  window.__sunnyStartRequested = false;
+  resetGame();
+}
+} catch (error) {
+  showStartupError(error);
+}
 </script>
 </body>
 </html>
