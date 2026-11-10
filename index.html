@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta name="theme-color" content="#100d26" />
+<title>Солнечный зайчик — Башня сумерек</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');
+  :root{--gold:#ffd88a;--cream:#fff4d7;--violet:#a89bff;--glass:rgba(19,15,42,.58);--line:rgba(255,232,190,.22)}
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#100d26;color:var(--cream);font-family:Manrope,system-ui,sans-serif}
+  #game{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none}
+  #vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 38%,rgba(8,6,24,.18) 78%,rgba(8,6,24,.55) 120%);z-index:2}
+  .hud{position:fixed;z-index:5;inset:0;pointer-events:none;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+  .topline{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .brand{display:flex;align-items:center;gap:12px;text-shadow:0 2px 20px #10091e}
+  .brandmark{width:38px;height:38px;border:1px solid rgba(255,224,166,.55);border-radius:50%;display:grid;place-items:center;color:#ffe1a4;font-size:20px;background:rgba(255,207,120,.1);box-shadow:0 0 28px rgba(255,195,94,.18)}
+  .brandname{font-family:'Playfair Display',Georgia,serif;font-size:18px;letter-spacing:.02em;font-weight:700}
+  .brandtag{font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,236,205,.6);margin-top:2px}
+  .hudstats{display:flex;gap:10px;align-items:center}
+  .stat{min-width:112px;padding:10px 13px;border:1px solid var(--line);border-radius:14px;background:var(--glass);backdrop-filter:blur(16px);box-shadow:0 8px 30px rgba(0,0,0,.16)}
+  .statlabel{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,236,205,.58);margin-bottom:4px}
+  .statvalue{font-size:15px;font-weight:800;letter-spacing:.04em}
+  .rightstack{display:flex;flex-direction:column;gap:9px;align-items:flex-end}
+  .lightcard{width:min(260px,35vw);padding:12px 15px;border-radius:15px;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(16px)}
+  .lightrow{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,236,205,.7)}
+  .lightrow strong{font-size:12px;letter-spacing:.04em;color:#fff1d0}
+  .bar{height:7px;margin-top:9px;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.25)}
+  #lightFill{height:100%;width:100%;border-radius:20px;background:linear-gradient(90deg,#f08c55,#ffd17d,#fff6c2);box-shadow:0 0 14px rgba(255,205,112,.72);transition:width .15s linear}
+  .bottomline{display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+  .objective{max-width:340px;padding:11px 14px;border-left:2px solid rgba(255,216,138,.7);background:linear-gradient(90deg,rgba(17,12,40,.56),transparent);text-shadow:0 2px 12px #090617}
+  .objective small{display:block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#e8bf83;margin-bottom:4px}
+  #objectiveText{font-size:12px;line-height:1.5;color:rgba(255,245,223,.82)}
+  .controlsHint{font-size:10px;color:rgba(255,244,220,.64);text-align:right;line-height:1.8;text-shadow:0 2px 12px #090617}
+  kbd{font:700 9px Manrope,sans-serif;color:#ffe7b1;border:1px solid rgba(255,231,177,.35);border-radius:5px;padding:3px 5px;background:rgba(25,17,48,.55);margin:0 2px}
+  .overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 50% 40%,rgba(28,19,55,.45),rgba(8,6,24,.72));backdrop-filter:blur(5px);transition:opacity .45s,visibility .45s}
+  .overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .panel{position:relative;width:min(560px,94vw);padding:clamp(25px,5vw,48px);border:1px solid rgba(255,222,170,.3);border-radius:25px;background:linear-gradient(145deg,rgba(42,29,68,.88),rgba(15,13,39,.91));box-shadow:0 25px 100px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.08);text-align:center;overflow:hidden}
+  .panel:before{content:"";position:absolute;inset:-50% 20% auto;height:180px;background:radial-gradient(ellipse,rgba(255,194,105,.2),transparent 68%);pointer-events:none}
+  .eyebrow{position:relative;color:#e7bd81;font-size:10px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;margin-bottom:14px}
+  h1{position:relative;margin:0;color:#fff0d0;font:800 clamp(36px,7vw,58px)/1.02 'Playfair Display',Georgia,serif;letter-spacing:-.035em;text-shadow:0 3px 25px rgba(255,183,99,.17)}
+  .subtitle{position:relative;margin:16px auto 0;max-width:410px;color:rgba(255,241,216,.76);font-size:13px;line-height:1.75}
+  .rule{height:1px;background:linear-gradient(90deg,transparent,rgba(255,220,163,.36),transparent);margin:24px 0}
+  .instructionGrid{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+  .instruction{padding:11px 12px;border:1px solid rgba(255,235,199,.1);border-radius:12px;background:rgba(255,255,255,.035)}
+  .instruction strong{display:block;font-size:11px;color:#ffe4af;margin-bottom:3px}
+  .instruction span{font-size:10px;line-height:1.5;color:rgba(255,239,213,.59)}
+  .cta{position:relative;border:0;border-radius:999px;margin-top:25px;padding:14px 32px;background:linear-gradient(110deg,#ffbd70,#ffe6a8);color:#382044;font:800 11px Manrope,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 30px rgba(255,190,111,.24);transition:transform .2s,box-shadow .2s}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 12px 38px rgba(255,190,111,.36)}
+  .smallnote{position:relative;margin-top:13px;color:rgba(255,236,205,.4);font-size:9px;letter-spacing:.08em}
+  .touchControls{position:fixed;z-index:6;left:16px;bottom:74px;display:none;gap:9px;pointer-events:auto;touch-action:none}
+  .touchBtn{width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,230,180,.35);background:rgba(26,18,54,.48);color:#ffe7b8;font-size:18px;backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,.2);touch-action:none}
+  .touchBtn:active{background:rgba(255,199,118,.28)}
+  .touchRight{position:fixed;z-index:6;right:17px;bottom:74px;display:none;gap:8px;pointer-events:auto;touch-action:none}
+  .touchRight .touchBtn{width:56px;height:56px}
+  #toast{position:fixed;z-index:8;top:19%;left:50%;transform:translate(-50%,-8px);padding:10px 17px;border:1px solid rgba(255,225,173,.32);border-radius:30px;background:rgba(21,14,43,.8);font-size:11px;letter-spacing:.08em;color:#ffe7bd;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;backdrop-filter:blur(12px);white-space:nowrap}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  @media(max-width:700px){.hud{padding:14px}.brandtag{display:none}.brandname{font-size:15px}.brandmark{width:32px;height:32px}.topline{gap:7px}.hudstats{gap:6px}.stat{min-width:77px;padding:8px 9px}.statlabel{font-size:8px}.statvalue{font-size:12px}.lightcard{width:135px;padding:9px 10px}.lightrow{font-size:8px}.lightrow strong{font-size:10px}.bottomline{align-items:flex-end}.objective{max-width:210px;padding:8px 10px}.objective small{font-size:8px}#objectiveText{font-size:10px}.controlsHint{display:none}.touchControls,.touchRight{display:flex}.instructionGrid{gap:7px}.instruction{padding:9px}.instruction strong{font-size:10px}.instruction span{font-size:9px}}
+  @media(max-height:600px){.panel{padding:20px 28px}.subtitle{margin-top:9px}.rule{margin:14px 0}.cta{margin-top:15px}.smallnote{margin-top:8px}.instruction{padding:7px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="vignette"></div>
+<div class="hud" id="hud" style="display:none">
+  <div class="topline">
+    <div class="brand"><div class="brandmark">✧</div><div><div class="brandname">Башня сумерек</div><div class="brandtag">Хроники солнечного зайчика</div></div></div>
+    <div class="hudstats">
+      <div class="stat"><div class="statlabel">Собрано бликов</div><div class="statvalue" id="sparkCount">0 / 12</div></div>
+      <div class="stat"><div class="statlabel">Высота</div><div class="statvalue" id="floorLabel">Этаж 500</div></div>
+    </div>
+    <div class="rightstack"><div class="lightcard"><div class="lightrow"><span>Сохранность света</span><strong id="lightPct">100%</strong></div><div class="bar"><div id="lightFill"></div></div></div></div>
+  </div>
+  <div class="bottomline">
+    <div class="objective"><small>Твоя цель</small><div id="objectiveText">Спускайся по спирали к сердцу башни. Не дай теням погасить тебя.</div></div>
+    <div class="controlsHint"><kbd>W</kbd><kbd>↑</kbd> вперёд по спирали &nbsp; <kbd>A</kbd><kbd>D</kbd> сменить полку<br><kbd>SPACE</kbd> прыгнуть &nbsp; <kbd>S</kbd> замедлиться / назад</div>
+  </div>
+</div>
+<div class="touchControls" id="touchControls">
+  <button class="touchBtn" data-key="KeyA" aria-label="Влево">◀</button>
+  <button class="touchBtn" data-key="KeyD" aria-label="Вправо">▶</button>
+</div>
+<div class="touchRight" id="touchRight">
+  <button class="touchBtn" data-key="Space" aria-label="Прыжок">↑</button>
+  <button class="touchBtn" data-key="KeyW" aria-label="Вперёд">✦</button>
+</div>
+<div id="toast"></div>
+<div class="overlay" id="intro">
+  <div class="panel">
+    <div class="eyebrow">Сказание о последнем луче</div>
+    <h1>Солнечный<br>зайчик</h1>
+    <p class="subtitle">Ты — крошечный отблеск ловца солнца. Закат уходит за горизонт, и только ты можешь донести последний свет до древнего кристалла в основании башни.</p>
+    <div class="rule"></div>
+    <div class="instructionGrid">
+      <div class="instruction"><strong>✦ Скользи по спирали</strong><span>W / ↑ — вниз по башне. S — вернуться назад.</span></div>
+      <div class="instruction"><strong>✧ Ищи светлые полосы</strong><span>Цветные витражи ускоряют и усиливают тебя.</span></div>
+      <div class="instruction"><strong>◌ Берегись теней</strong><span>Тёмные пятна и лапы зверьков гасят твой свет.</span></div>
+      <div class="instruction"><strong>✴ Собирай блики</strong><span>Золотые искры восполняют запас света.</span></div>
+    </div>
+    <button class="cta" id="startBtn">Начать путешествие</button>
+    <div class="smallnote">WASD / стрелки · пробел — прыжок · звук не требуется</div>
+  </div>
+</div>
+<div class="overlay hidden" id="endOverlay">
+  <div class="panel">
+    <div class="eyebrow" id="endEyebrow">Свет угас</div>
+    <h1 id="endTitle">Тени победили</h1>
+    <p class="subtitle" id="endText">Последний луч растворился в сумерках. Но башня помнит твой путь.</p>
+    <div class="rule"></div>
+    <div class="instructionGrid">
+      <div class="instruction"><strong>Блики собраны</strong><span id="endSparks">0 из 12</span></div>
+      <div class="instruction"><strong>Путь пройден</strong><span id="endProgress">0%</span></div>
+    </div>
+    <button class="cta" id="restartBtn">Попробовать снова</button>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+// ---------- Renderer and scene ----------
+const canvas = document.querySelector('#game');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.8));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x17112e);
+scene.fog = new THREE.FogExp2(0x1a1432, 0.0125);
+const camera = new THREE.PerspectiveCamera(49, innerWidth/innerHeight, 0.1, 180);
+const clock = new THREE.Clock();
+
+const MAT = {
+  stone: new THREE.MeshStandardMaterial({color:0x514765, roughness:.82, metalness:.12}),
+  trim: new THREE.MeshStandardMaterial({color:0xc19a65, metalness:.72, roughness:.3}),
+  dark: new THREE.MeshStandardMaterial({color:0x211b37, roughness:.9}),
+  gold: new THREE.MeshStandardMaterial({color:0xffd68b, emissive:0x7d3f0b, emissiveIntensity:.6, metalness:.45, roughness:.3}),
+  glass: new THREE.MeshPhysicalMaterial({color:0x8b79bd, emissive:0x39285d, emissiveIntensity:.55, roughness:.14, metalness:.12, transmission:.25, transparent:true, opacity:.78, side:THREE.DoubleSide}),
+  shadow: new THREE.MeshBasicMaterial({color:0x090718, transparent:true, opacity:.76, depthWrite:false}),
+};
+const ambient = new THREE.HemisphereLight(0xaaa4ed, 0x21132f, 1.05); scene.add(ambient);
+const warmSun = new THREE.DirectionalLight(0xffbd75, 2.4); warmSun.position.set(-16,38,8); warmSun.castShadow=true; warmSun.shadow.mapSize.set(1024,1024); scene.add(warmSun);
+const fillLight = new THREE.PointLight(0x8d78d9, 85, 45, 2); fillLight.position.set(0,27,0); scene.add(fillLight);
+const lowerGlow = new THREE.PointLight(0xffb15c, 42, 22, 2); lowerGlow.position.set(0,4,0); scene.add(lowerGlow);
+
+// ---------- Tower architecture ----------
+const tower = new THREE.Group(); scene.add(tower);
+const wall = new THREE.Mesh(new THREE.CylinderGeometry(15.2,15.2,62,72,1,true), new THREE.MeshStandardMaterial({color:0x332b4a, roughness:.86, metalness:.14, side:THREE.BackSide}));
+wall.position.y=30.8; wall.receiveShadow=true; tower.add(wall);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(15.15,72), new THREE.MeshStandardMaterial({color:0x29233f,roughness:.9}));
+floor.rotation.x=-Math.PI/2; floor.position.y=.1; floor.receiveShadow=true; tower.add(floor);
+const ceiling = new THREE.Mesh(new THREE.CircleGeometry(15.15,72), new THREE.MeshStandardMaterial({color:0x211c39,roughness:.92,side:THREE.DoubleSide}));
+ceiling.rotation.x=Math.PI/2; ceiling.position.y=61.7; tower.add(ceiling);
+
+// Repeating stone ribs and decorative rings make the shaft feel immense.
+for(let i=0;i<18;i++){
+  const a=i*Math.PI*2/18;
+  const rib=new THREE.Mesh(new THREE.BoxGeometry(.55,61.5,.8),new THREE.MeshStandardMaterial({color:0x51435f,roughness:.72,metalness:.22}));
+  rib.position.set(Math.cos(a)*14.75,30.8,Math.sin(a)*14.75); rib.rotation.y=-a; rib.castShadow=true; tower.add(rib);
+  const capital=new THREE.Mesh(new THREE.BoxGeometry(1.05,.55,1.15),MAT.trim);
+  capital.position.set(Math.cos(a)*14.55,7.8,Math.sin(a)*14.55); capital.rotation.y=-a; tower.add(capital);
+}
+for(const y of [7.8,20,32.2,44.4,56.6]){
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(14.72,.12,8,120),MAT.trim); ring.rotation.x=Math.PI/2; ring.position.y=y; tower.add(ring);
+}
+
+// Stained-glass windows: jewel-coloured panes inside an antique brass frame.
+const paneColors=[0x67d2d5,0xe58a9f,0xf3bd66,0x9c88e8,0x7abf9c,0xd18dc9];
+const windowGlows=[];
+for(let i=0;i<9;i++){
+  const a=i*Math.PI*2/9 + .12;
+  const g=new THREE.Group();
+  g.position.set(Math.cos(a)*14.53,47.3,Math.sin(a)*14.53);
+  g.rotation.y=a-Math.PI/2;
+  const frame=new THREE.Mesh(new THREE.BoxGeometry(3.7,8.5,.25),MAT.trim); g.add(frame);
+  const glass=new THREE.Mesh(new THREE.BoxGeometry(3.23,8.04,.11),new THREE.MeshPhysicalMaterial({color:0x8a79a9,emissive:paneColors[i%paneColors.length],emissiveIntensity:.43,roughness:.16,metalness:.08,transmission:.22,transparent:true,opacity:.78,side:THREE.DoubleSide}));
+  glass.position.z=.16; g.add(glass);
+  for(let j=0;j<4;j++){
+    const p=new THREE.Mesh(new THREE.BoxGeometry(.7,1.55,.035),new THREE.MeshBasicMaterial({color:paneColors[(i+j)%paneColors.length],transparent:true,opacity:.57}));
+    p.position.set((j%2?-.72:.72),(j<2?1.6:-1.6),.23); g.add(p);
+  }
+  const mullion=new THREE.Mesh(new THREE.BoxGeometry(.09,8.1,.07),MAT.trim); mullion.position.z=.25; g.add(mullion);
+  for(const x of [-1.86,1.86]){const bar=new THREE.Mesh(new THREE.BoxGeometry(.12,8.7,.12),MAT.trim);bar.position.x=x;g.add(bar)}
+  for(const y of [-4.25,4.25]){const bar=new THREE.Mesh(new THREE.BoxGeometry(3.85,.13,.13),MAT.trim);bar.position.y=y;g.add(bar)}
+  tower.add(g);
+  const glow=new THREE.PointLight(paneColors[i%paneColors.length],2.2,14,2); glow.position.copy(g.position).multiplyScalar(.87); glow.position.y-=2; tower.add(glow); windowGlows.push(glow);
+}
+
+// Rays from the low evening sun, with a few luminous streaks through dusty air.
+function beamBetween(a,b,r1,r2,color,opacity){
+  const dir=new THREE.Vector3().subVectors(b,a); const len=dir.length();
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,len,12,1,true),new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
+  mesh.position.copy(a).add(b).multiplyScalar(.5); mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize()); scene.add(mesh); return mesh;
+}
+const rayA=new THREE.Vector3(-13,54,7), rayB=new THREE.Vector3(-3,43,1);
+beamBetween(rayA,rayB,2.5,.55,0xffbd72,.105);
+beamBetween(new THREE.Vector3(11,56,-6),new THREE.Vector3(3,44,-1),2,.35,0xf2a7c4,.075);
+beamBetween(new THREE.Vector3(-3,43,1),new THREE.Vector3(4,29,2),.55,.18,0xffd89b,.07);
+
+// Hanging sun-catcher: brass ring, suspended prisms and bright central diamond.
+const catcher=new THREE.Group(); catcher.position.set(-2,52,0); tower.add(catcher);
+const hoop=new THREE.Mesh(new THREE.TorusGeometry(2.1,.09,10,80),MAT.trim); hoop.rotation.x=.18; catcher.add(hoop);
+const hub=new THREE.Mesh(new THREE.OctahedronGeometry(.8,1),new THREE.MeshPhysicalMaterial({color:0xffe6a8,emissive:0xffa83d,emissiveIntensity:1.8,metalness:.25,roughness:.12,transmission:.3,transparent:true,opacity:.9})); catcher.add(hub);
+for(let i=0;i<9;i++){
+  const a=i*Math.PI*2/9; const x=Math.cos(a)*2.05,z=Math.sin(a)*2.05;
+  const chain=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,1.15,6),MAT.trim);chain.position.set(x*.8,-.62,z*.8); catcher.add(chain);
+  const prism=new THREE.Mesh(new THREE.OctahedronGeometry(.38,.1),new THREE.MeshPhysicalMaterial({color:paneColors[i%paneColors.length],emissive:paneColors[i%paneColors.length],emissiveIntensity:.65,roughness:.08,metalness:.08,transparent:true,opacity:.87}));
+  prism.position.set(x,-1.45,z); prism.rotation.set(a,.4,a); catcher.add(prism);
+}
+const catcherGlow=new THREE.PointLight(0xffc36c,28,22,2); catcherGlow.position.copy(catcher.position); tower.add(catcherGlow);
+
+// ---------- The descending spiral shelf ----------
+const MAX_T=Math.PI*10; // five complete turns, from the upper windows to the crystal chamber
+const TOP_Y=51, BOTTOM_Y=2.2;
+const RAMP_DROP=(TOP_Y-BOTTOM_Y)/MAX_T;
+const TRACK_R=8.35;
+const trackY=t=>TOP_Y-RAMP_DROP*t;
+const trackPos=(t,lane=0,jump=0)=>new THREE.Vector3(Math.cos(t)*(TRACK_R+lane),trackY(t)+jump,Math.sin(t)*(TRACK_R+lane));
+const walkwayGroup=new THREE.Group(); tower.add(walkwayGroup);
+{
+  const verts=[],uvs=[],indices=[]; const segments=1100, half=2.15;
+  for(let i=0;i<=segments;i++){
+    const t=MAX_T*i/segments;
+    for(const side of [-1,1]){
+      const r=TRACK_R+side*half;
+      verts.push(Math.cos(t)*r,trackY(t),Math.sin(t)*r); uvs.push(i/segments,side===-1?0:1);
+    }
+    if(i<segments){const k=i*2;indices.push(k,k+1,k+2,k+1,k+3,k+2)}
+  }
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);geo.computeVertexNormals();
+  const mat=new THREE.MeshStandardMaterial({color:0x5c526a,roughness:.83,metalness:.18,side:THREE.DoubleSide});
+  const path=new THREE.Mesh(geo,mat);path.receiveShadow=true;path.castShadow=true;walkwayGroup.add(path);
+  // Golden inlaid edges.
+  for(const side of [-1,1]){
+    const pts=[];for(let i=0;i<=segments;i+=3){const t=MAX_T*i/segments;const r=TRACK_R+side*half;pts.push(new THREE.Vector3(Math.cos(t)*r,trackY(t)+.07,Math.sin(t)*r))}
+    const curve=new THREE.CatmullRomCurve3(pts);const rail=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.floor(segments/3),.075,7,false),MAT.trim);walkwayGroup.add(rail);
+  }
+  // Small repeating brass floor studs create a readable sense of motion.
+  const studGeo=new THREE.SphereGeometry(.075,8,6);const studMat=new THREE.MeshStandardMaterial({color:0xf0bf76,metalness:.7,roughness:.26,emissive:0x6a3210,emissiveIntensity:.28});
+  for(let i=0;i<150;i++){
+    const t=(i+.5)*MAX_T/150;const r=TRACK_R+2.02;const stud=new THREE.Mesh(studGeo,studMat);stud.position.set(Math.cos(t)*r,trackY(t)+.13,Math.sin(t)*r);walkwayGroup.add(stud);
+  }
+}
+
+// Vertical buttresses along the outer wall reinforce the giant scale.
+for(let i=0;i<10;i++){
+  const a=i*Math.PI*2/10+.2; const x=Math.cos(a)*12.8,z=Math.sin(a)*12.8;
+  const pillar=new THREE.Mesh(new THREE.CylinderGeometry(.34,.54,58,8),new THREE.MeshStandardMaterial({color:0x5a4b66,roughness:.82,metalness:.18}));
+  pillar.position.set(x,30,z);pillar.castShadow=true;tower.add(pillar);
+  const cap=new THREE.Mesh(new THREE.TorusGeometry(.53,.08,6,16),MAT.trim);cap.rotation.x=Math.PI/2;cap.position.set(x,8,z);tower.add(cap);
+}
+
+// Bottom crystal and dais.
+const dais=new THREE.Group();dais.position.set(0,.25,0);tower.add(dais);
+const base1=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.9,.6,10),new THREE.MeshStandardMaterial({color:0x403450,metalness:.5,roughness:.38}));base1.position.y=.35;dais.add(base1);
+const base2=new THREE.Mesh(new THREE.CylinderGeometry(2.7,3.2,.38,10),MAT.trim);base2.position.y=.83;dais.add(base2);
+const crystal=new THREE.Group();crystal.position.y=3.25;dais.add(crystal);
+const crystalMat=new THREE.MeshPhysicalMaterial({color:0xa6e7ff,emissive:0x2876b2,emissiveIntensity:1.2,metalness:.15,roughness:.08,transmission:.52,transparent:true,opacity:.93,thickness:1.4,ior:1.45});
+const crystalMesh=new THREE.Mesh(new THREE.OctahedronGeometry(1.9,1),crystalMat);crystalMesh.scale.set(.78,1.7,.78);crystalMesh.rotation.y=.28;crystal.add(crystalMesh);
+const crystalCore=new THREE.Mesh(new THREE.OctahedronGeometry(.72,1),new THREE.MeshBasicMaterial({color:0xe4fdff}));crystal.add(crystalCore);
+const crystalRing=new THREE.Mesh(new THREE.TorusGeometry(2.35,.055,8,80),new THREE.MeshBasicMaterial({color:0x9deaff,transparent:true,opacity:.8}));crystalRing.rotation.x=Math.PI/2;crystal.add(crystalRing);
+const crystalLight=new THREE.PointLight(0x80dcff,5,20,2);crystalLight.position.set(0,3.4,0);dais.add(crystalLight);
+
+// Floating dust particles in the immense shaft.
+const dustN=650,dustPositions=new Float32Array(dustN*3),dustColors=new Float32Array(dustN*3);
+for(let i=0;i<dustN;i++){
+  const a=Math.random()*Math.PI*2,r=2+Math.random()*12;
+  dustPositions[i*3]=Math.cos(a)*r;dustPositions[i*3+1]=1+Math.random()*58;dustPositions[i*3+2]=Math.sin(a)*r;
+  const c=new THREE.Color().setHSL(.11+Math.random()*.09,.45,.55+Math.random()*.3);dustColors.set([c.r,c.g,c.b],i*3);
+}
+const dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute('position',new THREE.BufferAttribute(dustPositions,3));dustGeo.setAttribute('color',new THREE.BufferAttribute(dustColors,3));
+const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({size:.075,vertexColors:true,transparent:true,opacity:.65,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(dust);
+
+// ---------- Player: the little living sunbeam ----------
+const player=new THREE.Group();scene.add(player);
+const orbMat=new THREE.MeshStandardMaterial({color:0xffe7a8,emissive:0xffa72d,emissiveIntensity:2.4,roughness:.18,metalness:.05});
+const orb=new THREE.Mesh(new THREE.IcosahedronGeometry(.36,2),orbMat);player.add(orb);
+const halo=new THREE.Mesh(new THREE.TorusGeometry(.6,.035,8,48),new THREE.MeshBasicMaterial({color:0xffdb8b,transparent:true,opacity:.82}));halo.rotation.x=Math.PI/2;player.add(halo);
+const halo2=new THREE.Mesh(new THREE.TorusGeometry(.83,.016,6,48),new THREE.MeshBasicMaterial({color:0xffb75d,transparent:true,opacity:.48}));halo2.rotation.x=Math.PI/2;halo2.rotation.y=.6;player.add(halo2);
+const playerLight=new THREE.PointLight(0xffc15d,7.5,9,2);player.add(playerLight);
+const tailPoints=[];for(let i=0;i<12;i++)tailPoints.push(new THREE.Vector3(-i*.12,.02,0));
+const tailCurve=new THREE.CatmullRomCurve3(tailPoints);const tail=new THREE.Mesh(new THREE.TubeGeometry(tailCurve,.2,.055,6,false),new THREE.MeshBasicMaterial({color:0xffcf79,transparent:true,opacity:.7}));tail.position.x=-.25;player.add(tail);
+
+// ---------- Collectibles, shadows, vials, and stained-glass boosts ----------
+const pickups=[], hazards=[], vials=[], boosts=[], fallingBooks=[];
+const pickupTs=[1.9,4.15,6.7,9.25,11.8,14.35,16.9,19.45,22,24.55,27.1,29.65];
+for(let i=0;i<pickupTs.length;i++){
+  const t=pickupTs[i],lane=[-1.2,.9,.2,-.8,1.15,-.25,.75,-1.05,.3,1.1,-.65,.1][i];
+  const g=new THREE.Group();
+  const core=new THREE.Mesh(new THREE.IcosahedronGeometry(.28,1),new THREE.MeshBasicMaterial({color:0xffe7a3}));g.add(core);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(.48,.035,7,32),new THREE.MeshBasicMaterial({color:0xffbd68,transparent:true,opacity:.9}));ring.rotation.x=Math.PI/2;g.add(ring);
+  const glow=new THREE.PointLight(0xffc66e,1.8,3,2);g.add(glow);
+  const p=trackPos(t,lane,.55);g.position.copy(p);scene.add(g);pickups.push({mesh:g,t,lane,active:true,phase:i*1.7});
+}
+const shadowSpecs=[[3.1,.6,1.25],[7.4,-1.05,1.4],[10.4,.35,1.25],[13.9,1.1,1.3],[17.6,-.7,1.45],[21.3,.65,1.4],[24.1,-1.15,1.25],[27.7,.25,1.5]];
+for(const [t,lane,r] of shadowSpecs){
+  const g=new THREE.Group();
+  const disk=new THREE.Mesh(new THREE.CircleGeometry(r,32),new THREE.MeshBasicMaterial({color:0x090719,transparent:true,opacity:.68,depthWrite:false}));disk.rotation.x=-Math.PI/2;g.add(disk);
+  const haze=new THREE.Mesh(new THREE.CircleGeometry(r*1.25,32),new THREE.MeshBasicMaterial({color:0x291b4e,transparent:true,opacity:.2,depthWrite:false}));haze.rotation.x=-Math.PI/2;haze.position.y=-.015;g.add(haze);
+  const p=trackPos(t,lane,.045);g.position.copy(p);scene.add(g);hazards.push({mesh:g,t,lane,r,book:false,life:Infinity});
+}
+// Magic flasks distort movement briefly when brushed.
+for(const [i,t] of [5.35,12.55,20.1,26.2].entries()){
+  const g=new THREE.Group();
+  const bottle=new THREE.Mesh(new THREE.CylinderGeometry(.22,.27,.78,12),new THREE.MeshPhysicalMaterial({color:0x80d9dc,emissive:0x1b5965,emissiveIntensity:.8,roughness:.1,transmission:.52,transparent:true,opacity:.78}));g.add(bottle);
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.11,.15,.2,10),MAT.trim);neck.position.y=.47;g.add(neck);
+  const cork=new THREE.Mesh(new THREE.CylinderGeometry(.09,.1,.16,8),new THREE.MeshStandardMaterial({color:0x9c6e48}));cork.position.y=.65;g.add(cork);
+  const aura=new THREE.Mesh(new THREE.TorusGeometry(.42,.025,6,24),new THREE.MeshBasicMaterial({color:0x83e7eb,transparent:true,opacity:.6}));aura.rotation.x=Math.PI/2;g.add(aura);
+  const lane=[-.7,.9,-1.1,.25][i];g.position.copy(trackPos(t,lane,.58));scene.add(g);vials.push({mesh:g,t,lane,active:true,phase:i});
+}
+// Coloured shards of window light are safe lanes and small buffs.
+for(const [i,t] of [2.9,8.8,15.6,23.1].entries()){
+  const g=new THREE.Group();
+  for(let j=0;j<5;j++){
+    const seg=new THREE.Mesh(new THREE.BoxGeometry(.28,.045,.72),new THREE.MeshBasicMaterial({color:paneColors[(i+j)%paneColors.length],transparent:true,opacity:.85}));seg.position.set((j-2)*.3,0,0);g.add(seg);
+  }
+  const lane=[1.1,-.4,.7,-1][i];g.position.copy(trackPos(t,lane,.09));g.rotation.y=t;scene.add(g);boosts.push({mesh:g,t,lane,active:true});
+}
+
+// ---------- Shadow familiars: little hunting creatures made of dusk ----------
+function makeShadowBeast(){
+  const g=new THREE.Group();
+  const bodyMat=new THREE.MeshStandardMaterial({color:0x171326,roughness:.95,metalness:.08});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.48,14,10),bodyMat);body.scale.set(1.25,.72,.72);body.position.y=.46;g.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.34,14,10),bodyMat);head.position.set(.45,.72,0);g.add(head);
+  for(const s of [-1,1]){
+    const ear=new THREE.Mesh(new THREE.ConeGeometry(.14,.38,5),bodyMat);ear.position.set(.32,.99,s*.22);ear.rotation.z=-.15;g.add(ear);
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.065,8,6),new THREE.MeshBasicMaterial({color:0xff7e5a}));eye.position.set(.69,.77,s*.19);g.add(eye);
+    const paw=new THREE.Mesh(new THREE.SphereGeometry(.2,9,7),bodyMat);paw.scale.set(.8,.7,.8);paw.position.set(-.12,.16,s*.38);g.add(paw);
+  }
+  const tail=new THREE.Mesh(new THREE.TorusGeometry(.33,.085,7,16,Math.PI*1.35),bodyMat);tail.position.set(-.62,.55,0);tail.rotation.z=1.3;g.add(tail);
+  const eyeGlow=new THREE.PointLight(0xaa3456,.65,2,2);eyeGlow.position.set(.68,.76,0);g.add(eyeGlow);
+  return g;
+}
+const beasts=[{mesh:makeShadowBeast(),t:-3.6,lane:.3,phase:0},{mesh:makeShadowBeast(),t:-9.8,lane:-.8,phase:2.1}];
+for(const b of beasts){scene.add(b.mesh)}
+
+// ---------- Game state and controls ----------
+const keys={};let state='intro';let progress=0,light=100,sparkCollected=0,lane=0,jumpY=0,jumpV=0;
+let slowTimer=0,invertTimer=0,boostTimer=0,bookTimer=7.5,hitCooldown=0,invulnerable=0,toastTimer=0;
+const TOTAL_SPARKS=pickupTs.length;
+let finaleTime=0,finaleStart=new THREE.Vector3(),finaleTarget=new THREE.Vector3(0,5.5,0),finalePoints=null,finaleVelocities=[],finaleBurst=false;
+const $=id=>document.getElementById(id);
+function showToast(message){$('toast').textContent=message;$('toast').classList.add('show');toastTimer=2.0}
+function updateHUD(){
+  $('sparkCount').textContent=`${sparkCollected} / ${TOTAL_SPARKS}`;
+  $('lightPct').textContent=`${Math.max(0,Math.round(light))}%`;
+  $('lightFill').style.width=`${Math.max(0,light)}%`;
+  $('floorLabel').textContent=`Этаж ${Math.max(1,Math.round((1-progress/MAX_T)*500))}`;
+  if(light<30){$('lightFill').style.background='linear-gradient(90deg,#a6425b,#ed806e)'}else{$('lightFill').style.background='linear-gradient(90deg,#f08c55,#ffd17d,#fff6c2)'}
+}
+function resetGame(){
+  progress=.35;light=100;sparkCollected=0;lane=0;jumpY=0;jumpV=0;slowTimer=0;invertTimer=0;boostTimer=0;bookTimer=7.5;hitCooldown=0;invulnerable=0;
+  for(const p of pickups)p.active=true, p.mesh.visible=true;
+  for(const v of vials)v.active=true,v.mesh.visible=true;
+  for(const b of boosts)b.active=true,b.mesh.visible=true;
+  for(let i=0;i<beasts.length;i++){beasts[i].t=[-3.6,-9.8][i];beasts[i].lane=[.3,-.8][i]}
+  for(const h of [...hazards])if(h.book){scene.remove(h.mesh);hazards.splice(hazards.indexOf(h),1)}
+  for(const b of fallingBooks)scene.remove(b.mesh);fallingBooks.length=0;
+  if(finalePoints){scene.remove(finalePoints);finalePoints.geometry.dispose();finalePoints=null}
+  finaleTime=0;finaleBurst=false;player.visible=true;player.scale.setScalar(1);
+  $('intro').classList.add('hidden');$('endOverlay').classList.add('hidden');$('hud').style.display='flex';
+  $('objectiveText').textContent='Спускайся по спирали к сердцу башни. Не дай теням погасить тебя.';
+  state='playing';updateHUD();
+}
+function beginFinale(){
+  if(state!=='playing')return;
+  state='finale';finaleTime=0;finaleBurst=false;finaleStart.copy(player.position);
+  finaleTarget.set(0,5.25,0);$('hud').style.display='none';showToast('Последний прыжок · к сердцу башни');
+  const count=190,positions=new Float32Array(count*3),colors=new Float32Array(count*3);
+  finaleVelocities=[];
+  for(let i=0;i<count;i++){
+    positions[i*3]=finaleTarget.x;positions[i*3+1]=finaleTarget.y;positions[i*3+2]=finaleTarget.z;
+    const c=new THREE.Color().setHSL(.08+Math.random()*.5,.8,.65);colors.set([c.r,c.g,c.b],i*3);
+    const v=new THREE.Vector3((Math.random()-.5)*5,1+Math.random()*4,(Math.random()-.5)*5);finaleVelocities.push(v);
+  }
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(positions,3));geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  finalePoints=new THREE.Points(geo,new THREE.PointsMaterial({size:.22,vertexColors:true,transparent:true,opacity:.95,depthWrite:false,blending:THREE.AdditiveBlending}));finalePoints.visible=false;scene.add(finalePoints);
+}
+function updateFinale(dt){
+  finaleTime+=dt;
+  const u=THREE.MathUtils.clamp(finaleTime/2.15,0,1),ease=u*u*(3-2*u);
+  player.position.lerpVectors(finaleStart,finaleTarget,ease);
+  player.position.y+=Math.sin(Math.PI*u)*4.5;
+  const scale=u>.82?Math.max(.015,1-(u-.82)/.18):1;
+  player.scale.setScalar(scale);
+  orbMat.emissiveIntensity=3.5+Math.sin(finaleTime*18)*1.1;playerLight.intensity=18+Math.sin(finaleTime*15)*5;
+  player.rotation.y+=dt*3;halo.rotation.z+=dt*4;halo2.rotation.z-=dt*3;
+  if(finaleTime>1.55&&!finaleBurst){finaleBurst=true;finalePoints.visible=true;crystalLight.intensity=38;showToast('Свет пробудил кристалл');}
+  if(finaleBurst&&finalePoints){
+    const attr=finalePoints.geometry.attributes.position;
+    for(let i=0;i<finaleVelocities.length;i++){
+      const v=finaleVelocities[i];attr.array[i*3]+=v.x*dt;attr.array[i*3+1]+=v.y*dt;attr.array[i*3+2]+=v.z*dt;
+      v.multiplyScalar(Math.max(.0,1-dt*.75));v.y-=1.2*dt;
+    }
+    attr.needsUpdate=true;
+  }
+  if(finaleTime>3.45)finish(true);
+}
+
+function finish(won){
+  if(state!=='playing'&&!(won&&state==='finale'))return;state=won?'won':'over';
+  $('hud').style.display='none';$('endOverlay').classList.remove('hidden');
+  if(won){
+    $('endEyebrow').textContent='Последний луч спасён';$('endTitle').innerHTML='Свет вернулся';
+    $('endText').textContent='Солнечный зайчик нырнул в кристалл. Башня вспыхнула тысячами звёзд, а за окнами опустилась тихая ночь.';
+  }else{
+    $('endEyebrow').textContent='Сумерки поглотили свет';$('endTitle').innerHTML='Луч погас';
+    $('endText').textContent='Твой свет растворился в тенях башни. Попробуй снова — на этот раз держись ближе к цветным бликам.';
+  }
+  $('endSparks').textContent=`${sparkCollected} из ${TOTAL_SPARKS}`;
+  $('endProgress').textContent=`${Math.round(Math.min(1,progress/MAX_T)*100)}%`;
+}
+$('startBtn').addEventListener('click',resetGame);$('restartBtn').addEventListener('click',resetGame);
+
+addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();keys[e.code]=true;if(e.code==='Space'&&state==='playing'&&jumpY<.08){jumpV=5.2}});
+addEventListener('keyup',e=>{keys[e.code]=false});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
+document.querySelectorAll('[data-key]').forEach(btn=>{
+  const key=btn.dataset.key;
+  const down=e=>{e.preventDefault();keys[key]=true;if(key==='Space'&&state==='playing'&&jumpY<.08)jumpV=5.2};
+  const up=e=>{e.preventDefault();keys[key]=false};
+  btn.addEventListener('pointerdown',down);btn.addEventListener('pointerup',up);btn.addEventListener('pointercancel',up);btn.addEventListener('pointerleave',up);
+});
+
+// ---------- Temporary falling books create new shadows ----------
+function spawnBook(){
+  const t=Math.min(MAX_T-1.5,progress+2.4+Math.random()*1.2),bookLane=(Math.random()-.5)*2.2;
+  const g=new THREE.Group();
+  const cover=new THREE.Mesh(new THREE.BoxGeometry(.75,.16,.95),new THREE.MeshStandardMaterial({color:0x8f4e68,roughness:.7}));g.add(cover);
+  const pages=new THREE.Mesh(new THREE.BoxGeometry(.69,.1,.9),new THREE.MeshStandardMaterial({color:0xf1d9ab,roughness:.9}));pages.position.y=.03;g.add(pages);
+  const cover2=new THREE.Mesh(new THREE.BoxGeometry(.75,.15,.95),new THREE.MeshStandardMaterial({color:0x5a3b69,roughness:.7}));cover2.position.y=.13;g.add(cover2);
+  const p=trackPos(t,bookLane,13+Math.random()*3);g.position.copy(p);scene.add(g);fallingBooks.push({mesh:g,t,lane:bookLane,y:g.position.y,fall:5+Math.random()*2,landed:false,life:7});
+}
+
+// ---------- Camera, animation and gameplay ----------
+const cameraTarget=new THREE.Vector3();let cameraInitialized=false;let elapsed=0;
+function updateGame(dt){
+  if(state!=='playing')return;
+  elapsed+=dt;hitCooldown=Math.max(0,hitCooldown-dt);invulnerable=Math.max(0,invulnerable-dt);
+  slowTimer=Math.max(0,slowTimer-dt);invertTimer=Math.max(0,invertTimer-dt);boostTimer=Math.max(0,boostTimer-dt);
+  if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').classList.remove('show')}
+  const forward=!!(keys.KeyW||keys.ArrowUp),back=!!(keys.KeyS||keys.ArrowDown),left=!!(keys.KeyA||keys.ArrowLeft),right=!!(keys.KeyD||keys.ArrowRight);
+  const flip=invertTimer>0?-1:1;
+  let speed=boostTimer>0?1.48:1.12;
+  if(slowTimer>0)speed*=.58;
+  if(forward)progress+=speed*dt;
+  if(back)progress-=.72*dt;
+  progress=THREE.MathUtils.clamp(progress,.25,MAX_T);
+  let laneInput=(right?1:0)-(left?1:0);lane+=laneInput*1.8*flip*dt;lane=THREE.MathUtils.clamp(lane,-1.35,1.35);
+  if(jumpY>0||jumpV>0){jumpV-=12.5*dt;jumpY+=jumpV*dt;if(jumpY<0){jumpY=0;jumpV=0}}
+  const p=trackPos(progress,lane,jumpY+.34);
+  player.position.copy(p);
+  player.rotation.y=-progress+Math.PI/2;
+  const pulse=1+Math.sin(elapsed*7)*.06;
+  orb.scale.setScalar(pulse*(.75+light/400));
+  orbMat.emissiveIntensity=.4+light*.035;
+  playerLight.intensity=1+light*.09;
+  halo.rotation.z+=dt*.8;halo2.rotation.z-=dt*.55;
+  const blink=invulnerable>0&&Math.sin(elapsed*24)>0;player.visible=!blink;
+
+  // Hazards drain light only when the player is grounded inside their shadow.
+  for(const h of hazards){
+    if(h.life!==Infinity){h.life-=dt;if(h.life<=0){scene.remove(h.mesh);hazards.splice(hazards.indexOf(h),1);continue}}
+    const dT=Math.abs(h.t-progress),dL=Math.abs(h.lane-lane);
+    if(dT<.25&&dL<h.r*.72&&jumpY<.58&&invulnerable<=0){light-=h.book?25*dt:19*dt;}
+  }
+  // Collect the little reflected glints.
+  for(const c of pickups){
+    if(!c.active)continue;c.mesh.rotation.y+=dt*1.3;c.mesh.position.y=trackY(c.t)+.55+Math.sin(elapsed*2+c.phase)*.13;
+    if(Math.abs(c.t-progress)<.32&&Math.abs(c.lane-lane)<.82&&jumpY<1.6){c.active=false;c.mesh.visible=false;sparkCollected++;light=Math.min(100,light+19);showToast('Блик пойман · +19 света');}
+  }
+  // Colour streaks refill a little light and grant a brief speed burst.
+  for(const b of boosts){if(!b.active)continue;b.mesh.rotation.z=Math.sin(elapsed*2+b.t)*.08;if(Math.abs(b.t-progress)<.35&&Math.abs(b.lane-lane)<1){b.active=false;b.mesh.visible=false;light=Math.min(100,light+9);boostTimer=3.8;showToast('Сила витража · ускорение');}}
+  // Vials disturb the controls. The effect changes over time so it is noticeable but fair.
+  for(const v of vials){if(!v.active)continue;v.mesh.rotation.y+=dt*.7;v.mesh.position.y=trackY(v.t)+.58+Math.sin(elapsed*2+v.phase)*.07;
+    if(Math.abs(v.t-progress)<.31&&Math.abs(v.lane-lane)<.72){v.active=false;v.mesh.visible=false;if(v.phase%2===0)invertTimer=3.6;else slowTimer=4.2;showToast(v.phase%2===0?'Склянка преломления · управление зеркально':'Склянка тумана · движение замедлено');}}
+
+  // Creatures creep along the spiral and pounce; a timely jump avoids their paws.
+  for(const beast of beasts){
+    const gap=progress-beast.t;
+    const chaseSpeed=1.0+THREE.MathUtils.clamp(gap*.035,0,.42);
+    beast.t+=chaseSpeed*dt;
+    beast.lane=THREE.MathUtils.damp(beast.lane,lane*.72,0.36,dt);
+    const bounce=Math.abs(Math.sin(elapsed*3.2+beast.phase))*.3;
+    const bp=trackPos(beast.t,beast.lane,bounce+.28);
+    beast.mesh.position.copy(bp);beast.mesh.rotation.y=-beast.t+Math.PI/2;
+    beast.mesh.rotation.z=Math.sin(elapsed*4+beast.phase)*.07;
+    const near=Math.abs(progress-beast.t)<.63&&Math.abs(lane-beast.lane)<.88;
+    if(near&&jumpY<.78&&hitCooldown<=0&&invulnerable<=0){light-=17;hitCooldown=1.25;invulnerable=.65;beast.t=progress-1.6;showToast('Тень накрыла тебя · -17 света')}
+    if(gap<-.4)beast.t=progress-2.8;
+  }
+
+  // A falling book lands on a nearby part of the shelf and leaves a temporary shadow.
+  bookTimer-=dt;if(bookTimer<=0&&progress<MAX_T-3){spawnBook();bookTimer=10+Math.random()*6}
+  for(const b of fallingBooks){
+    if(!b.landed){b.y-=b.fall*dt;b.mesh.position.y=b.y;b.mesh.rotation.z+=dt*1.6;
+      if(b.y<=trackY(b.t)+.3){b.landed=true;b.mesh.position.y=trackY(b.t)+.22;b.life=1.5;const s=new THREE.Group();const disk=new THREE.Mesh(new THREE.CircleGeometry(1.4,28),new THREE.MeshBasicMaterial({color:0x090719,transparent:true,opacity:.78,depthWrite:false}));disk.rotation.x=-Math.PI/2;s.add(disk);s.position.copy(trackPos(b.t,b.lane,.055));scene.add(s);hazards.push({mesh:s,t:b.t,lane:b.lane,r:1.3,book:true,life:6.5});}
+    }else{b.life-=dt;if(b.life<=0){scene.remove(b.mesh);fallingBooks.splice(fallingBooks.indexOf(b),1)}}
+  }
+
+  // Slow atmospheric drain at the very bottom encourages finishing the run.
+  if(progress>MAX_T-1.8)light-=1.3*dt;
+  light=THREE.MathUtils.clamp(light,0,100);
+  if(light<=0){finish(false);return}
+  if(progress>=MAX_T-.08){light=Math.max(1,light);beginFinale();return}
+  updateHUD();
+  $('objectiveText').textContent=slowTimer>0?'Туман склянки вязнет на крыльях — держись!':invertTimer>0?'Преломление исказило направление — выровняйся.':`До кристалла осталось ${Math.ceil((1-progress/MAX_T)*500)} этажей. Береги свет.`;
+}
+
+function updateCamera(dt){
+  const radial=new THREE.Vector3(Math.cos(progress),0,Math.sin(progress));
+  const target=player.position.clone();
+  const desired=target.clone().add(radial.clone().multiplyScalar(14)).add(new THREE.Vector3(0,7.8,0)).add(new THREE.Vector3(-Math.sin(progress)*2,0,Math.cos(progress)*2));
+  if(!cameraInitialized){camera.position.copy(desired);cameraInitialized=true}
+  camera.position.lerp(desired,1-Math.exp(-2.4*dt));
+  cameraTarget.copy(target).add(new THREE.Vector3(0,1.1,0));camera.lookAt(cameraTarget);
+}
+
+// Atmospheric details and finale lights.
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),.04);
+  if(state==='playing')updateGame(dt);else if(state==='finale')updateFinale(dt);else elapsed+=dt;
+  if(state!=='intro'){
+    updateCamera(dt);
+  }else{
+    // An inviting establishing shot down the centre of the tower.
+    const t=clock.elapsedTime*.035;camera.position.set(21*Math.cos(t),37,21*Math.sin(t));camera.lookAt(0,27,0);
+  }
+  catcher.rotation.y+=dt*.12;crystal.rotation.y+=dt*.28;crystalMesh.rotation.z=Math.sin(elapsed*.8)*.06;
+  crystalLight.intensity=state==='won'?18+Math.sin(elapsed*7)*5:5+Math.sin(elapsed*2)*.7;
+  dust.rotation.y+=dt*.008;
+  if(state==='finale'||state==='won'){
+    scene.background.lerp(new THREE.Color(0x080d26),.003);scene.fog.color.lerp(new THREE.Color(0x10152e),.003);
+    lowerGlow.intensity=THREE.MathUtils.damp(lowerGlow.intensity,95,1.2,dt);
+    for(let i=0;i<windowGlows.length;i++)windowGlows[i].intensity=2.2+Math.max(0,Math.sin(elapsed*2.5+i*1.7))*4.5;
+  }
+  renderer.render(scene,camera);
+}
+
+// Set the player and camera for the title shot before the first frame.
+player.position.copy(trackPos(.35,0,.35));
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.8))});
+updateHUD();animate();
+</script>
+</body>
+</html>
