@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import './style.css';
 import './gothic-ui.css';
 import './pixel-ui.css';
+import './paper-ui.css';
 import { createVisualRandom } from './visual-random.js';
 import { END, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, floorAt, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
 import { cameraPose, smoothCameraAnchor } from './camera.js';
@@ -269,7 +270,7 @@ function update(dt){
     const top=p.y+leap*.8+b.stompTop,foot=route(s,lane).y+height+.12;
     const overlaps=Math.abs(s-b.s)<.58&&Math.abs(lane-b.lane)<.78;
     if(canStomp(previousFoot,foot,b.lastTop??top,top,velocity,overlaps)){
-      killShadowBeast(b);height=Math.max(height,top-route(s,lane).y+.03);velocity=5.5;
+      killShadowBeast(b,currentVitralZone?.palette??(vitralGlow.strength>.01?vitralGlow.palette:null));height=Math.max(height,top-route(s,lane).y+.03);velocity=5.5;
       tone(360,.25);toast('Тень рассеяна!');continue;
     }
     b.lastTop=top;

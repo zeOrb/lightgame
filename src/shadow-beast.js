@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BeastVitralBurst } from './beast-vitral-burst.js';
 import { createVisualRandom } from './visual-random.js';
 const random=createVisualRandom('beast-smoke');
 
@@ -81,17 +82,32 @@ export function createShadowBeast(kind = 'cat') {
   });
   const meshes=[];o.traverse(child=>{if(child.isMesh)meshes.push(child);});
   const dissolve={value:-10};
+  const deathDirection={value:1};
+  const deathCenter={value:new THREE.Vector3()};
+  const vitralBurst=new BeastVitralBurst(o,smokeTexture);
+  const deathColors={value:Array.from({length:6},()=>new THREE.Color('#ffffff'))};
   const deathFur=fur.clone();deathFur.transparent=true;
   deathFur.onBeforeCompile=shader=>{
     shader.uniforms.dissolveHeight=dissolve;
+    shader.uniforms.deathDirection=deathDirection;shader.uniforms.deathColors=deathColors;shader.uniforms.deathCenter=deathCenter;
     shader.vertexShader='varying vec3 vBeastLocal;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvBeastLocal = (modelMatrix * vec4(position, 1.0)).xyz;');
-    shader.fragmentShader='uniform float dissolveHeight;\nvarying vec3 vBeastLocal;\n'+shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat grain = fract(sin(dot(floor(vBeastLocal.xz * 35.0), vec2(12.9898,78.233))) * 43758.5453);\nif(vBeastLocal.y < dissolveHeight + (grain-.5)*.22) discard;');
+    shader.fragmentShader='uniform float dissolveHeight;uniform float deathDirection;uniform vec3 deathColors[6];uniform vec3 deathCenter;\nvarying vec3 vBeastLocal;\n'+shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat grain = fract(sin(dot(floor(vBeastLocal.xz * 35.0), vec2(12.9898,78.233))) * 43758.5453);\nfloat dissolveDistance=deathDirection<0.0?length(vBeastLocal-deathCenter)-dissolveHeight:vBeastLocal.y-dissolveHeight; if(dissolveDistance < (grain-.5)*.22) discard;').replace('#include <opaque_fragment>','if(deathDirection<0.0){float edge=1.0-smoothstep(0.0,.5,abs(length(vBeastLocal-deathCenter)-dissolveHeight));int cell=int(mod(abs(floor(vBeastLocal.x*5.0)+floor(vBeastLocal.z*5.0)),6.0));outgoingLight=mix(outgoingLight,deathColors[cell]*3.5,edge);}\n#include <opaque_fragment>');
   };
-  return {o,paw,legs,tail,head,smoke,circles,meshes,deathFur,dissolve,kind,stompTop:hare?1.03:wolf?1.15:1.02,dead:false,deathAge:0};
+  return {o,paw,legs,tail,head,smoke,circles,meshes,deathFur,dissolve,deathDirection,deathColors,deathCenter,vitralBurst,kind,stompTop:hare?1.03:wolf?1.15:1.02,dead:false,deathAge:0};
 }
 
-export function killShadowBeast(beast){
+export function killShadowBeast(beast,palette=null){
   beast.dead=true;beast.deathAge=0;beast.deathY=beast.o.position.y;
+  beast.vitralDeath=!!palette?.length;beast.deathDirection.value=beast.vitralDeath?-1:1;
+  if(beast.vitralDeath){
+    const bounds=new THREE.Box3();for(const mesh of beast.meshes)bounds.union(new THREE.Box3().setFromObject(mesh));
+    beast.deathTop=bounds.max.y+.15;beast.deathBottom=bounds.min.y-.15;
+    bounds.getCenter(beast.deathCenter.value);
+    beast.dissolve.value=0;
+    beast.vitralBurst.start(beast.o.worldToLocal(beast.deathCenter.value.clone()),palette);
+    beast.deathColors.value.forEach((color,i)=>color.copy(palette[i%palette.length]));
+    beast.smoke.forEach((mote,i)=>{mote.sprite.material.map=circleTexture;mote.sprite.material.color.copy(palette[i%palette.length]);mote.sprite.material.blending=THREE.AdditiveBlending;mote.sprite.material.needsUpdate=true;});
+  }
   for(const mesh of beast.meshes){if(mesh.material===fur)mesh.material=beast.deathFur;else mesh.visible=false;}
   // Capture columns at the kill position: the dissolve travels strictly upward.
   beast.deathMotes=beast.smoke.map((mote,i)=>({x:Math.sin(i*2.4)*(.25+i%3*.13),z:Math.cos(i*2.4)*(.3+i%4*.15)}));
@@ -99,16 +115,25 @@ export function killShadowBeast(beast){
 export function resetShadowBeast(beast){
   beast.dead=false;beast.deathAge=0;beast.lastTop=null;beast.o.visible=true;beast.lane=0;
   beast.dissolve.value=-10;
+  beast.deathDirection.value=1;beast.vitralDeath=false;
+  beast.vitralBurst.reset();
+  for(const mote of beast.smoke){mote.sprite.material.map=smokeTexture;mote.sprite.material.color.set('#000000');mote.sprite.material.blending=THREE.NormalBlending;mote.sprite.material.opacity=0;mote.sprite.material.needsUpdate=true;}
   for(const mesh of beast.meshes){if(mesh.material===beast.deathFur)mesh.material=fur;mesh.visible=true;}
 }
 export function animateBeastDeath(beast,dt){
   beast.deathAge+=dt;const t=beast.deathAge;
-  beast.dissolve.value=beast.deathY-.2+t*3.1;
+  beast.dissolve.value=beast.vitralDeath?t*3.2:beast.deathY-.2+t*3.1;
+  if(beast.vitralDeath)beast.vitralBurst.update(t);
   beast.smoke.forEach((mote,i)=>{
     const age=Math.max(0,t-i*.018),column=beast.deathMotes[i];
     mote.sprite.position.set(column.x,.15+age*3.2,column.z);
     mote.sprite.scale.set(.45+age*.16,.8+age*.85,1);
     mote.sprite.material.opacity=Math.min(1,age*9)*Math.max(0,1-t/1.65)*.85;
+    if(beast.vitralDeath){
+      mote.sprite.position.set(column.x,beast.deathTop-beast.deathY-age*2.5,column.z);
+      mote.sprite.scale.setScalar((.12+(i%3)*.05)*Math.max(0,1-t/1.7));
+      mote.sprite.material.opacity=Math.min(1,age*12)*Math.max(0,1-t/1.7);
+    }
   });
   for(const dot of beast.circles)dot.sprite.visible=false;
   if(t>1.7)beast.o.visible=false;

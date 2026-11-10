@@ -1,0 +1,27 @@
+/* Shared paper treatment; structural HUD grid remains in pixel-ui.css. */
+.primary,.header-right button,#touch button,#toast,.modal-card,kbd{border:0;border-radius:0;clip-path:none;box-shadow:none;background:transparent url('./torn-paper.svg') center/100% 100% no-repeat;color:#322b25;text-shadow:0 1px #fff5cf55;filter:drop-shadow(2px 4px 1px #05090e85)}
+.primary{padding:21px 32px;transition:filter .18s,transform .18s}
+.primary:hover{background:transparent url('./torn-paper.svg') center/100% 100% no-repeat;filter:brightness(1.08) drop-shadow(2px 5px 1px #05090e85);transform:translateY(-1px)}
+.primary span{color:#5e492f}.primary::before,.primary::after{display:none}
+.header-right button{padding:16px 18px;min-width:42px;min-height:42px}
+#toast{padding:22px 36px;background-size:100% 100%;line-height:2;color:#3e3024}
+.modal-card{padding:48px 50px;background-size:100% 100%;border:0;outline:0;box-shadow:none;filter:none}
+.modal-card::before{content:'✧';background:none;color:#645237;top:12px}
+.modal h2{color:#342a24;text-shadow:1px 1px #fff0c88c}.modal p{color:#544633}.modal .eyebrow{color:#6b5033}
+.modal .primary{background:none;border-top:2px dotted #8f7954;border-bottom:2px dotted #8f7954;filter:none;min-width:260px;color:#342a24}
+.modal .primary:hover{background:#9a7e3420;filter:none}.modal .text-button{color:#655039;text-shadow:none}
+kbd{padding:6px;min-width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;color:#47392a}
+#touch button{font-family:monospace;font-size:25px;padding:10px;color:#493824}
+/* A thin torn backing replaces the rectangular counter plate. */
+.objective strong{position:relative;color:#403326;text-shadow:none;z-index:0}
+.objective strong::before{content:'';position:absolute;inset:-6px -13px;z-index:-1;background:url('./torn-paper.svg') center/100% 100% no-repeat;filter:drop-shadow(2px 2px 0 #070b1266);opacity:.94;pointer-events:none}
+.progress-track{border:0;background:#352e24;box-shadow:none;clip-path:polygon(0 15%,8% 0,17% 15%,29% 0,42% 12%,54% 0,67% 12%,79% 0,92% 12%,100% 0,99% 85%,91% 100%,77% 85%,65% 100%,52% 88%,38% 100%,25% 88%,12% 100%,0 85%)}
+.primary,.header-right button,#touch button,#toast,kbd,.objective strong,.modal h2,.modal p,.modal .eyebrow,.modal .primary,.modal .text-button{color:#803c26;text-shadow:0 0 3px #ff9b8759}
+.primary span{color:#a45132}.modal .primary:hover{color:#a85732}
+.brand,.light-stat>.eyebrow,.light-stat strong,.objective small,.eyebrow,.controls,.chapter,.intro-note,.legend,.text-button,#effect{color:#c18465;text-shadow:0 0 4px #ff9c8545}
+.panel p{color:#bd876c;text-shadow:0 0 4px #ff9c8545}h1{color:#d19a78;text-shadow:3px 3px #080e15,0 0 7px #ff9c854d}h1 span{color:#ce8059}
+.panel,.modal-card{text-align:center}
+.panel .primary,.modal .primary{margin-left:auto;margin-right:auto;justify-content:center;gap:16px;text-align:center}
+.panel .legend{justify-content:center}.panel .eyebrow,.panel p,.intro-note,.modal h2,.modal p,.modal .eyebrow{text-align:center}
+.modal-card .text-button{display:block;margin-left:auto;margin-right:auto;text-align:center}
+@media(max-width:760px){.primary{padding:20px 26px}.header-right button{padding:13px;min-height:38px}#toast{padding:18px 24px}.modal-card{padding:40px 25px}.modal .primary{min-width:220px}.objective strong::before{inset:-5px -7px}kbd{min-width:24px;height:25px}}
