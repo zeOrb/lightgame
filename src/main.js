@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {nextRunURL} from './run-navigation.js';
 import {FrameClock} from './frame-clock.js';
+import {fadeToNextRun,revealNextRun} from './run-transition.js';
 import { createVisualRandom } from './visual-random.js';
 import { END, FLOOR_COUNT, TOWER_TOP, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, floorAt, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, MOVEMENT_LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
 import { cameraPose, smoothCameraAnchor } from './camera.js';
@@ -18,7 +19,7 @@ import { shelfInnerRadius } from './game.js';
 import { VitralGlow } from './vitral-glow.js';
 import { ThreatType, ThreatInfo, createThreats, updateThreats, resetThreats, consumeThreatHit, hasShelfSupport,platformPassenger,carryPlatformPassenger } from './threats.js';
 import { ThreatVisuals } from './threat-visuals.js';
-import {RabbitState,RabbitMode} from './rabbit-state.js';
+import {RabbitState,RabbitMode,traceVitralPath} from './rabbit-state.js';
 import {FallingShadows} from './falling-shadows.js';
 import {createStairMaterials,createEnchantedStep} from './enchanted-stairs.js';
 import {Abilities,AbilityType,AbilityInfo,applySpiralPhase,phaseHitsTarget} from './abilities.js';
@@ -32,13 +33,15 @@ import { CatcherRay } from './catcher-ray.js';
 
 const $ = id => document.getElementById(id);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#303849');
+scene.background = new THREE.Color('#000000');
 scene.fog = new THREE.FogExp2('#303849', .015);
 let renderer;
 try { renderer = new THREE.WebGLRenderer({ canvas: $('world'), antialias: true, powerPreference: 'high-performance' }); }
 catch { $('intro').innerHTML = '<h1>Нужен WebGL</h1><p>Открой игру в браузере с аппаратным ускорением.</p>'; throw new Error('WebGL unavailable'); }
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
 renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor('#000000',1);
+renderer.clear();
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.25;
 const towerMist=new TowerMist(scene);
@@ -235,7 +238,7 @@ const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f8d8a1',si
 let state='intro',s=0,lane=0,height=0,velocity=0,light=RUN_UPGRADES.maxHP,collected=0,invert=0,slow=0,time=0,toastTime=0,currentVitralZone=null;
 let facing=-.5,facingTarget=-.5,moveSpeed=0;
 const keys=new Set();let jumpQueued=false;let audio=null,muted=true;
-const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent='Готовим забег…';location.assign(nextRunURL(location.href));});
+const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent='Готовим забег…';fadeToNextRun(()=>location.assign(nextRunURL(location.href)));});
 function tone(freq=660,length=.15){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(freq,audio.currentTime);gain.gain.setValueAtTime(.055,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+length);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+length);}
 function toast(text){$('toast').textContent=text;$('toast').style.opacity=1;toastTime=4;}
 function beginRabbitFall(outward,message,launched=true){
@@ -250,10 +253,11 @@ function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicke
 function pause(){if(state==='playing'){state='paused';keys.clear();showModal('ТИШИНА В БАШНЕ','Маленькая пауза','Свет подождёт тебя.','Продолжить');}else if(state==='paused'){state='playing';$('modal').hidden=true;}}
 function finish(won){state=won?'won':'lost';keys.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;tone(won?1046:164,won?1.8:.6);skillTree.open(won,collected);}
 $('start').onclick=start;$('pause').onclick=pause;$('restart').onclick=start;$('resume').onclick=()=>state==='paused'?pause():start();
+$('main-menu').onclick=()=>{reset();state='intro';$('modal').hidden=true;$('hud').hidden=true;$('intro').hidden=false;document.body.classList.remove('playing');toastTime=0;$('toast').style.opacity=0;};
 $('reset-progress').onclick=()=>{progression.reset();const url=new URL(location.href);url.searchParams.delete('sunny-run');url.searchParams.set('sunny-reset',String(Date.now()));location.assign(url.href);};
 $('sound').onclick=()=>{muted=!muted;$('sound').textContent='Звук: '+(muted?'выкл.':'вкл.');tone(784,.3);};
 const supported=new Set(['KeyA','KeyD','ArrowLeft','ArrowRight','Space','KeyE','Escape','ShiftLeft','ShiftRight']);
-addEventListener('keydown',e=>{if(state==='lost'||state==='won')return;if(!supported.has(e.code))return;e.preventDefault();if(e.code==='Escape'&&!e.repeat)pause();if(e.code==='Space'&&!e.repeat&&state==='playing')jumpQueued=true;if(e.code==='KeyE'&&!e.repeat&&state==='playing')flareQueued=true;if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&!e.repeat&&state==='playing'&&rabbitState.mode!==RabbitMode.FALLING)phaseQueued=true;keys.add(e.code);});
+addEventListener('keydown',e=>{if(state==='lost'||state==='won'||state==='loading')return;if(!supported.has(e.code))return;e.preventDefault();if(e.code==='Escape'&&!e.repeat)pause();if(e.code==='Space'&&!e.repeat&&state==='playing')jumpQueued=true;if(e.code==='KeyE'&&!e.repeat&&state==='playing')flareQueued=true;if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&!e.repeat&&state==='playing'&&rabbitState.mode!==RabbitMode.FALLING)phaseQueued=true;keys.add(e.code);});
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();if(state==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')pause();});
 for(const button of document.querySelectorAll('[data-key]')){button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);keys.add(button.dataset.key);if(button.dataset.key==='Space')jumpQueued=true;if(button.dataset.key==='KeyE')flareQueued=true;if(button.dataset.key==='ShiftLeft')phaseQueued=true;};button.onpointerup=button.onpointercancel=()=>keys.delete(button.dataset.key);}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
@@ -275,7 +279,7 @@ function update(dt){
   const forward=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
   const direction=invert>0?-1:1;
   if(forward)railFacing=Math.sign(forward*direction);
-  const beforeMove=route(s,lane);
+  const beforeMoveS=s,beforeMove=route(s,lane);
   if(phaseQueued){
     const dashDirection={x:railFacing,z:0};
     if(abilities.use(AbilityType.PHASING,{direction:dashDirection,distance:(SHELF_OUTER_RADIUS-shelfInnerRadius(Math.max(0,Math.round(s))))*AbilityInfo.phasing.distanceScale*RUN_UPGRADES.phaseDistance})){phaseTrail.reset();phaseTrail.update(0,new THREE.Vector3(beforeMove.x,beforeMove.y+.12+height,beforeMove.z),true,camera,rabbitMat.color.clone().multiplyScalar(hpBrightness(light/RUN_UPGRADES.maxHP*100)));tone(950,.15);}
@@ -328,13 +332,14 @@ function update(dt){
   }
   for(const b of books){const cycle=(time+b.phase)%5;const p=route(b.s);b.o.position.set(p.x,p.y+(cycle<3?6:Math.max(.25,6-(cycle-3)*8)),p.z);b.o.rotation.set(cycle*.3,cycle,.25);b.warning.visible=cycle>2.2;b.warning.material.opacity=.2+Math.sin(time*12)*.1;if(cycle>3.6&&Math.abs(s-b.s)<.65&&height<.8)inShadow=true;}
   const wasInVitral=!!currentVitralZone,lightPosition=route(s,lane);
+  if(phasingFrame&&RUN_UPGRADES.rayEntryHeal)traceVitralPath(rabbitState,beforeMoveS,s,lane,height,(point,h)=>windowLight.sampleLight(new THREE.Vector3(point.x,point.y,point.z),h));
   currentVitralZone=windowLight.sampleLight(new THREE.Vector3(lightPosition.x,lightPosition.y,lightPosition.z),height);
   if(currentVitralZone&&!wasInVitral){tone(1100,.3);toast('Свет витража · лечение ускоряется, пока ты в свете');}
-  rabbitState.setVitral(currentVitralZone);
+  rabbitState.setVitral(currentVitralZone,phasingFrame);
   if(phasingFrame||rescueInvul>0)inShadow=false;
   light=rabbitState.updateLight(light,dt,inShadow);
   shadowEffects.setDamage(inShadow);
-  $('effect').textContent=inShadow?'Тень забирает свет!':currentVitralZone?'Витраж · +'+Math.min(50,rabbitState.vitralTime*12.5).toFixed(0)+'/с':invert>0?'Управление отражено':slow>0?'Преломление замедляет':'В свете заката';
+  $('effect').textContent=inShadow?'Тень забирает свет!':currentVitralZone?(RUN_UPGRADES.rayEntryHeal?'Витраж · импульсное лечение':'Витраж · +'+(Math.min(50,rabbitState.vitralTime*12.5)*RUN_UPGRADES.regen).toFixed(0)+'/с'):invert>0?'Управление отражено':slow>0?'Преломление замедляет':'В свете заката';
   if(height<3.8){const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){tone(880,.35);toast(gate.plank===END?'Последняя арка · кристалл рядом':'Переход на этаж '+gate.nextFloor);}}
   if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;rescueInvul=1;light=RUN_UPGRADES.maxHP*.3;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+.5,afterMove.z),glassGlowPalette);toast('Последний огонёк · свет вернулся!');}
   if(light<=0)finish(false);else if(s>=END-.1)finish(true);
@@ -375,7 +380,7 @@ function emitSunParticle(particle,initial=false){
   animation.onfinish=()=>{if(sunWasRegenerating)emitSunParticle(particle);};
 }
 let cameraNeedsReset=true;
-function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);visualTime+=dt;
+function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);if(!skillTree.element.hidden)return;visualTime+=dt;
   if(state==='playing')update(dt);
   threatVisuals.update(time);
   floorGates.update(state==='paused'?0:dt);
@@ -393,7 +398,7 @@ function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);v
   $('light-sun').style.setProperty('--sun-sunset',Math.pow(1-sunHealth,.8).toFixed(3));
   $('light-sun').style.setProperty('--sun-glow-color',`hsl(${8+sunHealth*38} 85% ${24+sunHealth*43}%)`);
   $('light-sun').style.setProperty('--sun-glow',(3+sunHealth*14).toFixed(2)+'px');
-  const sunRegenerating=state==='playing'&&rabbitState.mode===RabbitMode.VITRAL;
+  const sunRegenerating=state==='playing'&&((rabbitState.mode===RabbitMode.VITRAL&&!RUN_UPGRADES.rayEntryHeal)||rabbitState.healPulse>0);
   if(sunRegenerating!==sunWasRegenerating){
     for(const particle of $('light-sun').querySelectorAll('.sun-particle')){
       const current=getComputedStyle(particle),transform=current.transform,opacity=current.opacity;
@@ -506,9 +511,8 @@ camera.position.set(3,TOWER_TOP+4,16);
 const runURL=new URL(location.href);
 if(runURL.searchParams.has('sunny-reset')){runURL.searchParams.delete('sunny-reset');history.replaceState(history.state,'',runURL.href);}
 if(runURL.searchParams.has('sunny-run')){
-  start();runURL.searchParams.delete('sunny-run');
+  start();update(0);state='loading';runURL.searchParams.delete('sunny-run');
   history.replaceState(history.state,'',runURL.href);
 }else try{if(sessionStorage.getItem('sunny.next-run')==='1'){sessionStorage.removeItem('sunny.next-run');start();}}catch{}
 requestAnimationFrame(frame);
-// The first rendered frame replaces the hidden boot document directly with gameplay.
-requestAnimationFrame(()=>document.documentElement.classList.remove('boot-run'));
+requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();frameClock.reset();state='playing';}}));

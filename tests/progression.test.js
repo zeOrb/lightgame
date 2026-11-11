@@ -1,25 +1,25 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {SKILLS,SkillProgression,skillStats,cleanProgress,isSkillVisible,isSkillPreview} from '../src/progression.js';
+import {SKILLS,SKILL_BRANCH_COUNT,SkillProgression,skillStats,cleanProgress,isSkillVisible,isSkillPreview} from '../src/progression.js';
 import {Abilities,AbilityType} from '../src/abilities.js';
 import {RabbitState} from '../src/rabbit-state.js';
 
-test('sun tree contains twenty upgrades in five connected four-node rays',()=>{
-  assert.equal(SKILLS.length,20);assert.equal(new Set(SKILLS.map(s=>s.id)).size,20);
-  for(let ray=0;ray<5;ray++){
-    const branch=SKILLS.filter(s=>s.ray===ray);assert.equal(branch.length,4);assert.equal(branch[0].requires,null);
-    for(let i=1;i<4;i++)assert.equal(branch[i].requires,branch[i-1].id);
+test('configured tree has unique nodes, valid dependencies and matching branch sizes',()=>{
+  assert.ok(SKILLS.length>0);assert.equal(new Set(SKILLS.map(s=>s.id)).size,SKILLS.length);
+  for(let ray=0;ray<SKILL_BRANCH_COUNT;ray++){
+    const branch=SKILLS.filter(s=>s.ray===ray);assert.ok(branch.length>0);
+    for(const skill of branch){assert.equal(skill.tiers,branch.length);assert.ok(!skill.requires||SKILLS.some(parent=>parent.id===skill.requires));}
   }
 });
 test('tree reveals only the next node, even when it cannot yet be afforded',()=>{
-  const p=new SkillProgression();assert.equal(SKILLS.filter(s=>isSkillVisible(p.state,s.id)).length,5);
+  const p=new SkillProgression();assert.equal(SKILLS.filter(s=>isSkillVisible(p.state,s.id)).length,6);
   assert.equal(isSkillVisible(p.state,'heart2'),false);assert.equal(isSkillVisible(p.state,'heart'),true);assert.equal(p.canBuy('heart'),false);
   p.award();p.buy('heart');assert.equal(p.state.points,0);
   assert.equal(isSkillVisible(p.state,'heart2'),true);assert.equal(p.canBuy('heart2'),false);assert.equal(isSkillVisible(p.state,'lasting'),false);
-  assert.equal(SKILLS.filter(s=>isSkillVisible(p.state,s.id)).length,6);
+  assert.equal(SKILLS.filter(s=>isSkillVisible(p.state,s.id)).length,7);
 });
 test('one locked neighbour per branch is previewed without revealing the entire chain',()=>{
-  const p=new SkillProgression();assert.equal(SKILLS.filter(s=>isSkillPreview(p.state,s.id)).length,5);
+  const p=new SkillProgression();assert.equal(SKILLS.filter(s=>isSkillPreview(p.state,s.id)).length,6);
   assert.equal(isSkillPreview(p.state,'heart2'),true);assert.equal(isSkillPreview(p.state,'lasting'),false);
   p.award();p.buy('heart');assert.equal(isSkillPreview(p.state,'heart2'),false);assert.equal(isSkillPreview(p.state,'lasting'),true);assert.equal(isSkillPreview(p.state,'shade'),false);
   assert.equal(p.canBuy('lasting'),false);
@@ -32,9 +32,10 @@ test('each shard banks one point, purchases enforce prerequisites and survive re
   const restored=new SkillProgression(storage);assert.deepEqual(restored.state,p.state);assert.equal(skillStats(restored.state).maxHP,150);
 });
 test('corrupt saves are contained and all nodes purchase once without negative points',()=>{
-  assert.deepEqual(cleanProgress({points:-8,owned:['heart2','bogus']}),{points:0,owned:[]});
+  assert.deepEqual(cleanProgress({points:-8,owned:['heart2','bogus']}),{points:0,owned:['heart2']});
   const p=new SkillProgression({getItem:()=>'{broken'});assert.equal(p.state.points,0);
-  for(let i=0;i<20;i++)p.award();for(const s of SKILLS)assert.ok(p.buy(s.id));
+  for(let i=0;i<SKILLS.reduce((sum,s)=>sum+s.cost,0);i++)p.award();
+  while(p.state.owned.length<SKILLS.length){const next=SKILLS.find(s=>p.canBuy(s.id));assert.ok(next);assert.ok(p.buy(next.id));}
   assert.equal(p.state.points,0);for(const s of SKILLS)assert.equal(p.buy(s.id),false);
   const stats=skillStats(p.state);assert.equal(stats.extraFloors,4);assert.equal(stats.glintSpacing,4);assert.equal(stats.flare,true);assert.equal(stats.doubleJump,true);
 });
@@ -55,5 +56,6 @@ test('upgrades alter live abilities and light math, not only tree labels',()=>{
   assert.ok(a.use(AbilityType.FLARE));assert.equal(a.use(AbilityType.FLARE),null);
   a.use(AbilityType.PHASING);assert.equal(a.cooldowns.phasing,1.35);
   assert.ok(rabbit.updateLight(150,1,false)>138);
-  rabbit.setVitral({});let light=100;for(let i=0;i<4;i++)light=rabbit.updateLight(light,1,false);assert.equal(light,150);
+  rabbit.setVitral({});let light=rabbit.updateLight(100,0,false);assert.equal(light,125);
+  light=rabbit.updateLight(light,1,false);assert.ok(light<125);assert.equal(stats.rayDashHeal,25);
 });

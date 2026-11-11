@@ -1,0 +1,4 @@
+html::after{content:'';position:fixed;inset:0;z-index:10000;background:#000;opacity:0;pointer-events:none;transition:opacity .75s ease-in-out}
+html.run-leaving::after,html.boot-run::after,html.run-entering::after{opacity:1;pointer-events:auto}
+html.boot-run{background:#000}
+html.boot-run::after{transition:none}

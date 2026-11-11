@@ -22,5 +22,5 @@ export function createSkillStarfield(){
   return layers.map(stars=>{
     const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="768" height="768" viewBox="0 0 384 384" shape-rendering="crispEdges"><g fill="white">${stars.join('')}</g></svg>`;
     return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-  }).join(',');
+  });
 }

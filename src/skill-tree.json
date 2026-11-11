@@ -1,0 +1,361 @@
+{
+  "baseStats": {
+    "maxHP": 100,
+    "drainScale": 1,
+    "damageScale": 1,
+    "speed": 1,
+    "jump": 1,
+    "doubleJump": false,
+    "potionScale": 1,
+    "phaseCooldown": 1,
+    "phaseDistance": 1,
+    "phaseHeal": 0,
+    "resonance": false,
+    "shardHeal": 22,
+    "magnet": 0.65,
+    "regen": 1,
+    "rayEntryHeal": 0,
+    "rayDashHeal": 0,
+    "flare": false,
+    "extraFloors": 0,
+    "glintSpacing": 5,
+    "lastLight": false
+  },
+  "branches": [
+    {
+      "id": "life",
+      "name": "Жизнь",
+      "nodes": [
+        {
+          "id": "heart",
+          "name": "Тёплое сердце",
+          "description": "Максимальный свет +25 HP.",
+          "cost": 1,
+          "requires": null,
+          "icon": 0,
+          "effects": {
+            "maxHP": {
+              "add": 25
+            }
+          }
+        },
+        {
+          "id": "heart2",
+          "name": "Ядро солнца",
+          "description": "Ещё +25 максимального HP.",
+          "cost": 1,
+          "requires": "heart",
+          "icon": 1,
+          "effects": {
+            "maxHP": {
+              "add": 25
+            }
+          }
+        },
+        {
+          "id": "lasting",
+          "name": "Долгий закат",
+          "description": "Пассивный расход света меньше на 18%.",
+          "cost": 1,
+          "requires": "heart2",
+          "icon": 2,
+          "effects": {
+            "drainScale": {
+              "multiply": 0.82
+            }
+          }
+        },
+        {
+          "id": "shade",
+          "name": "Янтарная кожа",
+          "description": "Тени и удары снимают на 25% меньше света.",
+          "cost": 1,
+          "requires": "lasting",
+          "icon": 3,
+          "effects": {
+            "damageScale": {
+              "multiply": 0.75
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "movement",
+      "name": "Движение",
+      "nodes": [
+        {
+          "id": "speed",
+          "name": "Быстрые лапки",
+          "description": "Скорость движения по спирали +15%.",
+          "cost": 1,
+          "requires": null,
+          "icon": 1,
+          "effects": {
+            "speed": {
+              "multiply": 1.15
+            }
+          }
+        },
+        {
+          "id": "jump",
+          "name": "Высокий прыжок",
+          "description": "Начальная сила прыжка +15%.",
+          "cost": 1,
+          "requires": "speed",
+          "icon": 2,
+          "effects": {
+            "jump": {
+              "multiply": 1.15
+            }
+          }
+        },
+        {
+          "id": "double",
+          "name": "Двойной прыжок",
+          "description": "Пробел в воздухе: один дополнительный прыжок.",
+          "cost": 1,
+          "requires": "jump",
+          "icon": 3,
+          "effects": {
+            "doubleJump": {
+              "set": true
+            }
+          }
+        },
+        {
+          "id": "clarity",
+          "name": "Ясный луч",
+          "description": "Замедление и инверсия от склянок длятся вдвое меньше.",
+          "cost": 1,
+          "requires": "double",
+          "icon": 4,
+          "effects": {
+            "potionScale": {
+              "multiply": 0.5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "phase",
+      "name": "Phasing",
+      "nodes": [
+        {
+          "id": "phaseCool",
+          "name": "Короткая тень",
+          "description": "Перезарядка Phasing на 25% быстрее.",
+          "cost": 1,
+          "requires": null,
+          "icon": 2,
+          "effects": {
+            "phaseCooldown": {
+              "multiply": 0.75
+            }
+          }
+        },
+        {
+          "id": "phaseReach",
+          "name": "Длинный луч",
+          "description": "Дальность Phasing +20%.",
+          "cost": 1,
+          "requires": "phaseCool",
+          "icon": 3,
+          "effects": {
+            "phaseDistance": {
+              "multiply": 1.2
+            }
+          }
+        },
+        {
+          "id": "phaseHeal",
+          "name": "Свет из тени",
+          "description": "Убийство дэшем восстанавливает 10 HP.",
+          "cost": 1,
+          "requires": "phaseReach",
+          "icon": 4,
+          "effects": {
+            "phaseHeal": {
+              "add": 10
+            }
+          }
+        },
+        {
+          "id": "resonance",
+          "name": "Резонанс",
+          "description": "Каждое убийство дэшем сокращает его перезарядку на 0,5 с.",
+          "cost": 1,
+          "requires": "phaseHeal",
+          "icon": 0,
+          "effects": {
+            "resonance": {
+              "set": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "light",
+      "name": "Свет",
+      "nodes": [
+        {
+          "id": "shard",
+          "name": "Полные осколки",
+          "description": "Осколок лечит на 12 HP больше и по-прежнему даёт 1 очко.",
+          "cost": 1,
+          "requires": null,
+          "icon": 3,
+          "effects": {
+            "shardHeal": {
+              "add": 12
+            }
+          }
+        },
+        {
+          "id": "magnet",
+          "name": "Притяжение",
+          "description": "Дальность подбора осколков увеличена.",
+          "cost": 1,
+          "requires": "shard",
+          "icon": 4,
+          "effects": {
+            "magnet": {
+              "set": 1.05
+            }
+          }
+        },
+        {
+          "id": "regen",
+          "name": "Цветение света",
+          "description": "Лечение витража ускоряется на 30%.",
+          "cost": 1,
+          "requires": "magnet",
+          "icon": 0,
+          "effects": {
+            "regen": {
+              "multiply": 1.3
+            }
+          }
+        },
+        {
+          "id": "flare",
+          "name": "Солнечная вспышка",
+          "description": "Новая способность E: уничтожает тени в радиусе 3 м. Кулдаун 8 с.",
+          "cost": 1,
+          "requires": "regen",
+          "icon": 1,
+          "effects": {
+            "flare": {
+              "set": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tower",
+      "name": "Башня",
+      "nodes": [
+        {
+          "id": "floors",
+          "name": "Выше башня",
+          "description": "Следующий забег: ещё 2 этажа с полками и угрозами.",
+          "cost": 1,
+          "requires": null,
+          "icon": 4,
+          "effects": {
+            "extraFloors": {
+              "add": 2
+            }
+          }
+        },
+        {
+          "id": "floors2",
+          "name": "Бесконечная спираль",
+          "description": "Ещё 2 этажа: всего 16.",
+          "cost": 1,
+          "requires": "floors",
+          "icon": 0,
+          "effects": {
+            "extraFloors": {
+              "add": 2
+            }
+          }
+        },
+        {
+          "id": "abundance",
+          "name": "Созвездие бликов",
+          "description": "Осколки встречаются чаще: каждые 4 секции вместо 5.",
+          "cost": 1,
+          "requires": "floors2",
+          "icon": 1,
+          "effects": {
+            "glintSpacing": {
+              "set": 4
+            }
+          }
+        },
+        {
+          "id": "lastLight",
+          "name": "Последний огонёк",
+          "description": "Один раз за забег при исчерпании HP возвращает 30% света. Не спасает от падения.",
+          "cost": 1,
+          "requires": "abundance",
+          "icon": 2,
+          "effects": {
+            "lastLight": {
+              "set": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rays",
+      "name": "Солнечные лучи",
+      "nodes": [
+        {
+          "id": "rayRegen",
+          "name": "Тёплые лучи",
+          "description": "Лечение в лучах витража ускоряется на 50%.",
+          "cost": 1,
+          "requires": null,
+          "icon": 0,
+          "effects": {
+            "regen": {
+              "multiply": 1.5
+            }
+          }
+        },
+        {
+          "id": "rayEntry",
+          "name": "Глоток солнца",
+          "description": "Вместо постоянного лечения каждый луч даёт 25 HP только при первом входе за забег. Пассивная потеря света сохраняется.",
+          "cost": 1,
+          "requires": "rayRegen",
+          "icon": 1,
+          "effects": {
+            "rayEntryHeal": {
+              "set": 25
+            }
+          }
+        },
+        {
+          "id": "rayDash",
+          "name": "Солнечный прорыв",
+          "description": "Каждый луч даёт 25 HP при первом входе и ещё 25 HP за первый дэш через него за забег. Повторные проходы не лечат. Постоянного лечения нет.",
+          "cost": 1,
+          "requires": "rayEntry",
+          "icon": 2,
+          "effects": {
+            "rayDashHeal": {
+              "set": 25
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
