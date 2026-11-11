@@ -18,7 +18,8 @@ import { RabbitAnimation } from './rabbit-animation.js';
 import { hpBrightness } from './game.js';
 import { shelfInnerRadius } from './game.js';
 import { VitralGlow } from './vitral-glow.js';
-import { ThreatType, createThreats, updateThreats, unsupportedThreat } from './threats.js';
+import { ThreatType, ThreatInfo, createThreats, updateThreats, resetThreats, consumeThreatHit, unsupportedThreat } from './threats.js';
+import { ThreatVisuals } from './threat-visuals.js';
 import { CatcherRay } from './catcher-ray.js';
 
 const $ = id => document.getElementById(id);
@@ -101,7 +102,7 @@ for(let i=0;i<7;i++) {
 }
 const lipGeo = new THREE.CylinderGeometry(SHELF_OUTER_RADIUS+.05,SHELF_OUTER_RADIUS+.05,.1,12,1,true,Math.PI/2-SHELF_HALF_ANGLE,SHELF_HALF_ANGLE*2);
 const hazards=[], glints=[], bottles=[], beasts=[], books=[];
-const reservedThreatShelves=new Set(Array.from({length:END},(_,s)=>s).filter(s=>(s>4&&s%5===0)||(s>6&&s%11===0)||(s>12&&s%28===16)||(s>20&&s%29===23)));
+const reservedThreatShelves=new Set(Array.from({length:END},(_,s)=>s).filter(s=>(s>4&&s%5===0)||(s>6&&s%11===0)||(s>12&&s%28===16)||(s>20&&s%29===23)||(s>10&&s%27===13)));
 const threats=createThreats(gaps,END,reservedThreatShelves);
 const movingPlatforms=threats.filter(threat=>threat.type===ThreatType.MOVING_PLATFORM);
 const walkableFloors=[];
@@ -161,7 +162,8 @@ for(const material of bookMats){
   instances.instanceMatrix.needsUpdate=true;scene.add(instances);
 }
 scene.updateMatrixWorld(true);
-const shadowShelves=new Set([...hazards,...beasts,...books,...movingPlatforms].map(object=>object.s));
+const shadowShelves=new Set([...hazards,...beasts,...books,...threats].map(object=>object.s));
+const threatVisuals=new ThreatVisuals(scene,threats);
 const windowLight=createWindowLight(windowPanes,walkableFloors,shadowShelves);scene.add(windowLight.group);
 windowLight.setDepthSource(towerMist.depthTarget.depthTexture,towerMist.material.uniforms.resolution.value,towerMist.material.uniforms.cameraRange.value);
 const groundSmoke=new GroundShadowSmoke(scene,hazards.map(h=>({...route(h.s,h.lane),gap:false})));
@@ -224,7 +226,7 @@ let facing=-.5,facingTarget=-.5,moveSpeed=0;
 const keys=new Set();let jumpQueued=false;let audio=null,muted=true;
 function tone(freq=660,length=.15){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(freq,audio.currentTime);gain.gain.setValueAtTime(.055,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+length);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+length);}
 function toast(text){$('toast').textContent=text;$('toast').style.opacity=1;toastTime=4;}
-function reset(){updateThreats(threats,0);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=100;collected=0;currentVitralZone=null;invert=0;slow=0;lastSafe=0;time=0;keys.clear();jumpQueued=false;for(const g of glints){g.taken=false;g.o.visible=true;g.o.scale.setScalar(1);}for(const b of bottles)b.cooldown=0;for(const b of beasts)resetShadowBeast(b);crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function reset(){resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=100;collected=0;currentVitralZone=null;invert=0;slow=0;lastSafe=0;time=0;keys.clear();jumpQueued=false;for(const g of glints){g.taken=false;g.o.visible=true;g.o.scale.setScalar(1);}for(const b of bottles)b.cooldown=0;for(const b of beasts)resetShadowBeast(b);crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
 function start(){reset();state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toast('D / → — к кристаллу. Перепрыгивай разрывы, собирай блики.');tone(523,.4);}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').innerHTML=button+' <span>↗</span>';$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';keys.clear();showModal('ТИШИНА В БАШНЕ','Маленькая пауза','Свет подождёт тебя.','Продолжить');}else if(state==='paused'){state='playing';$('modal').hidden=true;}}
@@ -252,6 +254,9 @@ function update(dt){
   if(dx*dx+dz*dz>1e-10)facingTarget=Math.atan2(dx,dz);
   if(jumpQueued&&height<=.001){velocity=JUMP_SPEED;tone(470,.1);}jumpQueued=false;
   const jump=advanceJump(height,velocity,dt);height=jump.height;velocity=jump.velocity;
+  for(const threat of threats)if(ThreatInfo[threat.type]&&!threat.introduced&&Math.abs(s-threat.s)<2.3){threat.introduced=true;toast(ThreatInfo[threat.type].hint);tone(320,.16);}
+  const threatHit=consumeThreatHit(threats,{s,lane,height},time);
+  if(threatHit){light=Math.max(0,light-ThreatInfo[threatHit.type].damage);shadowEffects.hit();tone(170,.15);toast(ThreatInfo[threatHit.type].name+' · −'+ThreatInfo[threatHit.type].damage+' света');}
   let inShadow=false;
   for(const h of hazards)if(Math.abs(s-h.s)<.65&&Math.abs(lane-h.lane)<.85&&height<.8)inShadow=true;
   const missingSupport=unsupportedThreat(threats,s,lane);
@@ -321,6 +326,7 @@ function emitSunParticle(particle,initial=false){
 let cameraNeedsReset=true;
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.04);previous=now;visualTime+=dt;
   if(state==='playing')update(dt);
+  threatVisuals.update(time);
   const sunMoving=state==='playing'&&Math.abs(light-previousSunLight)>dt*.01;
   previousSunLight=light;
   sunMotion=THREE.MathUtils.damp(sunMotion,sunMoving?1:0,sunMoving?7:9,dt);
