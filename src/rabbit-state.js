@@ -1,13 +1,13 @@
 import {clamp,lightStep} from './game.js';
 export const RabbitMode=Object.freeze({NORMAL:'normal',VITRAL:'vitral',FALLING:'falling'});
 export class RabbitState {
-  constructor(){this.reset();}
+  constructor(upgrades={}){this.upgrades=upgrades;this.reset();}
   reset(){this.mode=RabbitMode.NORMAL;this.zone=null;this.fall=null;this.vitralTime=0;}
   setVitral(zone){if(this.mode===RabbitMode.FALLING)return;if(!zone||this.mode!==RabbitMode.VITRAL)this.vitralTime=0;this.zone=zone;this.mode=zone?RabbitMode.VITRAL:RabbitMode.NORMAL;}
   updateLight(light,dt,shadow){
     if(this.mode===RabbitMode.FALLING)return light;
     const vitral=this.mode===RabbitMode.VITRAL;
-    const next=lightStep(light,dt,{shadow,vitral,vitralTime:this.vitralTime});
+    const next=lightStep(light,dt,{...this.upgrades,shadow,vitral,vitralTime:this.vitralTime});
     if(vitral)this.vitralTime+=dt;
     return next;
   }

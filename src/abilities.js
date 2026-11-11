@@ -1,15 +1,17 @@
 import {JUMP_SPEED,ROUTE_ANGLE} from './game.js';
-export const AbilityType=Object.freeze({JUMP:'jump',PHASING:'phasing'});
-export const AbilityInfo=Object.freeze({jump:{key:'Space',cooldown:.12},phasing:{key:'Shift',cooldown:1.8,duration:.18,distanceScale:.75}});
+export const AbilityType=Object.freeze({JUMP:'jump',PHASING:'phasing',FLARE:'flare'});
+export const AbilityInfo=Object.freeze({jump:{key:'Space',cooldown:.12},phasing:{key:'Shift',cooldown:1.8,duration:.18,distanceScale:.75},flare:{key:'E',cooldown:8}});
 export class Abilities {
-  constructor(){this.reset();}
-  reset(){this.cooldowns={jump:0,phasing:0};this.phase=null;}
+  constructor(upgrades={}){this.upgrades=upgrades;this.reset();}
+  reset(){this.cooldowns={jump:0,phasing:0,flare:0};this.phase=null;this.airJumpUsed=false;}
+  land(){this.airJumpUsed=false;}
   use(type,{falling=false,height=0,direction={x:0,z:1},distance=5.4}={}){
     if(falling||!AbilityInfo[type]||this.cooldowns[type]>0)return null;
-    if(type===AbilityType.JUMP){if(height>.001)return null;this.cooldowns.jump=AbilityInfo.jump.cooldown;return {velocity:JUMP_SPEED};}
+    if(type===AbilityType.JUMP){if(height>.001){if(!this.upgrades.doubleJump||this.airJumpUsed)return null;this.airJumpUsed=true;}this.cooldowns.jump=AbilityInfo.jump.cooldown;return {velocity:JUMP_SPEED*(this.upgrades.jump??1)};}
+    if(type===AbilityType.FLARE){if(!this.upgrades.flare)return null;this.cooldowns.flare=AbilityInfo.flare.cooldown;return {flare:true};}
     if(this.phase)return null;
     const length=Math.hypot(direction.x,direction.z);if(length<.001)return null;
-    this.phase={age:0,x:direction.x/length,z:direction.z/length,distance};this.cooldowns.phasing=AbilityInfo.phasing.cooldown;return this.phase;
+    this.phase={age:0,x:direction.x/length,z:direction.z/length,distance};this.cooldowns.phasing=AbilityInfo.phasing.cooldown*(this.upgrades.phaseCooldown??1);return this.phase;
   }
   advance(dt){
     for(const key of Object.keys(this.cooldowns))this.cooldowns[key]=Math.max(0,this.cooldowns[key]-dt);
@@ -25,6 +27,10 @@ export function applyPhaseDelta(s,lane,delta){
   const x=Math.cos(angle)*radius+delta.x,z=Math.sin(angle)*radius+delta.z;
   const turn=Math.atan2(Math.cos(angle)*z-Math.sin(angle)*x,Math.cos(angle)*x+Math.sin(angle)*z);
   return {s:s+turn/ROUTE_ANGLE,lane:Math.hypot(x,z)-12};
+}
+export function applySpiralPhase(s,lane,distance){
+  const unitsPerSection=Math.hypot((12+lane)*ROUTE_ANGLE,.5);
+  return {s:s+distance/unitsPerSection,lane};
 }
 // Sweep the entire dash segment, so a fast frame cannot skip an enemy.
 export function phaseHitsTarget(from,to,target){

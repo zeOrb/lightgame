@@ -1,12 +1,14 @@
 import { visualSample } from './visual-random.js';
-export const END = 167;
-export const FLOOR_COUNT = 12;
+import {RUN_UPGRADES} from './progression.js';
+export const FLOOR_COUNT = 12+RUN_UPGRADES.extraFloors;
+export const END = FLOOR_COUNT*14-1;
+export const TOWER_TOP=100+RUN_UPGRADES.extraFloors*7;
 export function floorAt(s) { return FLOOR_COUNT - Math.min(FLOOR_COUNT-1, Math.floor(clamp(s,0,END)/14)); }
 export function depthLight(s) { return Math.pow(1-clamp(s/END,0,1),1.25); }
 export function canStomp(previousFoot, foot, previousTop, top, velocity, overlaps) {
   return overlaps && velocity < 0 && previousFoot >= previousTop-.12 && foot <= top+.12;
 }
-export const gaps = [19, 38, 59, 81, 103, 126, 147];
+export const gaps = [19, 38, 59, 81, 103, 126, 147,...Array.from({length:Math.ceil((END-167)/22)},(_,i)=>170+i*22).filter(s=>s<END-3)];
 export const ROUTE_ANGLE = Math.PI / 14;
 export const SHELF_HALF_ANGLE = .133;
 export const SHELF_INNER_RADIUS = 9.3;
@@ -52,13 +54,13 @@ export function vitralRecovery(time){
   const t=Math.max(0,time),ramp=Math.min(t,VITRAL_REGEN_DURATION);
   return 100*(ramp/VITRAL_REGEN_DURATION)**2+Math.max(0,t-VITRAL_REGEN_DURATION)*50;
 }
-export function lightStep(light, dt, { shadow = false, vitral = false, vitralTime=0 } = {}) {
-  const loss=shadow?48:PASSIVE_LIGHT_DRAIN;
-  const healing=vitral?PASSIVE_LIGHT_DRAIN*dt+vitralRecovery(vitralTime+dt)-vitralRecovery(vitralTime):0;
-  return clamp(light+healing-loss*dt,0,100);
+export function lightStep(light, dt, { shadow = false, vitral = false, vitralTime=0,maxHP=100,drainScale=1,damageScale=1,regen=1 } = {}) {
+  const loss=shadow?48*damageScale:PASSIVE_LIGHT_DRAIN*drainScale;
+  const healing=vitral?PASSIVE_LIGHT_DRAIN*drainScale*dt+(vitralRecovery(vitralTime+dt)-vitralRecovery(vitralTime))*maxHP/100*regen:0;
+  return clamp(light+healing-loss*dt,0,maxHP);
 }
 export function route(s, lane = 0) {
   const theta = s * ROUTE_ANGLE;
   const radius = 12 + lane;
-  return { x: Math.cos(theta) * radius, y: 100 - s * .5, z: Math.sin(theta) * radius, theta };
+  return { x: Math.cos(theta) * radius, y: TOWER_TOP - s * .5, z: Math.sin(theta) * radius, theta };
 }

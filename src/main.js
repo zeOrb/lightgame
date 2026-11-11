@@ -1,10 +1,8 @@
 import * as THREE from 'three';
-import './style.css';
-import './gothic-ui.css';
-import './pixel-ui.css';
-import './paper-ui.css';
+import {nextRunURL} from './run-navigation.js';
+import {FrameClock} from './frame-clock.js';
 import { createVisualRandom } from './visual-random.js';
-import { END, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, floorAt, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, MOVEMENT_LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
+import { END, FLOOR_COUNT, TOWER_TOP, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, floorAt, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, MOVEMENT_LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
 import { cameraPose, smoothCameraAnchor } from './camera.js';
 import { PickupEffects } from './pickup-effects.js';
 import { ShadowEffects } from './shadow-effects.js';
@@ -23,9 +21,13 @@ import { ThreatVisuals } from './threat-visuals.js';
 import {RabbitState,RabbitMode} from './rabbit-state.js';
 import {FallingShadows} from './falling-shadows.js';
 import {createStairMaterials,createEnchantedStep} from './enchanted-stairs.js';
-import {Abilities,AbilityType,AbilityInfo,applyPhaseDelta,phaseHitsTarget} from './abilities.js';
+import {Abilities,AbilityType,AbilityInfo,applySpiralPhase,phaseHitsTarget} from './abilities.js';
 import {PhaseTrail} from './phase-trail.js';
 import {createAncientLibrary} from './ancient-library.js';
+import {FloorGates} from './floor-gates.js';
+import {RUN_UPGRADES,progression} from './progression.js';
+import {SkillTree} from './skill-tree.js';
+import {BeastVitralBurst} from './beast-vitral-burst.js';
 import { CatcherRay } from './catcher-ray.js';
 
 const $ = id => document.getElementById(id);
@@ -42,9 +44,9 @@ renderer.toneMappingExposure = 1.25;
 const towerMist=new TowerMist(scene);
 const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, .1, 240);
 const ambient=new THREE.HemisphereLight('#a1bdcc', '#5a3849', 2.1);scene.add(ambient);
-const sun = new THREE.DirectionalLight('#ffcf87', 4.1);sun.target.position.set(0,100,0);sun.position.copy(sun.target.position).addScaledVector(SUN_RAY_DIRECTION,-40);
+const sun = new THREE.DirectionalLight('#ffcf87', 4.1);sun.target.position.set(0,TOWER_TOP,0);sun.position.copy(sun.target.position).addScaledVector(SUN_RAY_DIRECTION,-40);
 scene.add(sun,sun.target);
-const warm = new THREE.PointLight('#ffa769', 140, 65, 1.2); warm.position.set(0, 95, -12); scene.add(warm);
+const warm = new THREE.PointLight('#ffa769', 140, 65, 1.2); warm.position.set(0, TOWER_TOP-5, -12); scene.add(warm);
 const mat = (color, extra = {}) => applyTowerDepth(new THREE.MeshStandardMaterial({ color, roughness: .75, ...extra }));
 const wood = mat('#66534b'), edgeMat = mat('#b39469', { metalness: .5, roughness: .4 });
 const stone = mat('#454c5a'), dark = mat('#20212e');
@@ -61,13 +63,13 @@ function ring(radius,y,thickness,color) {
   const o = mesh(new THREE.TorusGeometry(radius,thickness,8,96),color,0,y,0); o.rotation.x = Math.PI/2; return o;
 }
 // The tower is open at its heart: all architecture is genuine 3D geometry.
-mesh(new THREE.CylinderGeometry(19,19,132,64,1,true), mat('#38404d',{side:THREE.BackSide}),0,65,0);
+mesh(new THREE.CylinderGeometry(19,19,132+(TOWER_TOP-100),64,1,true), mat('#38404d',{side:THREE.BackSide}),0,65+(TOWER_TOP-100)/2,0);
 for(let i=0;i<16;i++) {
   const a=i*Math.PI/8;
-  mesh(new THREE.CylinderGeometry(.26,.38,130,7),wood,18.5*Math.cos(a),65,18.5*Math.sin(a));
+  mesh(new THREE.CylinderGeometry(.26,.38,130+(TOWER_TOP-100),7),wood,18.5*Math.cos(a),65+(TOWER_TOP-100)/2,18.5*Math.sin(a));
 }
-for(let level=0;level<12;level++) {
-  const y=100-level*7;
+for(let level=0;level<FLOOR_COUNT;level++) {
+  const y=TOWER_TOP-level*7;
   ring(18.6,y,.14,edgeMat);
 }
 createAncientLibrary(scene);
@@ -79,7 +81,7 @@ const roseMat=new THREE.MeshBasicMaterial({map:glassTextures.rose,transparent:tr
 for(const glass of glassMats)glass.userData.glowPalette=glassGlowPalette;
 const windowPanes=[];
 for(let i=0;i<8;i++) {
-  const a=i*Math.PI/4+.18; const group=new THREE.Group(); group.position.set(Math.cos(a)*18.2,106,Math.sin(a)*18.2);group.rotation.y=-a+Math.PI/2;scene.add(group);
+  const a=i*Math.PI/4+.18; const group=new THREE.Group(); group.position.set(Math.cos(a)*18.2,TOWER_TOP+6,Math.sin(a)*18.2);group.rotation.y=-a+Math.PI/2;scene.add(group);
   box(3.7,11,.22,edgeMat,0,0,0,group);
   for(let x=0;x<3;x++) for(let y=0;y<6;y++) {
     windowPanes.push(box(1.02,1.63,.28,glassMats[(x+y+i)%4],(x-1)*1.14,(y-2.5)*1.76,-.05,group));
@@ -88,12 +90,12 @@ for(let i=0;i<8;i++) {
   crown.rotation.z=0;
   mesh(new THREE.CircleGeometry(1.65,48),roseMat,0,6.1,-.18,group);
 }
-for(let y=10;y<95;y+=16)for(let i=0;i<8;i++){
+for(let y=10;y<TOWER_TOP-5;y+=16)for(let i=0;i<8;i++){
   const a=i*Math.PI/4+.18,window=new THREE.Group();window.position.set(Math.cos(a)*18.1,y,Math.sin(a)*18.1);window.rotation.y=-a+Math.PI/2;scene.add(window);
   box(2.3,5.8,.2,edgeMat,0,0,0,window);
   for(let j=0;j<4;j++)windowPanes.push(box(1.95,1.25,.24,glassMats[4+(i+j)%4],0,(j-1.5)*1.38,-.1,window));
 }
-const catcher=new THREE.Group();catcher.position.set(12,107,0);scene.add(catcher);
+const catcher=new THREE.Group();catcher.position.set(12,TOWER_TOP+7,0);scene.add(catcher);
 const catcherRing=mesh(new THREE.TorusGeometry(1.65,.055,8,64),edgeMat,0,0,0,catcher);
 const catcherGems=[];
 for(let i=0;i<7;i++) {
@@ -103,8 +105,9 @@ for(let i=0;i<7;i++) {
 }
 const lipGeo = new THREE.CylinderGeometry(SHELF_OUTER_RADIUS+.05,SHELF_OUTER_RADIUS+.05,.1,12,1,true,Math.PI/2-SHELF_HALF_ANGLE,SHELF_HALF_ANGLE*2);
 const hazards=[], glints=[], bottles=[], beasts=[], books=[];
-const reservedThreatShelves=new Set(Array.from({length:END},(_,s)=>s).filter(s=>(s>4&&s%5===0)||(s>6&&s%11===0)||(s>12&&s%28===16)||(s>20&&s%29===23)||(s>10&&s%27===13)));
+const reservedThreatShelves=new Set(Array.from({length:END},(_,s)=>s).filter(s=>(s>4&&s%RUN_UPGRADES.glintSpacing===0)||(s>6&&s%11===0)||(s>12&&s%28===16)||(s>20&&s%29===23)||(s>10&&s%27===13)));
 const threats=createThreats(gaps,END,reservedThreatShelves);
+for(const threat of threats)if(threat.type===ThreatType.THORNS)threat.lane=0;
 const movingPlatforms=threats.filter(threat=>threat.type===ThreatType.MOVING_PLATFORM);
 const walkableFloors=[];
 const shadowMat=softShadowMaterial();
@@ -126,7 +129,7 @@ function shelfSegment(s) {
 }
 for(let s=0;s<=END+1;s++) {
   if(!gaps.includes(s)) shelfSegment(s);
-  if(s>4 && s%5===0 && !isGap(s)) {
+  if(s>4 && s%RUN_UPGRADES.glintSpacing===0 && !isGap(s)) {
     const p=route(s,(s%3-1)*.7); const o=mesh(new THREE.OctahedronGeometry(.22),glintMat,p.x,p.y+.65,p.z);glints.push({s,lane:(s%3-1)*.7,o,taken:false});
   }
   if(s>6 && s%11===0 && !isGap(s)) {
@@ -135,7 +138,7 @@ for(let s=0;s<=END+1;s++) {
     hazards.push({s,lane,o});
   }
   if(s>10 && s%27===13) {
-    const lane=s%2 ? 1 : -1,p=route(s,lane);const o=new THREE.Group();o.position.set(p.x,p.y+.55,p.z);scene.add(o);
+    const lane=0,p=route(s,lane);const o=new THREE.Group();o.position.set(p.x,p.y+.55,p.z);scene.add(o);
     const bm=mat('#a39ae4',{transparent:true,opacity:.7,metalness:.2,roughness:.15,emissive:'#55477c',emissiveIntensity:.5});
     mesh(new THREE.SphereGeometry(.45,12,10),bm,0,0,0,o);mesh(new THREE.CylinderGeometry(.13,.18,.48,8),bm,0,.48,0,o);mesh(new THREE.CylinderGeometry(.16,.16,.13,8),edgeMat,0,.75,0,o);
     bottles.push({s,lane,o,cooldown:0});
@@ -167,6 +170,7 @@ const groundSmoke=new GroundShadowSmoke(scene,hazards.map(h=>({...route(h.s,h.la
 const glowCanvas=document.createElement('canvas');glowCanvas.width=128;glowCanvas.height=128;
 const ctx=glowCanvas.getContext('2d');const gradient=ctx.createRadialGradient(64,64,0,64,64,64);gradient.addColorStop(0,'rgba(255,244,195,1)');gradient.addColorStop(.15,'rgba(255,219,129,.7)');gradient.addColorStop(.5,'rgba(255,193,82,.13)');gradient.addColorStop(1,'rgba(255,193,82,0)');ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
 const glowTexture=new THREE.CanvasTexture(glowCanvas);
+const floorGates=new FloorGates(scene,glowTexture,glassGlowPalette);
 const pickupEffects=new PickupEffects(scene,glowTexture);
 const shadowEffects=new ShadowEffects(scene,glowTexture,$('shadow-vfx'),matchMedia('(prefers-reduced-motion: reduce)').matches);
 const rabbit=new THREE.Group();scene.add(rabbit);
@@ -208,10 +212,12 @@ for(const x of [-.13,.13]){const paw=mesh(new THREE.SphereGeometry(1,12,8),rabbi
 const rabbitTail=mesh(new THREE.SphereGeometry(.13,10,8),rabbitMat,0,.3,-.26,rabbitVisual);
 const rabbitAnimation=new RabbitAnimation(rabbitVisual,rabbitEars,rabbitPaws,rabbitTail);
 const vitralGlow=new VitralGlow(rabbitVisual,glowTexture);
-const abilities=new Abilities(),phaseTrail=new PhaseTrail(scene),phaseTrailColor=new THREE.Color();
+const abilities=new Abilities(RUN_UPGRADES),phaseTrail=new PhaseTrail(scene),phaseTrailColor=new THREE.Color();
+const flareBurst=new BeastVitralBurst(scene,glowTexture);
+let flareAge=2,flareQueued=false,flareFrame=false,rescueUsed=false,rescueInvul=0;
 const phaseGlowZone={palette:glassGlowPalette};
-let phaseQueued=false,phasingFrame=false,phaseGlowWasActive=false;
-const rabbitState=new RabbitState();
+let phaseQueued=false,phasingFrame=false,phaseGlowWasActive=false,railFacing=1;
+const rabbitState=new RabbitState(RUN_UPGRADES);
 const fallingShadows=new FallingShadows(scene,glowTexture);
 const fallCameraOffset=new THREE.Vector3();
 mesh(new THREE.CylinderGeometry(18.6,18.6,.5,64),stone,0,-.25,0);
@@ -222,13 +228,14 @@ const crystal=mesh(new THREE.OctahedronGeometry(1.15),crystalMat,0,1.7,0,crystal
 const crystalLight=new THREE.PointLight('#a2ffeb',20,35,1.3);crystalLight.position.copy(crystalGroup.position).add(new THREE.Vector3(0,3,0));scene.add(crystalLight);
 ring(4,14,.07,edgeMat);
 const dustCount=650,dustArray=new Float32Array(dustCount*3);
-for(let i=0;i<dustCount;i++){const a=dustRandom()*Math.PI*2,r=4+dustRandom()*13;dustArray[i*3]=Math.cos(a)*r;dustArray[i*3+1]=dustRandom()*122;dustArray[i*3+2]=Math.sin(a)*r;}
+for(let i=0;i<dustCount;i++){const a=dustRandom()*Math.PI*2,r=4+dustRandom()*13;dustArray[i*3]=Math.cos(a)*r;dustArray[i*3+1]=dustRandom()*(TOWER_TOP+22);dustArray[i*3+2]=Math.sin(a)*r;}
 const dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute('position',new THREE.BufferAttribute(dustArray,3));
 const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f8d8a1',size:.065,transparent:true,opacity:.65,depthWrite:false}));scene.add(dust);
 
-let state='intro',s=0,lane=0,height=0,velocity=0,light=100,collected=0,invert=0,slow=0,time=0,toastTime=0,currentVitralZone=null;
+let state='intro',s=0,lane=0,height=0,velocity=0,light=RUN_UPGRADES.maxHP,collected=0,invert=0,slow=0,time=0,toastTime=0,currentVitralZone=null;
 let facing=-.5,facingTarget=-.5,moveSpeed=0;
 const keys=new Set();let jumpQueued=false;let audio=null,muted=true;
+const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent='Готовим забег…';location.assign(nextRunURL(location.href));});
 function tone(freq=660,length=.15){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(freq,audio.currentTime);gain.gain.setValueAtTime(.055,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+length);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+length);}
 function toast(text){$('toast').textContent=text;$('toast').style.opacity=1;toastTime=4;}
 function beginRabbitFall(outward,message,launched=true){
@@ -237,17 +244,18 @@ function beginRabbitFall(outward,message,launched=true){
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
   abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent='Падение';
 }
-function reset(){abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;phaseGlowWasActive=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=100;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints){g.taken=false;g.o.visible=true;g.o.scale.setScalar(1);}for(const b of bottles)b.cooldown=0;for(const b of beasts)resetShadowBeast(b);crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
-function start(){reset();state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toast('D / → — к кристаллу. Перепрыгивай разрывы, собирай блики.');tone(523,.4);}
+function reset(){flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;phaseGlowWasActive=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints){g.taken=false;g.o.visible=true;g.o.scale.setScalar(1);}for(const b of bottles)b.cooldown=0;for(const b of beasts)resetShadowBeast(b);crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function start(){frameClock.reset();skillTree.element.hidden=true;reset();state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toast('D / → — к кристаллу. Перепрыгивай разрывы, собирай блики.');tone(523,.4);}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').innerHTML=button+' <span>↗</span>';$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';keys.clear();showModal('ТИШИНА В БАШНЕ','Маленькая пауза','Свет подождёт тебя.','Продолжить');}else if(state==='paused'){state='playing';$('modal').hidden=true;}}
-function finish(won){state=won?'won':'lost';keys.clear();if(won){tone(1046,1.8);showModal('ПОСЛЕДНИЙ ЛУЧ СОХРАНЁН','Свет останется.','Снаружи наступила ночь. Но в окнах башни снова мерцает магия. Собрано бликов: '+collected+'.','Ещё одно лето');}else{tone(164,.6);showModal('ДАЖЕ СОЛНЦУ НУЖЕН ОТДЫХ','Свет погас…','Тени оказались сильнее. Собирай блики и перепрыгивай тёмные участки.','Зажечься снова');}}
+function finish(won){state=won?'won':'lost';keys.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;tone(won?1046:164,won?1.8:.6);skillTree.open(won,collected);}
 $('start').onclick=start;$('pause').onclick=pause;$('restart').onclick=start;$('resume').onclick=()=>state==='paused'?pause():start();
+$('reset-progress').onclick=()=>{progression.reset();const url=new URL(location.href);url.searchParams.delete('sunny-run');url.searchParams.set('sunny-reset',String(Date.now()));location.assign(url.href);};
 $('sound').onclick=()=>{muted=!muted;$('sound').textContent='Звук: '+(muted?'выкл.':'вкл.');tone(784,.3);};
-const supported=new Set(['KeyA','KeyD','KeyW','KeyS','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','Escape','ShiftLeft','ShiftRight']);
-addEventListener('keydown',e=>{if(!supported.has(e.code))return;e.preventDefault();if(e.code==='Escape'&&!e.repeat)pause();if(e.code==='Space'&&!e.repeat&&state==='playing')jumpQueued=true;if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&!e.repeat&&state==='playing'&&rabbitState.mode!==RabbitMode.FALLING)phaseQueued=true;keys.add(e.code);});
+const supported=new Set(['KeyA','KeyD','ArrowLeft','ArrowRight','Space','KeyE','Escape','ShiftLeft','ShiftRight']);
+addEventListener('keydown',e=>{if(state==='lost'||state==='won')return;if(!supported.has(e.code))return;e.preventDefault();if(e.code==='Escape'&&!e.repeat)pause();if(e.code==='Space'&&!e.repeat&&state==='playing')jumpQueued=true;if(e.code==='KeyE'&&!e.repeat&&state==='playing')flareQueued=true;if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&!e.repeat&&state==='playing'&&rabbitState.mode!==RabbitMode.FALLING)phaseQueued=true;keys.add(e.code);});
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();if(state==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')pause();});
-for(const button of document.querySelectorAll('[data-key]')){button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);keys.add(button.dataset.key);if(button.dataset.key==='Space')jumpQueued=true;if(button.dataset.key==='ShiftLeft')phaseQueued=true;};button.onpointerup=button.onpointercancel=()=>keys.delete(button.dataset.key);}
+for(const button of document.querySelectorAll('[data-key]')){button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);keys.add(button.dataset.key);if(button.dataset.key==='Space')jumpQueued=true;if(button.dataset.key==='KeyE')flareQueued=true;if(button.dataset.key==='ShiftLeft')phaseQueued=true;};button.onpointerup=button.onpointercancel=()=>keys.delete(button.dataset.key);}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 function update(dt){
   if(rabbitState.mode===RabbitMode.FALLING){
@@ -257,42 +265,45 @@ function update(dt){
     return;
   }
   const previousFoot=route(s,lane).y+height+.12;
+  rescueInvul=Math.max(0,rescueInvul-dt);flareFrame=false;
+  const gatePreviousS=s,gatePreviousLane=lane;
   const passenger=platformPassenger(threats,s,lane,height,jumpQueued||phaseQueued||!!abilities.phase),previousOffset=passenger?.offset;
   time+=dt;invert=Math.max(0,invert-dt);slow=Math.max(0,slow-dt);
   updateThreats(threats,time);
   if(passenger){const carried=carryPlatformPassenger(passenger,s,lane,previousOffset);s=carried.s;lane=carried.lane;}
   for(const platform of movingPlatforms)if(platform.warning&&!platform.notified&&Math.abs(s-platform.s)<2){platform.notified=true;toast('Полка сдвигается! Она несёт тебя к центру — следи за краями.');tone(240,.12);}
   const forward=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
-  const radial=Number(keys.has('KeyW')||keys.has('ArrowUp'))-Number(keys.has('KeyS')||keys.has('ArrowDown'));
   const direction=invert>0?-1:1;
+  if(forward)railFacing=Math.sign(forward*direction);
   const beforeMove=route(s,lane);
   if(phaseQueued){
-    const theta=beforeMove.theta;
-    const dashDirection=forward||radial?{x:direction*(-Math.sin(theta)*forward+Math.cos(theta)*radial),z:direction*(Math.cos(theta)*forward+Math.sin(theta)*radial)}:{x:Math.sin(facingTarget),z:Math.cos(facingTarget)};
-    if(abilities.use(AbilityType.PHASING,{direction:dashDirection,distance:(SHELF_OUTER_RADIUS-shelfInnerRadius(Math.max(0,Math.round(s))))*AbilityInfo.phasing.distanceScale})){phaseTrail.reset();phaseTrail.update(0,new THREE.Vector3(beforeMove.x,beforeMove.y+.12+height,beforeMove.z),true,camera,rabbitMat.color.clone().multiplyScalar(hpBrightness(light)));tone(950,.15);}
+    const dashDirection={x:railFacing,z:0};
+    if(abilities.use(AbilityType.PHASING,{direction:dashDirection,distance:(SHELF_OUTER_RADIUS-shelfInnerRadius(Math.max(0,Math.round(s))))*AbilityInfo.phasing.distanceScale*RUN_UPGRADES.phaseDistance})){phaseTrail.reset();phaseTrail.update(0,new THREE.Vector3(beforeMove.x,beforeMove.y+.12+height,beforeMove.z),true,camera,rabbitMat.color.clone().multiplyScalar(hpBrightness(light/RUN_UPGRADES.maxHP*100)));tone(950,.15);}
   }
   phaseQueued=false;
   const dash=abilities.advance(dt);phasingFrame=!!dash;
-  if(dash){const moved=applyPhaseDelta(s,lane,dash);s=moved.s;lane=moved.lane;}
-  else{s=Math.min(END,s+forward*direction*(slow>0?.65:1.45)*dt);lane+=radial*direction*2.6*dt;}
+  if(dash){const moved=applySpiralPhase(s,lane,dash.x);s=moved.s;lane=moved.lane;}
+  else{s=Math.min(END,s+forward*direction*(slow>0?.65:1.45)*RUN_UPGRADES.speed*dt);if(!passenger&&height<=.001)lane=THREE.MathUtils.damp(lane,0,12,dt);}
   const afterMove=route(s,lane),dx=afterMove.x-beforeMove.x,dz=afterMove.z-beforeMove.z;
   moveSpeed=Math.hypot(dx,dz)/Math.max(dt,.0001);
   if(dx*dx+dz*dz>1e-10)facingTarget=Math.atan2(dx,dz);
+  if(height<=.001)abilities.land();
   if(jumpQueued){const jumpAbility=abilities.use(AbilityType.JUMP,{height});if(jumpAbility){velocity=jumpAbility.velocity;tone(470,.1);}}jumpQueued=false;
   const jump=advanceJump(height,velocity,dt);height=jump.height;velocity=jump.velocity;
+  if(flareQueued&&abilities.use(AbilityType.FLARE)){flareFrame=true;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+height+.5,afterMove.z),glassGlowPalette);tone(1150,.3);}flareQueued=false;
   for(const threat of threats)if(ThreatInfo[threat.type]&&!threat.introduced&&Math.abs(s-threat.s)<2.3){threat.introduced=true;toast(ThreatInfo[threat.type].hint);tone(320,.16);}
-  const threatHit=phasingFrame?null:consumeThreatHit(threats,{s,lane,height},time);
+  const threatHit=phasingFrame||rescueInvul>0?null:consumeThreatHit(threats,{s,lane,height},time);
   if(threatHit){
     if(threatHit.type===ThreatType.PENDULUM){
       beginRabbitFall(Math.cos((time+threatHit.phase)*Math.PI*2/3.6)>0,'Колокол сбил тебя с полки…');return;
     }
-    light=Math.max(0,light-ThreatInfo[threatHit.type].damage);shadowEffects.hit();tone(170,.15);toast(ThreatInfo[threatHit.type].name+' · −'+ThreatInfo[threatHit.type].damage+' света');
+    light=Math.max(0,light-ThreatInfo[threatHit.type].damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(170,.15);toast(ThreatInfo[threatHit.type].name+' · −'+ThreatInfo[threatHit.type].damage+' света');
   }
   let inShadow=false;
   for(const h of hazards)if(Math.abs(s-h.s)<.65&&Math.abs(lane-h.lane)<.85&&height<.8)inShadow=true;
   if(!phasingFrame&&!hasShelfSupport(threats,s,lane)&&height===0&&velocity<=0){beginRabbitFall(lane>2.5,'Под лапами больше нет полки…',false);return;}
-  for(const g of glints)if(!g.taken&&Math.abs(s-g.s)<.65&&Math.abs(lane-g.lane)<1&&height<1.8){g.taken=true;pickupEffects.collect(g.o);light=clamp(light+22,0,100);collected++;tone(800+collected%4*90);toast('+22 света · осколок заката');}
-  for(const b of bottles){b.cooldown=Math.max(0,b.cooldown-dt);if(!phasingFrame&&Math.abs(s-b.s)<.65&&Math.abs(lane-b.lane)<.7&&height<1&&b.cooldown===0){b.cooldown=7;if(b.s%2){invert=2.5;toast('Преломление! Управление отражено на 2,5 секунды');}else{slow=3;toast('Густой свет · замедление на 3 секунды');}tone(270,.2);}}
+  for(const g of glints)if(!g.taken&&Math.abs(s-g.s)<RUN_UPGRADES.magnet&&Math.abs(lane-g.lane)<1.15&&height<1.8){g.taken=true;pickupEffects.collect(g.o);light=clamp(light+RUN_UPGRADES.shardHeal,0,RUN_UPGRADES.maxHP);collected++;progression.award();tone(800+collected%4*90);toast('+'+RUN_UPGRADES.shardHeal+' света · +1 очко древа');}
+  for(const b of bottles){b.cooldown=Math.max(0,b.cooldown-dt);if(!phasingFrame&&Math.abs(s-b.s)<.65&&Math.abs(lane-b.lane)<.7&&height<1&&b.cooldown===0){b.cooldown=7;if(b.s%2){invert=2.5*RUN_UPGRADES.potionScale;toast('Преломление! Управление отражено на 2,5 секунды');}else{slow=3*RUN_UPGRADES.potionScale;toast('Густой свет · замедление на 3 секунды');}tone(270,.2);}}
   for(const b of beasts){
     if(b.dead){animateBeastDeath(b,dt);continue;}
     if(Math.abs(s-b.s)<3)b.lane=THREE.MathUtils.damp(b.lane,lane,1.6,dt);
@@ -301,7 +312,9 @@ function update(dt){
     const yaw=Math.abs(s-b.s)<6?Math.atan2(prey.x-p.x,prey.z-p.z):-p.theta;
     b.o.rotation.y=turnTowards(b.o.rotation.y,yaw,dt);
     animateShadowBeast(b,time,leap);
+    if(flareFrame&&Math.hypot(p.x-afterMove.x,p.z-afterMove.z)<3&&Math.abs(p.y+leap*.8-afterMove.y-height)<2){killShadowBeast(b,glassGlowPalette);continue;}
     if(phasingFrame&&phaseHitsTarget({x:beforeMove.x,y:previousFoot+.33,z:beforeMove.z},{x:afterMove.x,y:afterMove.y+height+.45,z:afterMove.z},{x:p.x,y:p.y+leap*.8+.65,z:p.z})){
+      light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.phaseHeal);if(RUN_UPGRADES.resonance)abilities.cooldowns.phasing=Math.max(0,abilities.cooldowns.phasing-.5);
       killShadowBeast(b,currentVitralZone?.palette??glassGlowPalette);tone(640,.2);toast('Витражный прорыв · тень рассеяна!');continue;
     }
     const top=p.y+leap*.8+b.stompTop,foot=route(s,lane).y+height+.12;
@@ -318,19 +331,23 @@ function update(dt){
   currentVitralZone=windowLight.sampleLight(new THREE.Vector3(lightPosition.x,lightPosition.y,lightPosition.z),height);
   if(currentVitralZone&&!wasInVitral){tone(1100,.3);toast('Свет витража · лечение ускоряется, пока ты в свете');}
   rabbitState.setVitral(currentVitralZone);
-  if(phasingFrame)inShadow=false;
+  if(phasingFrame||rescueInvul>0)inShadow=false;
   light=rabbitState.updateLight(light,dt,inShadow);
   shadowEffects.setDamage(inShadow);
   $('effect').textContent=inShadow?'Тень забирает свет!':currentVitralZone?'Витраж · +'+Math.min(50,rabbitState.vitralTime*12.5).toFixed(0)+'/с':invert>0?'Управление отражено':slow>0?'Преломление замедляет':'В свете заката';
+  if(height<3.8){const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){tone(880,.35);toast(gate.plank===END?'Последняя арка · кристалл рядом':'Переход на этаж '+gate.nextFloor);}}
+  if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;rescueInvul=1;light=RUN_UPGRADES.maxHP*.3;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+.5,afterMove.z),glassGlowPalette);toast('Последний огонёк · свет вернулся!');}
   if(light<=0)finish(false);else if(s>=END-.1)finish(true);
-  $('light-value').innerHTML=Math.ceil(light)+'<small>%</small>';
-  const lightFill=$('light-fill');lightFill.style.width=clamp(light,0,100)+'%';lightFill.dataset.empty=String(light<=0);
-  const lightSun=$('light-sun');lightSun.style.left=clamp(light,0,100)+'%';lightSun.hidden=light<=0;
-  lightFill.parentElement.style.setProperty('--sun-position',clamp(light,0,100)+'%');
+  const lightPercent=clamp(light/RUN_UPGRADES.maxHP*100,0,100);
+  $('light-value').innerHTML=Math.ceil(lightPercent)+'<small>%</small>';$('light-value').title=Math.ceil(light)+' / '+RUN_UPGRADES.maxHP+' HP';
+  const lightFill=$('light-fill');lightFill.style.width=lightPercent+'%';lightFill.dataset.empty=String(light<=0);
+  const lightSun=$('light-sun');lightSun.style.left=lightPercent+'%';lightSun.hidden=light<=0;
+  lightFill.parentElement.style.setProperty('--sun-position',lightPercent+'%');
   lightFill.parentElement.style.setProperty('--sun-power',light>0?'1':'0');
-  $('progress').style.width=s/END*100+'%';$('floor').textContent='Этаж '+floorAt(s)+' / 12';$('shards').textContent='Блики: '+collected;
+  $('progress').style.width=s/END*100+'%';$('floor').textContent='Этаж '+floorAt(s)+' / '+FLOOR_COUNT;$('shards').textContent='Блики: '+collected+' · ✦ '+progression.state.points;
 }
-let previous=performance.now(),visualTime=0,viewAnchor=0,smoothAnchor=0,anchorVelocity=0;
+const frameClock=new FrameClock();
+let visualTime=0,viewAnchor=0,smoothAnchor=0,anchorVelocity=0;
 let previousSunLight=100,sunMotion=0,sunOrbit=0,sunWasRegenerating=false;
 const sunParticleColors=['#ff95db','#ad98ff','#7de4ff','#9affca','#fff09a'];
 const sunDisc=document.createElement('span');sunDisc.className='sun-disc';$('light-sun').prepend(sunDisc);
@@ -358,9 +375,11 @@ function emitSunParticle(particle,initial=false){
   animation.onfinish=()=>{if(sunWasRegenerating)emitSunParticle(particle);};
 }
 let cameraNeedsReset=true;
-function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous)/1000,.04);previous=now;visualTime+=dt;
+function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);visualTime+=dt;
   if(state==='playing')update(dt);
   threatVisuals.update(time);
+  floorGates.update(state==='paused'?0:dt);
+  if(state!=='paused'&&flareAge<1.8){flareAge+=dt;flareBurst.update(flareAge);}
   $('phase-status').textContent=abilities.cooldowns.phasing>.05?'Phasing '+abilities.cooldowns.phasing.toFixed(1)+'с':'Phasing';
   const sunMoving=state==='playing'&&Math.abs(light-previousSunLight)>dt*.01;
   previousSunLight=light;
@@ -369,7 +388,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
   const sunRadius=2.5*sunMotion*(.75+.25*Math.sin(sunOrbit*1.37));
   $('light-sun').style.setProperty('--sun-x',(Math.cos(sunOrbit)*sunRadius).toFixed(3)+'px');
   $('light-sun').style.setProperty('--sun-y',(Math.sin(sunOrbit)*sunRadius).toFixed(3)+'px');
-  const sunHealth=clamp(light/100,0,1);
+  const sunHealth=clamp(light/RUN_UPGRADES.maxHP,0,1);
   $('light-sun').style.setProperty('--sun-health',sunHealth.toFixed(3));
   $('light-sun').style.setProperty('--sun-sunset',Math.pow(1-sunHealth,.8).toFixed(3));
   $('light-sun').style.setProperty('--sun-glow-color',`hsl(${8+sunHealth*38} 85% ${24+sunHealth*43}%)`);
@@ -398,7 +417,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
   shadowMat.uniforms.clock.value=time;groundSmoke.update(time,innerHeight*renderer.getPixelRatio());
   if(state==='playing'||state==='won'||state==='lost')pickupEffects.update(dt);
   if(state!=='won'){
-    const daylight=depthLight(rabbitState.mode===RabbitMode.FALLING?clamp((100-rabbitState.fall.y)*2,0,END):s);
+    const daylight=depthLight(rabbitState.mode===RabbitMode.FALLING?clamp((TOWER_TOP-rabbitState.fall.y)*2,0,END):s);
     ambient.intensity=.16+daylight*1.94;sun.intensity=.1+daylight*4;
     warm.intensity=4+daylight*136;
     scene.background.copy(new THREE.Color('#080c17').lerp(new THREE.Color('#303849'),daylight));
@@ -433,7 +452,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
   if(state==='playing')facing=turnTowards(facing,facingTarget,dt);
   rabbit.rotation.y=facing;
   if(state==='playing'&&!falling)rabbitAnimation.update(dt,{speed:moveSpeed,height,velocity,turn:Math.atan2(Math.sin(facingTarget-facing),Math.cos(facingTarget-facing))});
-  const brightness=hpBrightness(light)*(falling?1-rabbitState.fall.dissolve:1);rabbitHPFade.value=brightness;
+  const brightness=hpBrightness(light/RUN_UPGRADES.maxHP*100)*(falling?1-rabbitState.fall.dissolve:1);rabbitHPFade.value=brightness;
   rabbitMat.color.setRGB(1,.91,.64);
   rabbitMat.emissive.setRGB(.62,.47,.2);
   eyeMat.color.copy(eyeBaseColor).multiplyScalar(brightness);eyeSparkMat.color.copy(eyeSparkBaseColor).multiplyScalar(brightness);
@@ -458,7 +477,7 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
     desired.copy(rabbit.position).add(fallCameraOffset);camera.position.lerp(desired,1-Math.exp(-dt*7));
     target.lerp(rabbit.position.clone().add(new THREE.Vector3(0,.3,0)),1-Math.exp(-dt*10));
   }
-  else if(state==='intro') {viewAnchor=0;desired.set(3+Math.sin(visualTime*.09)*1.5,104,16);target.copy(rabbit.position).add(new THREE.Vector3(0,.45,0));camera.position.lerp(desired,1-Math.exp(-dt*2));}
+  else if(state==='intro') {viewAnchor=0;desired.set(3+Math.sin(visualTime*.09)*1.5,TOWER_TOP+4,16);target.copy(rabbit.position).add(new THREE.Vector3(0,.45,0));camera.position.lerp(desired,1-Math.exp(-dt*2));}
   else if(state==='won'){desired.set(end.x*.38,end.y+8,end.z*.38);target.copy(crystalGroup.position).add(new THREE.Vector3(0,2,0));camera.position.lerp(desired,1-Math.exp(-dt*.9));sun.intensity=THREE.MathUtils.damp(sun.intensity,.08,.7,dt);scene.background.lerp(new THREE.Color('#0d152a'),dt*.4);scene.fog.color.copy(scene.background);crystalMat.emissiveIntensity=THREE.MathUtils.damp(crystalMat.emissiveIntensity,5,1,dt);crystalLight.intensity=THREE.MathUtils.damp(crystalLight.intensity,250,1,dt);for(const m of glassMats)m.emissiveIntensity=2+Math.sin(visualTime*2)*.6;rabbit.visible=false;}
   else {
     rabbit.visible=true;
@@ -482,4 +501,14 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-previous
   catcherRay.update(dt,visualTime,rabbit,state!=='won'&&state!=='lost'&&!falling,camera);
   renderer.render(scene,camera);
 }
-camera.position.set(3,104,16);requestAnimationFrame(frame);
+$('flare-hint').hidden=!RUN_UPGRADES.flare;$('flare-touch').hidden=!RUN_UPGRADES.flare;
+camera.position.set(3,TOWER_TOP+4,16);
+const runURL=new URL(location.href);
+if(runURL.searchParams.has('sunny-reset')){runURL.searchParams.delete('sunny-reset');history.replaceState(history.state,'',runURL.href);}
+if(runURL.searchParams.has('sunny-run')){
+  start();runURL.searchParams.delete('sunny-run');
+  history.replaceState(history.state,'',runURL.href);
+}else try{if(sessionStorage.getItem('sunny.next-run')==='1'){sessionStorage.removeItem('sunny.next-run');start();}}catch{}
+requestAnimationFrame(frame);
+// The first rendered frame replaces the hidden boot document directly with gameplay.
+requestAnimationFrame(()=>document.documentElement.classList.remove('boot-run'));

@@ -2,9 +2,9 @@ import { END, GAP_HALF_WIDTH, ROUTE_ANGLE, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS,
 
 export const ThreatType=Object.freeze({HOLE:'hole',MOVING_PLATFORM:'moving-platform',PENDULUM:'pendulum',INK_WAVE:'ink-wave',THORNS:'thorns'});
 export const ThreatInfo=Object.freeze({
-  [ThreatType.PENDULUM]:{name:'Колокол затмения',damage:10,hint:'Колокол затмения · обойди его с другой стороны полки.'},
+  [ThreatType.PENDULUM]:{name:'Колокол затмения',damage:10,hint:'Колокол затмения · перепрыгни или пройди сквозь него с Phasing.'},
   [ThreatType.INK_WAVE]:{name:'Чернильная волна',damage:8,hint:'Чернильная волна · перепрыгни расширяющееся кольцо.'},
-  [ThreatType.THORNS]:{name:'Стеклянные шипы',damage:12,hint:'Стеклянные шипы · руны предупреждают о выдвижении. Обойди или прыгни.'},
+  [ThreatType.THORNS]:{name:'Стеклянные шипы',damage:12,hint:'Стеклянные шипы · дождись спада, перепрыгни или используй Phasing.'},
 });
 export const PLATFORM_COOLDOWN=5;
 const ease=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
