@@ -23,10 +23,10 @@ h1{font-family:TowerPixel,monospace;font-size:clamp(28px,3.2vw,48px);line-height
 @media(max-width:760px){.light-track::before{inset:-23px -20px}}
 #light-sun{position:absolute;display:block;z-index:10;left:100%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%);background:url('./hud-sun.svg') center/contain no-repeat;filter:drop-shadow(0 0 3px #fff6bb) drop-shadow(0 0 9px #ffd95c) drop-shadow(0 0 20px #f7c848b3);pointer-events:none}
 #light-sun{transform:translate(calc(-50% + var(--sun-x,0px)),calc(-50% + var(--sun-y,0px)))}
-#light-sun .sun-disc{isolation:isolate;filter:drop-shadow(0 0 3px #ffe6a0) drop-shadow(0 0 var(--sun-glow,17px) #ffb842);transition:filter .25s linear}
+#light-sun .sun-disc{isolation:isolate;filter:drop-shadow(0 0 2px var(--sun-glow-color,#ffe6a0)) drop-shadow(0 0 var(--sun-glow,17px) var(--sun-glow-color,#ffb842));transition:filter .25s linear}
 #light-sun .sun-disc::after{content:'';position:absolute;inset:11px;border-radius:50%;background:conic-gradient(#ff75c8,#ad84ff,#69d9ff,#85ffc6,#fff296,#ff987b,#ff75c8);opacity:0;transition:opacity .4s;pointer-events:none;box-shadow:inset 0 0 4px 2px #fff8d6}
 #light-sun.vitral-sun .sun-disc::after{opacity:.9;animation:sun-rainbow-turn 4s linear infinite}
-#light-sun .sun-disc::before{content:'';position:absolute;inset:0;background:var(--sun-multiply,#fff);mask:url('./hud-sun.svg') center/contain no-repeat;mix-blend-mode:multiply;transition:background-color .25s linear;pointer-events:none}
+#light-sun .sun-disc::before{content:'';position:absolute;inset:0;background:url('./hud-sun-sunset.svg') center/contain no-repeat;opacity:var(--sun-sunset,0);transition:opacity .25s linear;pointer-events:none}
 #light-sun.vitral-sun .sun-disc::before{display:block}
 #light-sun .sun-particle{position:absolute;left:calc(50% - 2.5px);top:calc(50% - 2.5px);width:5px;height:5px;background:#fff;box-shadow:0 0 0 1px var(--particle-color),0 0 5px 2px var(--particle-color),0 0 11px var(--particle-color);opacity:0;pointer-events:none;z-index:2}
 #light-sun .sun-particle{animation:none}

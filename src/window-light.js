@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SHELF_HALF_ANGLE } from './game.js';
+import { SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius } from './game.js';
 
 export const SUN_RAY_DIRECTION = new THREE.Vector3(15,-22,25).normalize();
 
@@ -77,7 +77,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
     if(data.floor){
       const floorGeometry=new THREE.BufferGeometry();floorGeometry.setAttribute('position',new THREE.Float32BufferAttribute(endCorners.flatMap(p=>[p.x,p.y,p.z]),3));floorGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(beam.sourceUV,2));floorGeometry.setIndex([0,1,2,0,2,3]);
       const floorMaterial=new THREE.ShaderMaterial({
-        uniforms:{beamColor:{value:beam.color},glassMap:{value:pane.material.map??null},hasGlassMap:{value:!!pane.material.map},strength:{value:.8},clock:{value:0},floorAngle:{value:data.floor.userData.theta},floorBounds:{value:new THREE.Vector3(6.94,18.06,.223)},projectionDepth:{value:null},depthResolution:{value:new THREE.Vector2(1,1)},depthRange:{value:new THREE.Vector2(.1,240)},depthEnabled:{value:false}},
+        uniforms:{beamColor:{value:beam.color},glassMap:{value:pane.material.map??null},hasGlassMap:{value:!!pane.material.map},strength:{value:.8},clock:{value:0},floorAngle:{value:data.floor.userData.theta},floorBounds:{value:new THREE.Vector3(shelfInnerRadius(data.floor.userData.s)+.012,SHELF_OUTER_RADIUS-.012,SHELF_HALF_ANGLE-.001)},projectionDepth:{value:null},depthResolution:{value:new THREE.Vector2(1,1)},depthRange:{value:new THREE.Vector2(.1,240)},depthEnabled:{value:false}},
         vertexShader:'varying vec2 tileUV; varying vec3 tileWorld; void main(){tileUV=uv;tileWorld=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
         fragmentShader:`uniform vec3 beamColor;uniform sampler2D glassMap;uniform bool hasGlassMap;uniform float strength;uniform float clock;uniform float floorAngle;uniform vec3 floorBounds;uniform sampler2D projectionDepth;uniform vec2 depthResolution;uniform vec2 depthRange;uniform bool depthEnabled;varying vec2 tileUV;varying vec3 tileWorld;
           void main(){float r=length(tileWorld.xz);float angle=atan(tileWorld.z,tileWorld.x)-floorAngle;angle=atan(sin(angle),cos(angle));if(r<floorBounds.x||r>floorBounds.y||abs(angle)>floorBounds.z)discard;
@@ -105,6 +105,9 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       if(jumpHeight>3.5)return null;
       for(const zone of zones){
         if(Math.abs(position.y-zone.center.y)>.36)continue;
+        const radius=Math.hypot(position.x,position.z);
+        const angle=Math.atan2(position.z,position.x)-Math.atan2(zone.radial.z,zone.radial.x);
+        if(radius<shelfInnerRadius(zone.s)+.012||radius>SHELF_OUTER_RADIUS-.012||Math.abs(Math.atan2(Math.sin(angle),Math.cos(angle)))>SHELF_HALF_ANGLE-.001)continue;
         const offset=position.clone().sub(zone.center);
         if(Math.abs(offset.dot(zone.tangent))<zone.width*.5&&Math.abs(offset.dot(zone.radial))<zone.length*.5)return zone;
       }

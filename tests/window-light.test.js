@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { paneBeam, createWindowLight } from '../src/window-light.js';
-import { SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, SHELF_HALF_ANGLE } from '../src/game.js';
+import { SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, SHELF_HALF_ANGLE, shelfInnerRadius } from '../src/game.js';
 
 test('beams originate exactly on the inner glass face and inherit its color',()=>{
   const group=new THREE.Group(),angle=Math.PI;
@@ -31,6 +31,10 @@ test('window mosaic creates a persistent walkable projection on a real shelf',()
   assert.equal(light.sampleLight(new THREE.Vector3(12.55,100,3)),null);
   assert.equal(light.sampleLight(new THREE.Vector3(12.55,100,0),4),null);
   const pattern=light.zones[0].o.children[0];assert.ok(pattern.material.uniforms.beamColor.value.equals(pane.material.color));
+  const bounds=pattern.material.uniforms.floorBounds.value;
+  assert.equal(bounds.x,shelfInnerRadius(0)+.012);
+  assert.equal(bounds.y,SHELF_OUTER_RADIUS-.012);
+  assert.equal(bounds.z,SHELF_HALF_ANGLE-.001);
   const depth=new THREE.DepthTexture(800,600),resolution=new THREE.Vector2(800,600),range=new THREE.Vector2(.1,240);
   light.setDepthSource(depth,resolution,range);
   assert.equal(pattern.material.uniforms.projectionDepth.value,depth);

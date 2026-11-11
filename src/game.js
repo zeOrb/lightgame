@@ -16,7 +16,8 @@ export function shelfInnerRadius(section){
   const length=(SHELF_OUTER_RADIUS-SHELF_INNER_RADIUS)*(1+(random*2-1)/8);
   return SHELF_OUTER_RADIUS-length;
 }
-export const LANE_LIMIT = 1.8;
+export const LANE_LIMIT = 1.8; // Safe central strip used by camera and level layout.
+export const MOVEMENT_LANE_LIMIT = 4.2; // Movement can cross the real shelf edges.
 export const JUMP_SPEED = 9;
 export const GRAVITY = 16;
 export const GAP_HALF_WIDTH = 1 - SHELF_HALF_ANGLE / ROUTE_ANGLE;
@@ -46,11 +47,15 @@ export function cameraAnchor(s, anchor, aspect = 16 / 9) {
 }
 export function isGap(s) { return gaps.some(g => Math.abs(s - g) < GAP_HALF_WIDTH); }
 export const PASSIVE_LIGHT_DRAIN = 12;
-export const VITRAL_LIGHT_REGEN = PASSIVE_LIGHT_DRAIN * 2;
-export function lightStep(light, dt, { shadow = false, vitral = false } = {}) {
+export const VITRAL_REGEN_DURATION = 4;
+export function vitralRecovery(time){
+  const t=Math.max(0,time),ramp=Math.min(t,VITRAL_REGEN_DURATION);
+  return 100*(ramp/VITRAL_REGEN_DURATION)**2+Math.max(0,t-VITRAL_REGEN_DURATION)*50;
+}
+export function lightStep(light, dt, { shadow = false, vitral = false, vitralTime=0 } = {}) {
   const loss=shadow?48:PASSIVE_LIGHT_DRAIN;
-  const healing=vitral?VITRAL_LIGHT_REGEN:0;
-  return clamp(light+(healing-loss)*dt,0,100);
+  const healing=vitral?PASSIVE_LIGHT_DRAIN*dt+vitralRecovery(vitralTime+dt)-vitralRecovery(vitralTime):0;
+  return clamp(light+healing-loss*dt,0,100);
 }
 export function route(s, lane = 0) {
   const theta = s * ROUTE_ANGLE;

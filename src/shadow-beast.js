@@ -6,9 +6,9 @@ const random=createVisualRandom('beast-smoke');
 // Unlit black stays black even in the sunset and in the rabbit's point light.
 const fur = new THREE.MeshBasicMaterial({ color: '#000000', fog: false });
 const red = new THREE.MeshBasicMaterial({ color: '#ff071d', fog: false, toneMapped: false });
-const eyeCore = new THREE.MeshBasicMaterial({ color: '#ff7563', fog: false, toneMapped: false });
+const eyeCore = new THREE.MeshBasicMaterial({ color: '#ffd2b6', fog: false, toneMapped: false });
 const sphere = new THREE.SphereGeometry(1, 16, 12);
-let smokeTexture, circleTexture;
+let smokeTexture, circleTexture,eyeGlowTexture;
 function textures() {
   if (smokeTexture) return;
   const canvas=document.createElement('canvas');canvas.width=canvas.height=64;
@@ -23,6 +23,10 @@ function textures() {
   const circle=document.createElement('canvas');circle.width=circle.height=32;
   const c=circle.getContext('2d');c.fillStyle='white';c.beginPath();c.arc(16,16,14,0,Math.PI*2);c.fill();
   circleTexture=new THREE.CanvasTexture(circle);
+  const glow=document.createElement('canvas');glow.width=glow.height=64;
+  const g=glow.getContext('2d'),radial=g.createRadialGradient(32,32,0,32,32,32);
+  radial.addColorStop(0,'rgba(255,255,255,1)');radial.addColorStop(.16,'rgba(255,255,255,.8)');radial.addColorStop(.45,'rgba(255,255,255,.25)');radial.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=radial;g.fillRect(0,0,64,64);eyeGlowTexture=new THREE.CanvasTexture(glow);
 }
 function ellipsoid(parent, material, position, scale) {
   const mesh=new THREE.Mesh(sphere,material);mesh.position.set(...position);mesh.scale.set(...scale);parent.add(mesh);return mesh;
@@ -31,6 +35,7 @@ export const BEAST_KINDS = ['cat','wolf','fox','hare'];
 export function createShadowBeast(kind = 'cat') {
   textures();
   const o=new THREE.Group();
+  const eyeGlows=[];
   const hare=kind==='hare',wolf=kind==='wolf',fox=kind==='fox';
   ellipsoid(o,fur,[0,.8,-.1],[hare?.39:wolf?.52:.43,hare?.51:.46,hare?.6:wolf?1:.88]);
   ellipsoid(o,fur,[0,.98,.48],[.4,.5,.44]);
@@ -52,6 +57,11 @@ export function createShadowBeast(kind = 'cat') {
     }
     const eye=ellipsoid(head,red,[side*.19,.055,.292],[.105,.065,.054]);eye.rotation.z=-side*.2;
     ellipsoid(head,eyeCore,[side*.19,.06,.34],[.023,.043,.012]);
+    for(let layer=0;layer<2;layer++){
+      const material=new THREE.SpriteMaterial({map:eyeGlowTexture,color:layer?'#ff482a':'#ff071d',transparent:true,opacity:layer?.9:.55,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:true,fog:false,toneMapped:false});
+      const glow=new THREE.Sprite(material);glow.position.set(side*.19,.06,.365);
+      glow.scale.set(layer?.26:.68,layer?.19:.5,1);head.add(glow);eyeGlows.push(glow);
+    }
   }
   const legs=[];
   for(const z of [-.62,.55])for(const side of [-1,1]){
@@ -93,11 +103,12 @@ export function createShadowBeast(kind = 'cat') {
     shader.vertexShader='varying vec3 vBeastLocal;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvBeastLocal = (modelMatrix * vec4(position, 1.0)).xyz;');
     shader.fragmentShader='uniform float dissolveHeight;uniform float deathDirection;uniform vec3 deathColors[6];uniform vec3 deathCenter;\nvarying vec3 vBeastLocal;\n'+shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat grain = fract(sin(dot(floor(vBeastLocal.xz * 35.0), vec2(12.9898,78.233))) * 43758.5453);\nfloat dissolveDistance=deathDirection<0.0?length(vBeastLocal-deathCenter)-dissolveHeight:vBeastLocal.y-dissolveHeight; if(dissolveDistance < (grain-.5)*.22) discard;').replace('#include <opaque_fragment>','if(deathDirection<0.0){float edge=1.0-smoothstep(0.0,.5,abs(length(vBeastLocal-deathCenter)-dissolveHeight));int cell=int(mod(abs(floor(vBeastLocal.x*5.0)+floor(vBeastLocal.z*5.0)),6.0));outgoingLight=mix(outgoingLight,deathColors[cell]*3.5,edge);}\n#include <opaque_fragment>');
   };
-  return {o,paw,legs,tail,head,smoke,circles,meshes,deathFur,dissolve,deathDirection,deathColors,deathCenter,vitralBurst,kind,stompTop:hare?1.03:wolf?1.15:1.02,dead:false,deathAge:0};
+  return {o,paw,legs,tail,head,smoke,circles,eyeGlows,meshes,deathFur,dissolve,deathDirection,deathColors,deathCenter,vitralBurst,kind,stompTop:hare?1.03:wolf?1.15:1.02,dead:false,deathAge:0};
 }
 
 export function killShadowBeast(beast,palette=null){
   beast.dead=true;beast.deathAge=0;beast.deathY=beast.o.position.y;
+  for(const glow of beast.eyeGlows)glow.visible=false;
   beast.vitralDeath=!!palette?.length;beast.deathDirection.value=beast.vitralDeath?-1:1;
   if(beast.vitralDeath){
     const bounds=new THREE.Box3();for(const mesh of beast.meshes)bounds.union(new THREE.Box3().setFromObject(mesh));
@@ -117,6 +128,7 @@ export function resetShadowBeast(beast){
   beast.dissolve.value=-10;
   beast.deathDirection.value=1;beast.vitralDeath=false;
   beast.vitralBurst.reset();
+  for(const glow of beast.eyeGlows)glow.visible=true;
   for(const mote of beast.smoke){mote.sprite.material.map=smokeTexture;mote.sprite.material.color.set('#000000');mote.sprite.material.blending=THREE.NormalBlending;mote.sprite.material.opacity=0;mote.sprite.material.needsUpdate=true;}
   for(const mesh of beast.meshes){if(mesh.material===beast.deathFur)mesh.material=fur;mesh.visible=true;}
 }
@@ -140,6 +152,7 @@ export function animateBeastDeath(beast,dt){
 }
 
 export function animateShadowBeast(beast,time,leap) {
+  beast.eyeGlows.forEach((glow,i)=>{glow.material.opacity=(i%2?.88:.55)+Math.sin(time*2.6+beast.s)*.055;});
   beast.tail.rotation.z=Math.sin(time*1.8+beast.s)*.22;
   beast.head.rotation.x=-.08+Math.sin(time*2+beast.s)*.045;
   beast.legs.forEach((leg,i)=>{

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+ <defs>
+  <radialGradient id="ember" cx=".34" cy=".28" r=".78"><stop stop-color="#f19a72"/><stop offset=".22" stop-color="#d95b48"/><stop offset=".48" stop-color="#a72c35"/><stop offset=".78" stop-color="#631a2c"/><stop offset="1" stop-color="#321120"/></radialGradient>
+  <radialGradient id="rays"><stop offset=".2" stop-color="#e77548"/><stop offset=".56" stop-color="#bc4434"/><stop offset="1" stop-color="#58152b"/></radialGradient>
+  <linearGradient id="rim" x2=".8" y2="1"><stop stop-color="#f09b69"/><stop offset=".4" stop-color="#c24e3b"/><stop offset="1" stop-color="#50122b"/></linearGradient>
+ </defs>
+ <g fill="url(#rays)"><path d="M20 0L22 10H18ZM40 20L30 22V18ZM20 40L18 30H22ZM0 20L10 18V22Z"/><path d="M6 6L15 12L12 15ZM34 6L28 15L25 12ZM34 34L25 28L28 25ZM6 34L12 25L15 28Z"/></g>
+ <circle cx="20" cy="20" r="12" stroke="#9f3943" stroke-opacity=".28"/>
+ <circle cx="20" cy="20" r="9" fill="url(#ember)" stroke="url(#rim)" stroke-width="1.5"/>
+ <path d="M14 17C15 14 18 12.8 20 13.4" stroke="#ffd4a1" stroke-opacity=".65" stroke-width="1.1" stroke-linecap="round"/>
+ <path d="M23 26C25 25 26 23 26 21" stroke="#340f26" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

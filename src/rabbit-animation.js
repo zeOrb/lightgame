@@ -5,9 +5,26 @@ export class RabbitAnimation {
     this.visual=visual;this.ears=ears;this.paws=paws;this.tail=tail;this.reset();
   }
   reset(){
-    this.phase=0;this.blend=0;this.air=0;this.landing=0;this.wasAirborne=false;
+    this.phase=0;this.blend=0;this.air=0;this.landing=0;this.wasAirborne=false;this.fallTime=0;
     this.visual.position.set(0,0,0);this.visual.rotation.set(0,0,0);this.visual.scale.setScalar(1);
     this.pose(0,0,0);
+  }
+  updateFall(dt){
+    this.fallTime+=dt;
+    const t=this.fallTime,flip=THREE.MathUtils.smoothstep(t,0,.55),kick=t*17;
+    this.visual.position.set(0,.65*flip,0);
+    this.visual.rotation.set(Math.PI*flip,0,Math.sin(t*3.5)*.09*flip);
+    this.paws.forEach((paw,i)=>{
+      const step=Math.sin(kick+i*Math.PI);
+      paw.position.y=.065+Math.max(0,step)*.065;
+      paw.position.z=.12+step*.1;
+      paw.rotation.set(step*.9,0,Math.sin(kick*.8+i*Math.PI)*.28);
+    });
+    this.ears.forEach((ear,i)=>{
+      ear.rotation.x=.25*flip+Math.sin(t*11+i)*.12*flip;
+      ear.rotation.z=(i===0?.165:-.165)+Math.sin(t*8+i)*.09*flip;
+    });
+    this.tail.rotation.x=Math.sin(t*13)*.25;
   }
   update(dt,{speed,height,velocity,turn=0}){
     const airborne=height>.025;
@@ -34,7 +51,7 @@ export class RabbitAnimation {
     this.paws.forEach((paw,i)=>{
       const stride=step*(i===0?1:-1)*this.blend*ground;
       paw.position.y=.065+Math.max(0,stride)*.045;paw.position.z=.12+stride*.055;
-      paw.rotation.x=stride*.4-.25*this.air;
+      paw.rotation.set(stride*.4-.25*this.air,0,0);
     });
     this.tail.rotation.x=Math.sin(this.phase-.5)*.18*this.blend;
   }

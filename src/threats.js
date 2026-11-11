@@ -1,4 +1,4 @@
-import { GAP_HALF_WIDTH, ROUTE_ANGLE, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius, clamp } from './game.js';
+import { END, GAP_HALF_WIDTH, ROUTE_ANGLE, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius, clamp } from './game.js';
 
 export const ThreatType=Object.freeze({HOLE:'hole',MOVING_PLATFORM:'moving-platform',PENDULUM:'pendulum',INK_WAVE:'ink-wave',THORNS:'thorns'});
 export const ThreatInfo=Object.freeze({
@@ -9,11 +9,12 @@ export const ThreatInfo=Object.freeze({
 export const PLATFORM_COOLDOWN=5;
 const ease=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 
-export function platformMotion(time){
+export function platformTravel(section){return (SHELF_OUTER_RADIUS-shelfInnerRadius(section))*.5;}
+export function platformMotion(time,section=0){
   if(time<PLATFORM_COOLDOWN)return {offset:0,warning:time>=4.25,moving:false};
   const t=(time-PLATFORM_COOLDOWN)%PLATFORM_COOLDOWN;
   const amount=t<.45?ease(t/.45):t<.95?1:t<1.45?1-ease((t-.95)/.5):0;
-  return {offset:amount>0?-2.1*amount:0,warning:t>=4.25,moving:amount>0};
+  return {offset:amount>0?-platformTravel(section)*amount:0,warning:t>=4.25,moving:amount>0};
 }
 
 export function createThreats(holes,end,reserved=new Set()){
@@ -70,6 +71,17 @@ export function movingPlatformSupports(threat,s,lane){
   const r=Math.hypot(x,z);
   return r>=shelfInnerRadius(threat.s)&&r<=SHELF_OUTER_RADIUS&&Math.abs(Math.atan2(z,x))<=SHELF_HALF_ANGLE;
 }
+export function platformPassenger(threats,s,lane,height,jumping=false){
+  if(height>.001||jumping)return null;
+  return threats.find(t=>t.type===ThreatType.MOVING_PLATFORM&&Math.abs(s-t.s)<1.2&&movingPlatformSupports(t,s,lane))??null;
+}
+export function carryPlatformPassenger(platform,s,lane,previousOffset){
+  const angle=s*ROUTE_ANGLE,radius=12+lane,delta=platform.offset-previousOffset;
+  const x=Math.cos(angle)*radius+Math.cos(platform.s*ROUTE_ANGLE)*delta;
+  const z=Math.sin(angle)*radius+Math.sin(platform.s*ROUTE_ANGLE)*delta;
+  const turn=Math.atan2(Math.cos(angle)*z-Math.sin(angle)*x,Math.cos(angle)*x+Math.sin(angle)*z);
+  return {s:s+turn/ROUTE_ANGLE,lane:Math.hypot(x,z)-12};
+}
 
 export function unsupportedThreat(threats,s,lane){
   for(const threat of threats){
@@ -79,10 +91,23 @@ export function unsupportedThreat(threats,s,lane){
   return null;
 }
 
+// Test the actual curved footprint, including overlapping neighbour shelves.
+export function hasShelfSupport(threats,s,lane){
+  const radius=12+lane;
+  for(let section=Math.max(0,Math.floor(s)-1);section<=Math.min(END+1,Math.ceil(s)+1);section++){
+    if(threats.some(t=>t.type===ThreatType.HOLE&&t.s===section))continue;
+    const platform=threats.find(t=>t.type===ThreatType.MOVING_PLATFORM&&t.s===section);
+    const angle=(s-section)*ROUTE_ANGLE;
+    const x=Math.cos(angle)*radius-(platform?.offset??0),z=Math.sin(angle)*radius,r=Math.hypot(x,z);
+    if(r>=shelfInnerRadius(section)&&r<=SHELF_OUTER_RADIUS&&Math.abs(Math.atan2(z,x))<=SHELF_HALF_ANGLE)return true;
+  }
+  return false;
+}
+
 export function updateThreats(threats,time){
-  const motion=platformMotion(time);
   for(const threat of threats){
     if(threat.type!==ThreatType.MOVING_PLATFORM){Object.assign(threat,threatState(threat,time));continue;}
+    const motion=platformMotion(time,threat.s);
     Object.assign(threat,motion);
     if(threat.group){const angle=threat.s*ROUTE_ANGLE;threat.group.position.x=Math.cos(angle)*motion.offset;threat.group.position.z=Math.sin(angle)*motion.offset;}
     if(threat.indicator){threat.indicator.visible=motion.warning||motion.moving;threat.indicator.material.opacity=.35+.3*(.5+.5*Math.sin(time*15));}

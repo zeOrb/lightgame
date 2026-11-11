@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { END, route, gaps, isGap, lightStep, cameraAnchor, turnTowards, LANE_LIMIT, PASSIVE_LIGHT_DRAIN, VITRAL_LIGHT_REGEN } from '../src/game.js';
+import { END, route, gaps, isGap, lightStep, cameraAnchor, turnTowards, LANE_LIMIT, PASSIVE_LIGHT_DRAIN, VITRAL_REGEN_DURATION } from '../src/game.js';
 test('gaze turns smoothly along the shortest arc, including the angle wrap',()=>{
   const start=Math.PI-.1,target=-Math.PI+.1;
   const next=turnTowards(start,target,1/60);
@@ -47,11 +47,11 @@ test('gaps have a safe approach and landing, and do not block the start or cryst
   for(const s of gaps){assert.ok(isGap(s));assert.ok(!isGap(s-1));assert.ok(!isGap(s+1));}
   assert.ok(!isGap(0));assert.ok(!isGap(END));
 });
-test('vitral heals at twice the passive drain rate while all damage remains active',()=>{
+test('vitral healing accelerates while passive and shadow damage remain active',()=>{
   assert.equal(lightStep(100,1,{shadow:true}),52);
-  assert.equal(VITRAL_LIGHT_REGEN,PASSIVE_LIGHT_DRAIN*2);
-  assert.equal(lightStep(50,1,{vitral:true}),Math.min(100,50+PASSIVE_LIGHT_DRAIN));
-  assert.equal(lightStep(100,1,{shadow:true,vitral:true}),Math.min(100,52+VITRAL_LIGHT_REGEN));
+  assert.equal(VITRAL_REGEN_DURATION,4);
+  assert.equal(lightStep(50,1,{vitral:true}),56.25);
+  assert.equal(lightStep(100,1,{shadow:true,vitral:true}),70.25);
   assert.equal(lightStep(5,1,{shadow:true}),0);
   assert.equal(lightStep(100,1),100-PASSIVE_LIGHT_DRAIN);
 });
