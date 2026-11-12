@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius } from './game.js';
+import { ROUTE_RADIUS, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius } from './game.js';
 
 export const SUN_RAY_DIRECTION = new THREE.Vector3(15,-22,25).normalize();
 
@@ -24,6 +24,7 @@ export function paneBeam(pane) {
 
 export function createWindowLight(panes,floors,reservedShelves = new Set()) {
   const group=new THREE.Group(),materials=[],floorMaterials=[],zones=[],windows=new Map();
+  const arenaMask={arenaEnabled:{value:false},arenaY:{value:0},arenaRadius:{value:0},solidDepth:{value:null},bufferSize:{value:new THREE.Vector2(1,1)},inverseProjection:{value:new THREE.Matrix4()},cameraWorld:{value:new THREE.Matrix4()}};
   for(const pane of panes){
     const beam=paneBeam(pane),window=pane.parent;
     if(!windows.has(window)){
@@ -38,7 +39,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       const targetAngle=floor?floor.userData.theta:angle;
       const radial=new THREE.Vector3(Math.cos(targetAngle),0,Math.sin(targetAngle)),tangent=new THREE.Vector3(-Math.sin(targetAngle),0,Math.cos(targetAngle));
       const sourceTangent=new THREE.Vector3(-Math.sin(angle),0,Math.cos(angle));
-      const center=floor?radial.clone().multiplyScalar(12.55).setY(floor.userData.y+.035):new THREE.Vector3(0,Math.max(2,origin.y-9),0);
+      const center=floor?radial.clone().multiplyScalar(ROUTE_RADIUS+.55).setY(floor.userData.y+.035):new THREE.Vector3(0,Math.max(2,origin.y-9),0);
       const patch=new THREE.Group();group.add(patch);
       const bounds={minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity};
       for(const sibling of panes)if(sibling.parent===window)for(const corner of paneBeam(sibling).corners){
@@ -68,9 +69,22 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geometry.setIndex(indices);
     const baseOpacity=.052*(.35+.65*THREE.MathUtils.clamp(beam.origin.y/106,0,1));
     const material=new THREE.ShaderMaterial({
-      uniforms:{beamColor:{value:beam.color},strength:{value:baseOpacity}},
+      uniforms:{beamColor:{value:beam.color},strength:{value:baseOpacity},...arenaMask},
       vertexShader:'varying vec2 beamUV; void main(){beamUV=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-      fragmentShader:'uniform vec3 beamColor; uniform float strength; varying vec2 beamUV; void main(){float edge=pow(max(0.0,sin(3.14159265*beamUV.x)),.65);float fade=.35+.65*pow(1.0-beamUV.y,.8);gl_FragColor=vec4(beamColor,strength*edge*fade);\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n}',
+      fragmentShader:`uniform vec3 beamColor;uniform float strength;varying vec2 beamUV;
+        uniform bool arenaEnabled;uniform float arenaY,arenaRadius;uniform sampler2D solidDepth;uniform vec2 bufferSize;uniform mat4 inverseProjection,cameraWorld;
+        void main(){
+          if(arenaEnabled){
+            vec2 screen=gl_FragCoord.xy/bufferSize;float depth=texture2D(solidDepth,screen).r;
+            vec4 view=inverseProjection*vec4(screen*2.-1.,depth*2.-1.,1.);view/=view.w;
+            vec3 surface=(cameraWorld*view).xyz;
+            float maskRadius=abs(surface.y-arenaY)<.06?arenaRadius+.03:arenaRadius-.65;
+            if(depth<.99999&&length(surface.xz)<=maskRadius&&surface.y>=arenaY-.4&&surface.y<=arenaY+4.2)discard;
+          }
+          float edge=pow(max(0.0,sin(3.14159265*beamUV.x)),.65);float fade=.35+.65*pow(1.0-beamUV.y,.8);gl_FragColor=vec4(beamColor,strength*edge*fade);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`,
       side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     });
     material.userData.baseOpacity=baseOpacity;materials.push(material);
@@ -124,7 +138,8 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       }
       return null;
     },
-    setDepthSource(texture,resolution,range){for(const material of floorMaterials){material.uniforms.projectionDepth.value=texture;material.uniforms.depthResolution.value=resolution;material.uniforms.depthRange.value=range;material.uniforms.depthEnabled.value=true;}},
+    setArenaMask(arena,camera){arenaMask.arenaEnabled.value=!!arena;arenaMask.arenaY.value=arena?.y??0;arenaMask.arenaRadius.value=arena?.radius??0;camera.updateMatrixWorld();arenaMask.inverseProjection.value.copy(camera.projectionMatrixInverse);arenaMask.cameraWorld.value.copy(camera.matrixWorld);},
+    setDepthSource(texture,resolution,range){arenaMask.solidDepth.value=texture;arenaMask.bufferSize.value=resolution;for(const material of floorMaterials){material.uniforms.projectionDepth.value=texture;material.uniforms.depthResolution.value=resolution;material.uniforms.depthRange.value=range;material.uniforms.depthEnabled.value=true;}},
     update(daylight,time=0){
       const dt=Math.max(0,time-(group.userData.lastLightTime??time));group.userData.lastLightTime=time;
       for(const data of windows.values())if(data.extinguished){

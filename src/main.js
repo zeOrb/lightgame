@@ -1,5 +1,5 @@
 import {FloorArenas} from './floor-arenas.js';
-import {arenaInput} from './arena-state.js';
+import {arenaInput,ARENA_RADIUS} from './arena-state.js';
 import * as THREE from 'three';
 import {CatcherAura} from './catcher-aura.js';
 import {EliteWard} from './elite-ward.js';
@@ -38,7 +38,6 @@ import {createShelfDecorations} from './shelf-decorations.js';
 import {FloatingParchment} from './floating-parchment.js';
 import {BeastKnockback} from './beast-knockback.js';
 import {AtmosphericFocus} from './atmospheric-focus.js';
-import {ForegroundRuins} from './foreground-ruins.js';
 import {UnderShelfRelics} from './under-shelf-relics.js';
 
 const $ = id => document.getElementById(id);
@@ -56,7 +55,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.25;
 const towerMist=new TowerMist(scene);
 const floatingParchment=new FloatingParchment(scene);
-const atmosphericFocus=new AtmosphericFocus(),foregroundRuins=new ForegroundRuins(scene);
+const atmosphericFocus=new AtmosphericFocus();
 const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, .1, 240);
 const ambient=new THREE.HemisphereLight('#a1bdcc', '#5a3849', 2.1);scene.add(ambient);
 const sun = new THREE.DirectionalLight('#ffcf87', 4.1);sun.target.position.set(0,TOWER_TOP,0);sun.position.copy(sun.target.position).addScaledVector(SUN_RAY_DIRECTION,-40);
@@ -305,7 +304,8 @@ function updateArena(dt){
   time+=dt;invert=slow=0;
   const active=arenas.active,old={...arenas.player},previousHeight=height;
   camera.getWorldDirection(arenaForward);const direction=arenaInput(keys,arenaForward);
-  const movable=active.stage==='fighting'||active.stage==='cleared';
+  const entering=active.stage==='entering';
+  const movable=!active.collapse&&(active.stage==='fighting'||active.stage==='cleared');
   if(movable){
     if(Math.hypot(direction.x,direction.z)>.01){arenaFacing.x=direction.x;arenaFacing.z=direction.z;}
     if(height<=.001)abilities.land();
@@ -315,11 +315,11 @@ function updateArena(dt){
     }
   }
   jumpQueued=phaseQueued=false;
-  const dash=abilities.advance(dt);phasingFrame=movable&&!!dash;
+  const dash=abilities.advance(dt);phasingFrame=entering||(movable&&!!dash);
   if(movable){const jump=advanceJump(height,velocity,dt);height=jump.height;velocity=jump.velocity;}
   let flare=false;if(movable&&flareQueued&&abilities.use(AbilityType.FLARE)){flare=true;flareAge=0;flareBurst.start(new THREE.Vector3(old.x,old.y+height+.5,old.z),glassGlowPalette);}flareQueued=false;
   const result=arenas.update(dt,time,{direction,dash:movable?dash:null,height,previousHeight,velocity,speed:4.8*RUN_UPGRADES.speed,flare,chargedPalette:rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null});
-  const p=arenas.player,dx=p.x-old.x,dz=p.z-old.z;moveSpeed=Math.hypot(dx,dz)/Math.max(.0001,dt);
+  const p=arenas.player,dx=p.x-old.x,dz=p.z-old.z;moveSpeed=result.teleported?0:Math.hypot(dx,dz)/Math.max(.0001,dt);
   if(Math.hypot(dx,dz)>.0001)facingTarget=Math.atan2(dx,dz);
   if(result.bounce){height=Math.max(height,result.bounce);velocity=6;}
   rabbitState.setVitral(null);currentVitralZone=null;
@@ -327,15 +327,15 @@ function updateArena(dt){
   if(result.damage){light=Math.max(0,light-result.damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(140,.18);}
   if(result.phaseKill){light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.phaseHeal*result.kills);if(RUN_UPGRADES.resonance)abilities.cooldowns.phasing=Math.max(0,abilities.cooldowns.phasing-.5);}
   if(result.hits)tone(result.kills?640:330,.18);
+  if(result.teleported){s=result.returnedS;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=false;cameraNeedsReset=true;floorGates.arriveAt(s);}
   if(result.cleared){tone(1046,.35);toast('Арена пройдена');}
   shadowEffects.setDamage(false);
   const boss=active.enemies.find(b=>b.boss);
   $('effect').textContent=active.cleared?'Арена пройдена':boss?'Страж · '+Math.max(0,boss.hp)+' / '+boss.maxHP+' · Врагов: '+active.living:'Арена';
   if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;light=RUN_UPGRADES.maxHP*.3;}
   if(light<=0)finish(false);
-  if(result.exited!==undefined){
-    const previous=s;s=result.exited;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=false;arenaCameraReturn=.8;cameraNeedsReset=true;
-    floorGates.check(previous,s,0,0);
+  if(result.returnedS!==undefined&&!result.teleported){
+    s=result.returnedS;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=false;arenaCameraReturn=.8;cameraNeedsReset=true;
     if(s>=END-.1&&light>0)finish(true);
   }
   updateHUD();
@@ -371,7 +371,7 @@ function update(dt){
   else if(dash){const moved=applySpiralPhase(s,lane,dash.x);s=moved.s;lane=moved.lane;}
   else{s=Math.min(END,s+forward*direction*(slow>0?.65:1.45)*RUN_UPGRADES.speed*dt);if(!passenger&&height<=.001)lane=THREE.MathUtils.damp(lane,0,12,dt);}
   const enteredArena=arenas.enter(beforeMoveS,s,route(beforeMoveS,lane));
-  if(enteredArena){s=enteredArena.s;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=false;phaseQueued=jumpQueued=false;beastKnockback.reset();rabbitState.setVitral(null);currentVitralZone=null;shadowEffects.setDamage(false);updateHUD();return;}
+  if(enteredArena){s=enteredArena.s;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=true;phaseTrail.reset();floorGates.arriveAt(enteredArena.s);phaseQueued=jumpQueued=false;beastKnockback.reset();rabbitState.setVitral(null);currentVitralZone=null;shadowEffects.setDamage(false);updateHUD();return;}
   // The ward catches swept dashes before the enemy collision pass.
   for(const beast of beasts){
     if(beast.dead||!beast.elite?.contact(beforeMoveS,s,lane,height))continue;
@@ -401,7 +401,7 @@ function update(dt){
     light=Math.max(0,light-ThreatInfo[threatHit.type].damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(170,.15);toast(ThreatInfo[threatHit.type].name+' · −'+ThreatInfo[threatHit.type].damage+' света');
   }
   let inShadow=false;
-  for(const h of hazards){const p=route(h.s,h.lane),player=route(s,lane);if(Math.hypot(player.x-p.x,player.z-p.z)<1.12&&height<.8)inShadow=true;}
+  for(const h of hazards){const p=route(h.s,h.lane),player=route(s,lane);if(Math.hypot(player.x-p.x,player.z-p.z)<1.12&&Math.abs(player.y+height-p.y)<.8&&height<.8)inShadow=true;}
   if(!phasingFrame&&!hasShelfSupport(threats,s,lane)&&height===0&&velocity<=0){beginRabbitFall(lane>2.5,'Под лапами больше нет полки…',false);return;}
   for(const g of glints)if(!g.taken&&Math.abs(s-g.s)<RUN_UPGRADES.magnet&&Math.abs(lane-g.lane)<1.15&&height<1.8){g.taken=true;pickupEffects.collect(g.o);light=clamp(light+RUN_UPGRADES.shardHeal,0,RUN_UPGRADES.maxHP);collected++;progression.award();tone(800+collected%4*90);toast('+'+RUN_UPGRADES.shardHeal+' света · +1 очко древа');}
   for(const b of bottles){b.cooldown=Math.max(0,b.cooldown-dt);if(!phasingFrame&&Math.abs(s-b.s)<.65&&Math.abs(lane-b.lane)<.7&&height<1&&b.cooldown===0){b.cooldown=7;if(b.s%2){invert=2.5*RUN_UPGRADES.potionScale;toast('Преломление! Управление отражено на 2,5 секунды');}else{slow=3*RUN_UPGRADES.potionScale;toast('Густой свет · замедление на 3 секунды');}tone(270,.2);}}
@@ -480,9 +480,10 @@ function emitSunParticle(particle,initial=false){
 let cameraNeedsReset=true;
 function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);if(!skillTree.element.hidden)return;visualTime+=dt;
   if(state==='playing')update(dt);
+  const arenaView=arenas.active?.stage==='fighting'?{y:arenas.active.y,radius:ARENA_RADIUS}:null;
   threatVisuals.update(time);
   shelfRelics.updateDynamic();
-  floatingParchment.update(state==='paused'?0:dt);
+  floatingParchment.update(state==='paused'?0:dt,arenaView);
   floorGates.update(state==='paused'?0:dt);
   if(state!=='paused'&&flareAge<1.8){flareAge+=dt;flareBurst.update(flareAge);}
   $('phase-status').textContent=abilities.cooldowns.phasing>.05?'Phasing '+abilities.cooldowns.phasing.toFixed(1)+'с':'Phasing';
@@ -518,7 +519,7 @@ function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);i
     sunWasRegenerating=sunRegenerating;
   }
   $('light-sun').classList.toggle('vitral-sun',sunRegenerating);
-  towerMist.update(state==='intro'?visualTime:time,state==='won');
+  towerMist.update(state==='intro'?visualTime:time,state==='won',arenaView);
   shadowMat.uniforms.clock.value=time;groundSmoke.update(time,innerHeight*renderer.getPixelRatio());
   if(state==='playing'||state==='won'||state==='lost')pickupEffects.update(dt);
   if(state!=='won'){
@@ -607,16 +608,18 @@ function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);i
     else{camera.position.copy(desired);target.copy(nextTarget);}
     cameraNeedsReset=false;
   }
+  const desiredFov=58;
+  camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,6,dt);camera.updateProjectionMatrix();
   camera.lookAt(target);
   catcherAura.update(visualTime,camera,$('vignette'),innerWidth,innerHeight);
-  foregroundRuins.update(camera,dt,state!=='won');
   phaseTrailColor.copy(rabbitMat.color).multiplyScalar(brightness);
   phaseTrail.update(state==='paused'?0:dt,rabbit.position,state==='playing'&&phasingFrame&&!falling,camera,phaseTrailColor);
   if(state==='playing')shadowEffects.applyShake(camera);
+  windowLight.setArenaMask(arenaView,camera);
   towerMist.renderDepth(renderer,scene,camera);
   catcherRay.update(dt,visualTime,rabbit,state!=='won'&&state!=='lost'&&!falling,camera);
   const fallFade=falling?Math.min(.94,(1-Math.exp(-rabbitState.fall.time*1.2))*.48+rabbitState.fall.dissolve*.46):0;
-  atmosphericFocus.render(renderer,scene,camera,rabbit.position,depthLight(s),towerMist.depthTarget.depthTexture,fallFade);
+  atmosphericFocus.render(renderer,scene,camera,rabbit.position,depthLight(s),towerMist.depthTarget.depthTexture,fallFade,arenaView);
 }
 $('flare-hint').hidden=!RUN_UPGRADES.flare;$('flare-touch').hidden=!RUN_UPGRADES.flare;
 camera.position.set(3,TOWER_TOP+4,16);

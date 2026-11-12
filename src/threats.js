@@ -1,4 +1,4 @@
-import { END, GAP_HALF_WIDTH, ROUTE_ANGLE, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius, clamp } from './game.js';
+import {ROUTE_RADIUS, END, GAP_HALF_WIDTH, ROUTE_ANGLE, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius, clamp } from './game.js';
 
 export const ThreatType=Object.freeze({HOLE:'hole',MOVING_PLATFORM:'moving-platform',PENDULUM:'pendulum',INK_WAVE:'ink-wave',THORNS:'thorns'});
 export const ThreatInfo=Object.freeze({
@@ -49,8 +49,8 @@ export function threatState(threat,time){
 }
 export function threatHits(threat,{s,lane,height}){
   if(!threat.active||!ThreatInfo[threat.type]||Math.abs(s-threat.s)>1.2)return false;
-  const angle=(s-threat.s)*ROUTE_ANGLE,radius=12+lane;
-  const x=Math.cos(angle)*radius-12,z=Math.sin(angle)*radius;
+  const angle=(s-threat.s)*ROUTE_ANGLE,radius=ROUTE_RADIUS+lane;
+  const x=Math.cos(angle)*radius-ROUTE_RADIUS,z=Math.sin(angle)*radius;
   const foot=height-(s-threat.s)*.5;
   if(threat.type===ThreatType.PENDULUM)return Math.hypot(x-threat.bobX,z)<.72&&Math.abs(foot+.45-threat.bobY)<.68;
   if(threat.type===ThreatType.INK_WAVE)return foot<.62&&Math.abs(Math.hypot(x,z)-threat.radius)<.24;
@@ -66,7 +66,7 @@ export function resetThreats(threats){
 }
 
 export function movingPlatformSupports(threat,s,lane){
-  const angle=(s-threat.s)*ROUTE_ANGLE,radius=12+lane;
+  const angle=(s-threat.s)*ROUTE_ANGLE,radius=ROUTE_RADIUS+lane;
   const x=Math.cos(angle)*radius-threat.offset,z=Math.sin(angle)*radius;
   const r=Math.hypot(x,z);
   return r>=shelfInnerRadius(threat.s)&&r<=SHELF_OUTER_RADIUS&&Math.abs(Math.atan2(z,x))<=SHELF_HALF_ANGLE;
@@ -76,11 +76,11 @@ export function platformPassenger(threats,s,lane,height,jumping=false){
   return threats.find(t=>t.type===ThreatType.MOVING_PLATFORM&&Math.abs(s-t.s)<1.2&&movingPlatformSupports(t,s,lane))??null;
 }
 export function carryPlatformPassenger(platform,s,lane,previousOffset){
-  const angle=s*ROUTE_ANGLE,radius=12+lane,delta=platform.offset-previousOffset;
+  const angle=s*ROUTE_ANGLE,radius=ROUTE_RADIUS+lane,delta=platform.offset-previousOffset;
   const x=Math.cos(angle)*radius+Math.cos(platform.s*ROUTE_ANGLE)*delta;
   const z=Math.sin(angle)*radius+Math.sin(platform.s*ROUTE_ANGLE)*delta;
   const turn=Math.atan2(Math.cos(angle)*z-Math.sin(angle)*x,Math.cos(angle)*x+Math.sin(angle)*z);
-  return {s:s+turn/ROUTE_ANGLE,lane:Math.hypot(x,z)-12};
+  return {s:s+turn/ROUTE_ANGLE,lane:Math.hypot(x,z)-ROUTE_RADIUS};
 }
 
 export function unsupportedThreat(threats,s,lane){
@@ -93,7 +93,7 @@ export function unsupportedThreat(threats,s,lane){
 
 // Test the actual curved footprint, including overlapping neighbour shelves.
 export function hasShelfSupport(threats,s,lane){
-  const radius=12+lane;
+  const radius=ROUTE_RADIUS+lane;
   for(let section=Math.max(0,Math.floor(s)-1);section<=Math.min(END+1,Math.ceil(s)+1);section++){
     if(threats.some(t=>t.type===ThreatType.HOLE&&t.s===section))continue;
     const platform=threats.find(t=>t.type===ThreatType.MOVING_PLATFORM&&t.s===section);

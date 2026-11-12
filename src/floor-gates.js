@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
-import {END,FLOOR_COUNT,SHELF_OUTER_RADIUS,shelfInnerRadius,route} from './game.js';
+import {ROUTE_RADIUS,END,FLOOR_COUNT,SHELF_OUTER_RADIUS,shelfInnerRadius,route} from './game.js';
 import {applyTowerDepth} from './tower-depth.js';
 import {createVisualRandom} from './visual-random.js';
 const random=createVisualRandom('floor-gates');
 export function floorGateLayout(){return Array.from({length:FLOOR_COUNT},(_,i)=>{const plank=13+i*14;return {plank,positionS:plank+.49,s:Math.min(plank+.49,END-.2),nextFloor:Math.max(1,FLOOR_COUNT-i-1),passed:false};});}
 export function gateCrossed(gate,previous,s,previousLane,lane){
   if(gate.passed||s<=previous||previous>=gate.s||s<gate.s)return false;
-  const t=(gate.s-previous)/(s-previous),radius=12+previousLane+(lane-previousLane)*t;
+  const t=(gate.s-previous)/(s-previous),radius=ROUTE_RADIUS+previousLane+(lane-previousLane)*t;
   return radius>shelfInnerRadius(gate.plank)+.12&&radius<SHELF_OUTER_RADIUS-.12;
 }
 function archPoint(t,width){
@@ -25,7 +25,7 @@ export class FloorGates {
     const leaf=new THREE.ExtrudeGeometry(leafShape,{depth:.07,bevelEnabled:true,bevelThickness:.015,bevelSize:.015,bevelSegments:1});
     for(const gate of this.gates){
       const inner=shelfInnerRadius(gate.plank)+.22,outer=SHELF_OUTER_RADIUS-.22,width=outer-inner;
-      const p=route(gate.positionS,(inner+outer)/2-12),group=new THREE.Group();group.position.set(p.x,route(gate.plank).y-.02,p.z);group.rotation.y=-p.theta;scene.add(group);gate.group=group;
+      const p=route(gate.positionS,(inner+outer)/2-ROUTE_RADIUS),group=new THREE.Group();group.position.set(p.x,route(gate.plank).y-.02,p.z);group.rotation.y=-p.theta;scene.add(group);gate.group=group;
       const timber=[],ornaments=[];
       const path=Array.from({length:65},(_,i)=>archPoint(i/64,width));
       timber.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(path),80,.18,8,false));
@@ -66,6 +66,12 @@ export class FloorGates {
       gate.passed=true;crossed=gate;this.age=0;this.burst.visible=true;this.burst.position.copy(gate.group.position);this.burst.position.y+=1.65;this.burst.rotation.y=gate.group.rotation.y;
     }
     return crossed;
+  }
+  arriveAt(s){
+    const gate=this.gates.reduce((best,item)=>Math.abs(item.s-s)<Math.abs(best.s-s)?item:best,this.gates[0]);
+    if(!gate||Math.abs(gate.s-s)>.02)return null;
+    gate.passed=true;this.age=0;this.burst.visible=true;this.burst.position.copy(gate.group.position);this.burst.position.y+=1.65;this.burst.rotation.y=gate.group.rotation.y;
+    return gate;
   }
   update(dt=0){
     dt=Number.isFinite(dt)?Math.max(0,dt):0;

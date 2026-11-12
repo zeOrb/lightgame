@@ -13,11 +13,11 @@ export class AtmosphericFocus {
     // the existing solid-surface prepass supplies clean depth independently.
     this.target.resolveDepthBuffer=false;
     this.material=new THREE.ShaderMaterial({depthTest:true,depthWrite:true,depthFunc:THREE.AlwaysDepth,uniforms:{
-      sceneColor:{value:this.target.texture},sceneDepth:{value:null},resolution:{value:new THREE.Vector2(1,1)},inverseProjection:{value:new THREE.Matrix4()},cameraWorld:{value:new THREE.Matrix4()},focusPoint:{value:new THREE.Vector3()},daylight:{value:1},blurPixels:{value:FOCUS_STYLE.blurPixels},backgroundDim:{value:FOCUS_STYLE.backgroundDim},backgroundSaturation:{value:FOCUS_STYLE.backgroundSaturation},
+      sceneColor:{value:this.target.texture},sceneDepth:{value:null},resolution:{value:new THREE.Vector2(1,1)},inverseProjection:{value:new THREE.Matrix4()},cameraWorld:{value:new THREE.Matrix4()},focusPoint:{value:new THREE.Vector3()},daylight:{value:1},arenaMode:{value:0},arenaFloorY:{value:0},arenaRadius:{value:0},blurPixels:{value:FOCUS_STYLE.blurPixels},backgroundDim:{value:FOCUS_STYLE.backgroundDim},backgroundSaturation:{value:FOCUS_STYLE.backgroundSaturation},
       blurVariant:{value:BLUR_VARIANTS[FOCUS_STYLE.blurVariant]},
     },vertexShader:'varying vec2 screenUV;void main(){screenUV=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:`
       uniform sampler2D sceneColor,sceneDepth;uniform vec2 resolution;uniform mat4 inverseProjection,cameraWorld;
-      uniform vec3 focusPoint;uniform float daylight,blurPixels,backgroundDim,backgroundSaturation,blurVariant;varying vec2 screenUV;
+      uniform vec3 focusPoint;uniform float daylight,arenaMode,arenaFloorY,arenaRadius,blurPixels,backgroundDim,backgroundSaturation,blurVariant;varying vec2 screenUV;
       vec3 gradeBackground(vec3 color,float floorDistance){
         float luma=dot(color,vec3(.2126,.7152,.0722));
         color=mix(vec3(luma),color,backgroundSaturation)*backgroundDim;
@@ -30,13 +30,18 @@ export class AtmosphericFocus {
         vec4 view=inverseProjection*vec4(screenUV*2.-1.,depth*2.-1.,1.);view/=view.w;
         vec3 world=(cameraWorld*view).xyz;
         float radius=length(world.xz),vertical=abs(world.y-focusPoint.y);
+        float floorSurface=1.-smoothstep(.035,.07,abs(world.y-arenaFloorY));
+        float arenaFootprint=(1.-smoothstep(arenaRadius-.8,arenaRadius-.6,radius));
+        arenaFootprint=max(arenaFootprint,floorSurface*(1.-smoothstep(arenaRadius,arenaRadius+.03,radius)));
+        float arenaHeight=smoothstep(arenaFloorY-.4,arenaFloorY-.1,world.y)*(1.-smoothstep(arenaFloorY+3.9,arenaFloorY+4.2,world.y));
+        float arenaPixel=arenaMode*arenaFootprint*arenaHeight;
         float wall=smoothstep(13.8,18.5,radius);
         float otherFloors=smoothstep(4.5,22.,vertical);
         float away=1.-smoothstep(1.2,3.2,length(world-focusPoint));
-        float background=max(wall,otherFloors*.85)*(1.-away);
+        float background=max(wall,otherFloors*.85)*(1.-away)*(1.-arenaPixel);
         if(depth>.99999)background=1.;
         vec3 sharp=texture2D(sceneColor,screenUV).rgb,color=sharp;
-        if(background>.015){
+        if(arenaPixel<.5&&background>.015){
           vec2 pixel=vec2(blurPixels*sqrt(background))/resolution;
           vec3 sum=sharp*.1;float total=.1;
           for(int i=0;i<20;i++){
@@ -54,7 +59,7 @@ export class AtmosphericFocus {
         }
         // Feather only the narrow silhouette of a tread against deeper scenery.
         // The rabbit remains sharp; the shelf interior does not get blurred.
-        if(radius>9.5&&radius<14.5&&world.y<focusPoint.y-.075){
+        if(arenaPixel<.5&&radius>9.5&&radius<14.5&&world.y<focusPoint.y-.075){
           vec3 edgeColor=vec3(0.);float edgeWeight=0.;
           for(int i=0;i<4;i++){
             float a=float(i)*1.5707963;vec2 uv=clamp(screenUV+vec2(cos(a),sin(a))*2.1/resolution,vec2(0.),vec2(1.));
@@ -68,8 +73,7 @@ export class AtmosphericFocus {
           color=(color+edgeColor)/(1.+edgeWeight);
         }
         // A restrained frame leaves the playable centre unobscured.
-        vec2 q=screenUV*2.-1.;float edge=smoothstep(.45,1.35,length(q*vec2(.85,1.)));
-        color*=1.-edge*.16;
+        vec2 q=screenUV*2.-1.;float edge=smoothstep(.45,1.35,length(q*vec2(.85,1.)));color*=1.-edge*.16*(1.-arenaPixel);
         gl_FragColor=vec4(color,1.);
         gl_FragDepth=depth;
         #include <tonemapping_fragment>
@@ -82,14 +86,14 @@ export class AtmosphericFocus {
       #include <tonemapping_fragment>
       #include <colorspace_fragment>`),depthTest:true,depthWrite:true,depthFunc:THREE.AlwaysDepth});
   }
-  render(renderer,scene,camera,focus,daylight,depthTexture,fallDarkness=0){
+  render(renderer,scene,camera,focus,daylight,depthTexture,fallDarkness=0,arena=null){
     renderer.getDrawingBufferSize(this.size);
     if(this.target.width!==this.size.x||this.target.height!==this.size.y){this.target.setSize(this.size.x,this.size.y);this.graded.setSize(this.size.x,this.size.y);}
     const previous=renderer.getRenderTarget(),previousAutoClear=renderer.autoClear,previousLayers=camera.layers.mask,previousBackground=scene.background,u=this.material.uniforms;
     u.sceneDepth.value=depthTexture;
     this.antialias.uniforms.tDiffuse.value=this.graded.texture;this.antialias.uniforms.solidDepth.value=depthTexture;this.antialias.uniforms.resolution.value.set(1/this.size.x,1/this.size.y);
     if(!this.lightsReady){scene.traverse(object=>{if(object.isLight)object.layers.enable(2);});this.lightsReady=true;}
-    camera.updateMatrixWorld();u.resolution.value.copy(this.size);u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.cameraWorld.value.copy(camera.matrixWorld);u.focusPoint.value.copy(focus);u.daylight.value=daylight;
+    camera.updateMatrixWorld();u.resolution.value.copy(this.size);u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.cameraWorld.value.copy(camera.matrixWorld);u.focusPoint.value.copy(focus);u.daylight.value=daylight;u.arenaMode.value=arena?1:0;u.arenaFloorY.value=arena?.y??0;u.arenaRadius.value=arena?.radius??0;
     try{
       camera.layers.disable(2);renderer.setRenderTarget(this.target);renderer.clear();renderer.render(scene,camera);
       this.quad.material=this.material;renderer.setRenderTarget(this.graded);renderer.render(this.scene,this.camera);

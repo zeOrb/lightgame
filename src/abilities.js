@@ -1,4 +1,4 @@
-import {JUMP_SPEED,ROUTE_ANGLE} from './game.js';
+import {ROUTE_RADIUS,JUMP_SPEED,ROUTE_ANGLE} from './game.js';
 export const AbilityType=Object.freeze({JUMP:'jump',PHASING:'phasing',FLARE:'flare'});
 export const AbilityInfo=Object.freeze({jump:{key:'Space',cooldown:.12},phasing:{key:'Shift',cooldown:1.8,duration:.18,distanceScale:.75},flare:{key:'E',cooldown:8}});
 export class Abilities {
@@ -23,13 +23,13 @@ export class Abilities {
   }
 }
 export function applyPhaseDelta(s,lane,delta){
-  const angle=s*ROUTE_ANGLE,radius=12+lane;
+  const angle=s*ROUTE_ANGLE,radius=ROUTE_RADIUS+lane;
   const x=Math.cos(angle)*radius+delta.x,z=Math.sin(angle)*radius+delta.z;
   const turn=Math.atan2(Math.cos(angle)*z-Math.sin(angle)*x,Math.cos(angle)*x+Math.sin(angle)*z);
-  return {s:s+turn/ROUTE_ANGLE,lane:Math.hypot(x,z)-12};
+  return {s:s+turn/ROUTE_ANGLE,lane:Math.hypot(x,z)-ROUTE_RADIUS};
 }
 export function applySpiralPhase(s,lane,distance){
-  const unitsPerSection=Math.hypot((12+lane)*ROUTE_ANGLE,.5);
+  const unitsPerSection=Math.hypot((ROUTE_RADIUS+lane)*ROUTE_ANGLE,.5);
   return {s:s+distance/unitsPerSection,lane};
 }
 // Sweep the entire dash segment, so a fast frame cannot skip an enemy.

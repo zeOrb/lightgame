@@ -22,12 +22,13 @@ export class FloatingParchment {
   constructor(scene){
     const random=createVisualRandom('floating-parchment'),count=FLOOR_COUNT*18;
     this.clock={value:0};
+    this.arenaSphere={value:new THREE.Vector4(0,0,0,0)};
     const geometry=new THREE.PlaneGeometry(1,1.4,4,5),phases=new Float32Array(count);
     const material=applyTowerDepth(new THREE.MeshStandardMaterial({map:parchmentTexture(),color:'#d5c4a0',roughness:1,side:THREE.DoubleSide,alphaTest:.12,transparent:true,depthWrite:false,depthTest:true}));
     const depthCompile=material.onBeforeCompile;
     material.onBeforeCompile=shader=>{
-      depthCompile(shader);shader.uniforms.paperClock=this.clock;
-      shader.vertexShader=`uniform float paperClock;attribute float paperPhase;varying float paperAge;varying float paperSeed;varying float paperDistance;
+      depthCompile(shader);shader.uniforms.paperClock=this.clock;shader.uniforms.paperArenaSphere=this.arenaSphere;
+      shader.vertexShader=`uniform float paperClock;attribute float paperPhase;varying float paperAge;varying float paperSeed;varying float paperDistance;varying vec3 paperWorld;
         mat3 paperTurn(){
           float t=paperClock,p=paperPhase;
           float yaw=p+t*(.28+fract(p)*.24);
@@ -61,12 +62,13 @@ export class FloatingParchment {
         paperPosition.z+=cos(t*.31)*.35+gust*paperAge*sin(paperClock*.13)*.35;
         paperPosition.y+=gust*sin(t*1.5)*.25;
         towerWorldHeight=(modelMatrix*paperPosition).y;
+        paperWorld=(modelMatrix*paperPosition).xyz;
         vec4 mvPosition=modelViewMatrix*paperPosition;
         paperDistance=length(mvPosition.xyz);
         gl_Position=projectionMatrix*mvPosition;
       `);
       shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>','vec4 worldPosition=modelMatrix*paperPosition;');
-      shader.fragmentShader=`varying float paperAge;varying float paperSeed;varying float paperDistance;
+      shader.fragmentShader=`uniform vec4 paperArenaSphere;varying vec3 paperWorld;varying float paperAge;varying float paperSeed;varying float paperDistance;
         vec3 paperRGBtoHSV(vec3 c){
           vec4 K=vec4(0.,-1./3.,2./3.,-1.);
           vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));
@@ -102,9 +104,12 @@ export class FloatingParchment {
         float paperDepth=mix(.48,1.,smoothstep(10.,${TOWER_TOP.toFixed(1)},towerWorldHeight));
         if(!gl_FrontFacing)gl_FragColor.rgb=paperReverse*paperDepth;
         else {vec3 lit=paperRGBtoHSV(max(gl_FragColor.rgb,vec3(0.)));lit.x=paperHSV.x;lit.y=paperHSV.y;lit.z=max(lit.z,paperHSV.z*paperDepth*.8);gl_FragColor.rgb=paperHSVtoRGB(lit);}
+        if(paperArenaSphere.w>0.&&distance(paperWorld,paperArenaSphere.xyz)<=paperArenaSphere.w){
+          gl_FragColor.rgb=vec3(dot(gl_FragColor.rgb,vec3(.2126,.7152,.0722)));
+        }
       `);
     };
-    material.customProgramCacheKey=()=> 'floating-parchment-near-focus-v9';
+    material.customProgramCacheKey=()=> 'floating-parchment-arena-sphere-v10';
     const batch=new THREE.InstancedMesh(geometry,material,count),dummy=new THREE.Object3D();batch.name='Floating parchment';batch.frustumCulled=false;batch.renderOrder=1;batch.layers.set(2);
     for(let i=0;i<count;i++){
       const angle=random()*Math.PI*2,r=3.5+random()*6.1,size=.32+random()*.32;
@@ -113,5 +118,5 @@ export class FloatingParchment {
     }
     geometry.setAttribute('paperPhase',new THREE.InstancedBufferAttribute(phases,1));batch.instanceMatrix.needsUpdate=true;scene.add(batch);this.mesh=batch;
   }
-  update(dt){this.clock.value+=Math.max(0,dt);}
+  update(dt,arena=null){this.clock.value+=Math.max(0,dt);this.arenaSphere.value.set(0,arena?.y??0,0,arena?.radius??0);}
 }

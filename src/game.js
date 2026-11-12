@@ -11,8 +11,9 @@ export function canStomp(previousFoot, foot, previousTop, top, velocity, overlap
 export const gaps = [19, 38, 59, 81, 103, 126, 147,...Array.from({length:Math.ceil((END-167)/22)},(_,i)=>170+i*22).filter(s=>s<END-3)];
 export const ROUTE_ANGLE = Math.PI / 14;
 export const SHELF_HALF_ANGLE = .133;
-export const SHELF_INNER_RADIUS = 10.1;
-export const SHELF_OUTER_RADIUS = 14.0;
+export const ROUTE_RADIUS = 15;
+export const SHELF_INNER_RADIUS = 13.1;
+export const SHELF_OUTER_RADIUS = 17.0;
 export function shelfInnerRadius(section){
   const random=visualSample('shelves',section);
   const length=(SHELF_OUTER_RADIUS-SHELF_INNER_RADIUS)*(1+(random*2-1)/8);
@@ -61,6 +62,6 @@ export function lightStep(light, dt, { shadow = false, vitral = false, vitralTim
 }
 export function route(s, lane = 0) {
   const theta = s * ROUTE_ANGLE;
-  const radius = 12 + lane;
+  const radius = ROUTE_RADIUS + lane;
   return { x: Math.cos(theta) * radius, y: TOWER_TOP - s * .5, z: Math.sin(theta) * radius, theta };
 }

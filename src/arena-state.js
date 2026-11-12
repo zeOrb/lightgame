@@ -1,8 +1,10 @@
 import {FLOOR_COUNT,END,route} from './game.js';
-export const ARENA_RADIUS=5.6;
+// Leave clearance between the arena barrier and the spiral shelves.
+export const ARENA_RADIUS=11.25;
 export function arenaLayout(){return Array.from({length:FLOOR_COUNT},(_,index)=>{
   const plank=13+index*14,p=route(plank);
-  return {index,plank,s:plank-.35,exitS:Math.min(END,plank+.8),y:p.y,theta:p.theta,cleared:false};
+  const gateS=Math.min(plank+.49,END-.2);
+  return {index,plank,s:gateS,exitS:Math.min(END,plank+.8),returnS:gateS,y:p.y,theta:p.theta,cleared:false};
 });}
 export function clampArena(point,radius=ARENA_RADIUS-.45){
   const length=Math.hypot(point.x,point.z);
@@ -26,8 +28,9 @@ export class ArenaRun {
   }
   transition(dt){
     const a=this.active;if(!a||!['entering','exiting'].includes(a.stage))return null;
-    a.age=Math.min(1,a.age+dt/1.05);const t=a.age,e=t*t*(3-2*t);
-    const dest=a.stage==='entering'?{x:Math.cos(a.theta)*(ARENA_RADIUS-1),y:a.y,z:Math.sin(a.theta)*(ARENA_RADIUS-1)}:route(a.exitS);
+    const duration=a.stage==='entering'?.34:1.05;
+    a.age=Math.min(1,a.age+dt/duration);const t=a.age,e=a.stage==='entering'?1-(1-t)**3:t*t*(3-2*t);
+    const dest=a.stage==='entering'?{x:0,y:a.y,z:0}:route(a.exitS);
     for(const axis of ['x','y','z'])this.player[axis]=a.from[axis]+(dest[axis]-a.from[axis])*e;
     if(t===1){if(a.stage==='entering')a.stage='fighting';else{this.active=null;return a.exitS;}}
     return null;

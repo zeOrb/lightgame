@@ -98,7 +98,7 @@ export class PixelSkillArt {
     const seed=visualSample('skill-ready-border:'+skill.id,0);
     const pulse=Math.pow(.5+.5*Math.sin(this.time*(.58+seed*.24)+seed*Math.PI*2),2.5);
     const tint=(a,b)=>`rgb(${a.map((value,i)=>Math.round(value+(b[i]-value)*pulse)).join(',')})`;
-    const readyRim=tint([120,89,43],[255,226,127]),readyOuter=tint([98,69,34],[248,202,86]);
+    const readyRim=tint([58,61,64],[255,226,127]),readyOuter=tint([40,43,46],[248,202,86]);
     const body=owned?'#8a713e':ready?'#322e24':'#242729',rim=owned?'#f4cf80':node.unaffordable?'#e85b55':ready?readyRim:'#625b4d';
     if(owned){c.save();c.shadowColor='#ffcc7099';c.shadowBlur=14;this.diamond(0,0,47,'#00000000','#efbe6555',8);c.restore();}
     this.diamond(3,5,47,'#12181b','#0b1115',5);this.diamond(0,0,46,body,owned?'#ffd34f':ready?readyOuter:'#4d3827',ready?3:5);this.diamond(0,0,41,body,rim,ready?1.5:3);this.diamond(0,0,35,owned?'#ae9257':ready?'#403927':'#303234',owned?'#f8e0a0':ready?readyRim:'#8b774e',ready?1:2);
