@@ -106,6 +106,48 @@ export function createShadowBeast(kind = 'cat') {
   return {o,paw,legs,tail,head,smoke,circles,eyeGlows,meshes,deathFur,dissolve,deathDirection,deathColors,deathCenter,vitralBurst,kind,stompTop:hare?1.03:wolf?1.15:1.02,dead:false,deathAge:0};
 }
 
+export function createShadowReaper(){
+  // Retain the shared eyes, smoke, damage and dissolve systems.
+  const beast=createShadowBeast('wolf'),{o,head}=beast;
+  for(const mesh of beast.meshes)if(mesh.material===fur)mesh.removeFromParent();
+  for(const leg of beast.legs)leg.removeFromParent();beast.tail.removeFromParent();
+  head.position.set(0,2.12,.05);
+  ellipsoid(o,fur,[0,1.65,0],[.48,.65,.30]);
+  const hood=new THREE.Mesh(new THREE.ConeGeometry(.49,.92,12),fur);hood.position.set(0,.19,-.05);head.add(hood);
+  ellipsoid(head,fur,[0,-.04,-.04],[.43,.40,.32]);
+  const points=[],uvs=[],indices=[],segments=40,levels=12;
+  for(let row=0;row<=levels;row++)for(let j=0;j<=segments;j++){
+    const t=row/levels,angle=j/segments*Math.PI*2;
+    const radius=.34+(1-t)*.38+Math.sin(angle*9+t*2)*.045;
+    const hem=(1-t)**5*(.11+Math.sin(angle*7)*.10+Math.sin(angle*13)*.06);
+    points.push(Math.cos(angle)*radius,.13+t*1.9+hem,Math.sin(angle)*radius*.72);
+    uvs.push(j/segments,t);
+    if(row<levels&&j<segments){const a=row*(segments+1)+j,b=a+segments+1;indices.push(a,b,a+1,a+1,b,b+1);}
+  }
+  const robeGeometry=new THREE.BufferGeometry();robeGeometry.setAttribute('position',new THREE.Float32BufferAttribute(points,3));robeGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));robeGeometry.setIndex(indices);robeGeometry.computeVertexNormals();
+  const robe=new THREE.Mesh(robeGeometry,fur);robe.frustumCulled=false;o.add(robe);
+  robeGeometry.attributes.position.setUsage(THREE.DynamicDrawUsage);
+  beast.cloak={geometry:robeGeometry,rest:new Float32Array(points),motion:0,lastTime:null};
+  const arms=[];
+  for(const side of [-1,1]){
+    const arm=new THREE.Group();arm.position.set(side*.41,1.94,0);o.add(arm);
+    const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(),new THREE.Vector3(side*.24,-.30,.02),new THREE.Vector3(side*.38,-.72,.15),new THREE.Vector3(side*.46,-1.03,.23)]);
+    arm.add(new THREE.Mesh(new THREE.TubeGeometry(curve,16,.105,7,false),fur));
+    ellipsoid(arm,fur,[side*.46,-1.03,.23],[.14,.18,.10]);
+    for(let finger=0;finger<4;finger++){
+      const x=side*.46+(finger-1.5)*.07;
+      const claw=new THREE.CatmullRomCurve3([new THREE.Vector3(x,-1.10,.25),new THREE.Vector3(x+side*.035,-1.27,.28),new THREE.Vector3(x+side*.06,-1.31,.38)]);
+      arm.add(new THREE.Mesh(new THREE.TubeGeometry(claw,8,.025,4,false),fur));
+    }
+    for(let i=0;i<4;i++){const shred=new THREE.Mesh(new THREE.ConeGeometry(.14,.65,3),fur);shred.position.set(side*.13,-.15-i*.14,-.03);shred.rotation.z=Math.PI+side*.35;arm.add(shred);}
+    arms.push(arm);
+  }
+  beast.legs=arms;beast.paw=arms[1];beast.tail=new THREE.Group();o.add(beast.tail);
+  beast.kind='reaper';beast.stompTop=2.4;
+  beast.meshes=[];o.traverse(child=>{if(child.isMesh)beast.meshes.push(child);});
+  return beast;
+}
+
 export function killShadowBeast(beast,palette=null){
   beast.dead=true;beast.deathAge=0;beast.deathY=beast.o.position.y;
   for(const glow of beast.eyeGlows)glow.visible=false;
@@ -128,6 +170,7 @@ export function resetShadowBeast(beast){
   beast.dissolve.value=-10;
   beast.deathDirection.value=1;beast.vitralDeath=false;
   beast.vitralBurst.reset();
+  if(beast.cloak){beast.cloak.motion=0;beast.cloak.lastTime=null;beast.moveSpeed=0;beast.cloak.geometry.attributes.position.array.set(beast.cloak.rest);beast.cloak.geometry.attributes.position.needsUpdate=true;}
   for(const glow of beast.eyeGlows)glow.visible=true;
   for(const mote of beast.smoke){mote.sprite.material.map=smokeTexture;mote.sprite.material.color.set('#000000');mote.sprite.material.blending=THREE.NormalBlending;mote.sprite.material.opacity=0;mote.sprite.material.needsUpdate=true;}
   for(const mesh of beast.meshes){if(mesh.material===beast.deathFur)mesh.material=fur;mesh.visible=true;}
@@ -152,6 +195,19 @@ export function animateBeastDeath(beast,dt){
 }
 
 export function animateShadowBeast(beast,time,leap) {
+  if(beast.cloak){
+    const cloth=beast.cloak,dt=cloth.lastTime===null?0:Math.max(0,Math.min(.1,time-cloth.lastTime));cloth.lastTime=time;
+    cloth.motion=THREE.MathUtils.damp(cloth.motion,THREE.MathUtils.clamp((beast.moveSpeed??0)/5,0,1),5,dt);
+    const position=cloth.geometry.attributes.position,rest=cloth.rest,motion=cloth.motion;
+    for(let i=0;i<position.count;i++){
+      const x=rest[i*3],y=rest[i*3+1],z=rest[i*3+2];
+      const loose=Math.pow(THREE.MathUtils.clamp(1-y/2.03,0,1),1.6);
+      const back=THREE.MathUtils.smoothstep(-z,-.04,.42);
+      const wave=Math.sin(time*(3.2+motion*3)-y*5+x*4)+Math.sin(time*5.1-y*8-z*5)*.35;
+      position.setXYZ(i,x+wave*loose*back*(.045+motion*.18),y+loose*back*motion*(.22+wave*.09),z-loose*back*motion*1.25+wave*loose*(.025+motion*.06));
+    }
+    position.needsUpdate=true;
+  }
   beast.eyeGlows.forEach((glow,i)=>{glow.material.opacity=(i%2?.88:.55)+Math.sin(time*2.6+beast.s)*.055;});
   beast.tail.rotation.z=Math.sin(time*1.8+beast.s)*.22;
   beast.head.rotation.x=-.08+Math.sin(time*2+beast.s)*.045;

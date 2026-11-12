@@ -11,7 +11,7 @@ export function diamondUV(u,radius){
 }
 export function skillPosition(skill){
   if(skill.isRoot)return {x:SKILL_MAP_SIZE/2,y:SKILL_MAP_SIZE/2};
-  const angle=-Math.PI/2+Math.PI/SKILL_BRANCH_COUNT+skill.ray*Math.PI*2/SKILL_BRANCH_COUNT,r=200+skill.tier*170;
+  const angle=-Math.PI/2+Math.PI/SKILL_BRANCH_COUNT+skill.ray*Math.PI*2/SKILL_BRANCH_COUNT+(skill.layout?.angleOffset??0),r=200+skill.tier*170;
   const bend=Math.sin(skill.tier*1.8+skill.ray*.8)*32;
   const center=SKILL_MAP_SIZE/2;
   return {x:center+Math.cos(angle)*r-Math.sin(angle)*bend,y:center+Math.sin(angle)*r+Math.cos(angle)*bend};

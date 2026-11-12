@@ -24,7 +24,7 @@ export class ArenaRun {
     if(this.active||to<from)return null;
     const arena=this.arenas.find(a=>!a.cleared&&from<=a.s&&to>=a.s);if(!arena)return null;
     this.active=arena;arena.stage='entering';arena.age=0;arena.from={...position};
-    this.player={...position};arena.living=3;return arena;
+    this.player={...position};arena.living=1;return arena;
   }
   transition(dt){
     const a=this.active;if(!a||!['entering','exiting'].includes(a.stage))return null;

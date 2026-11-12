@@ -18,7 +18,7 @@ export class SkillProgression {
   constructor(storage=null){this.storage=storage;let data;try{data=JSON.parse(storage?.getItem(PROGRESS_KEY)??'{}');}catch{}this.state=cleanProgress(data);}
   save(){try{this.storage?.setItem(PROGRESS_KEY,JSON.stringify(this.state));}catch{}}
   reset(){this.state=cleanProgress();this.save();}
-  award(){this.state.points++;this.save();}
+  award(amount=1){this.state.points+=Math.max(0,Math.floor(amount));this.save();}
   canBuy(id){const skill=SKILLS.find(s=>s.id===id);return !!skill&&!this.state.owned.includes(id)&&this.state.points>=skill.cost&&(!skill.requires||this.state.owned.includes(skill.requires));}
   buy(id){if(!this.canBuy(id))return false;const skill=SKILLS.find(s=>s.id===id);this.state.points-=skill.cost;this.state.owned.push(id);this.save();return true;}
 }

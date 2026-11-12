@@ -28,7 +28,8 @@
     "flare": false,
     "extraFloors": 0,
     "glintSpacing": 5,
-    "lastLight": false
+    "lastLight": false,
+    "rayJumpHeal": 0
   },
   "branches": [
     {
@@ -339,28 +340,87 @@
           }
         },
         {
+          "id": "rayPassive",
+          "name": "Мягкий рассвет",
+          "description": "Пассивное лечение в витражах ещё на 50% быстрее.",
+          "cost": 1,
+          "requires": "rayRegen",
+          "icon": "healing-rays",
+          "layout": {
+            "tier": 1,
+            "angleOffset": -0.3
+          },
+          "effects": {
+            "regen": {
+              "multiply": 1.5
+            }
+          }
+        },
+        {
+          "id": "rayPassivePlus",
+          "name": "Полуденный свет",
+          "description": "Пассивное лечение в витражах ещё на 50% быстрее.",
+          "cost": 2,
+          "requires": "rayPassive",
+          "icon": "healing-rays",
+          "layout": {
+            "tier": 2,
+            "angleOffset": -0.3
+          },
+          "effects": {
+            "regen": {
+              "multiply": 1.5
+            }
+          }
+        },
+        {
           "id": "rayEntry",
           "name": "Глоток солнца",
-          "description": "Постоянного лечения нет. Каждый луч даёт 25 HP один раз за забег при прыжке или дэше через него, затем гаснет за 0,5 с. Обычный проход не лечит и не гасит свет.",
+          "description": "Вместо пассивного лечения: пересечение витража восстанавливает 25% максимального света. Каждый витраж срабатывает один раз за забег и гаснет за 0,5 с.",
           "cost": 1,
           "requires": "rayRegen",
           "icon": "window-heal",
+          "layout": {
+            "tier": 1,
+            "angleOffset": 0.3
+          },
           "effects": {
             "rayEntryHeal": {
-              "set": 25
+              "set": 0.25
+            }
+          }
+        },
+        {
+          "id": "rayJump",
+          "name": "Солнечный подскок",
+          "description": "Прыжок через неиспользованный витраж даёт ещё 25% максимального света, всего 50%. Витраж гаснет.",
+          "cost": 1,
+          "requires": "rayEntry",
+          "icon": "window-heal",
+          "layout": {
+            "tier": 2,
+            "angleOffset": 0.3
+          },
+          "effects": {
+            "rayJumpHeal": {
+              "set": 0.25
             }
           }
         },
         {
           "id": "rayDash",
           "name": "Солнечный прорыв",
-          "description": "Прыжок или дэш через луч даёт 25 HP, а первый дэш — ещё 25 HP. Каждый бонус одноразовый за забег. Луч плавно гаснет; обычный проход его не расходует.",
+          "description": "Дэш через неиспользованный витраж даёт ещё 25% максимального света за дэш. Вместе с пересечением — 50%, с прыжком — до 75%. Витраж гаснет.",
           "cost": 1,
-          "requires": "rayEntry",
+          "requires": "rayJump",
           "icon": "window-dash",
+          "layout": {
+            "tier": 3,
+            "angleOffset": 0.3
+          },
           "effects": {
             "rayDashHeal": {
-              "set": 25
+              "set": 0.25
             }
           }
         }

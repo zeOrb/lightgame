@@ -1,7 +1,7 @@
 import {clamp,lightStep,route} from './game.js';
 export function traceVitralPath(state,fromS,toS,lane,height,sampleZone){
   const steps=Math.max(1,Math.ceil(Math.abs(toS-fromS)/.08));
-  for(let i=1;i<=steps;i++)state.setVitral(sampleZone(route(fromS+(toS-fromS)*i/steps,lane),height),true);
+  for(let i=1;i<=steps;i++)state.setVitral(sampleZone(route(fromS+(toS-fromS)*i/steps,lane),height),true,height>.025);
 }
 export const RabbitMode=Object.freeze({NORMAL:'normal',VITRAL:'vitral',FALLING:'falling'});
 export class RabbitState {
@@ -11,8 +11,13 @@ export class RabbitState {
     if(this.mode===RabbitMode.FALLING)return;
     if(!zone||this.mode!==RabbitMode.VITRAL)this.vitralTime=0;
     const beforeHeal=this.pendingHeal;
-    if(zone&&(phasing||jumping)&&this.upgrades.rayEntryHeal&&!this.entryHealedZones.has(zone)){this.pendingHeal+=this.upgrades.rayEntryHeal;this.entryHealedZones.add(zone);}
-    if(zone&&phasing&&this.upgrades.rayDashHeal&&!this.dashHealedZones.has(zone)){this.pendingHeal+=this.upgrades.rayDashHeal;this.dashHealedZones.add(zone);}
+    if(zone&&!zone.extinguished&&this.upgrades.rayEntryHeal&&!this.entryHealedZones.has(zone)){
+      const maxHP=this.upgrades.maxHP??100;
+      this.pendingHeal+=maxHP*this.upgrades.rayEntryHeal;
+      if(jumping)this.pendingHeal+=maxHP*(this.upgrades.rayJumpHeal??0);
+      if(phasing){this.pendingHeal+=maxHP*(this.upgrades.rayDashHeal??0);this.dashHealedZones.add(zone);}
+      this.entryHealedZones.add(zone);
+    }
     if(this.pendingHeal>beforeHeal){this.lightCharge=1.5;this.chargeZone={palette:zone.palette,lightStrength:1};}
     this.zone=zone;this.mode=zone?RabbitMode.VITRAL:RabbitMode.NORMAL;
   }

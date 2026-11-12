@@ -30,7 +30,9 @@ export function compileSkillTree(config){
         const op=ops[0],value=effect[op],type=typeof config.baseStats[stat];
         if(type==='boolean'?(op!=='set'||typeof value!=='boolean'):!Number.isFinite(value))fail('неверное значение эффекта '+node.id+'.'+stat);
       }
-      return Object.freeze({id:node.id,name:node.name,description:node.description,cost,requires,icon,effects,isRoot:!!branch.isRoot,branch:branch.name,branchId:branch.id,ray,tier,tiers:branch.nodes.length});
+      const layout=node.layout??{};
+      if(Object.values(layout).some(value=>!Number.isFinite(value)))fail('неверный layout у '+node.id);
+      return Object.freeze({id:node.id,name:node.name,description:node.description,cost,requires,icon,effects,layout,isRoot:!!branch.isRoot,branch:branch.name,branchId:branch.id,ray,tier:layout.tier??tier,tiers:branch.nodes.length});
     });
   });
   const byId=new Map(skills.map(s=>[s.id,s])),done=new Set(),visiting=new Set();

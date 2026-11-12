@@ -1,4 +1,5 @@
 import {FloorArenas} from './floor-arenas.js';
+import {BossHitEffects} from './boss-hit-effects.js';
 import {arenaInput,ARENA_RADIUS} from './arena-state.js';
 import * as THREE from 'three';
 import {CatcherAura} from './catcher-aura.js';
@@ -202,6 +203,7 @@ const arenas=new FloorArenas(scene,stairMaterials,glassGlowPalette);
 const arenaForward=new THREE.Vector3(),arenaFacing={x:0,z:1};
 let arenaCameraReturn=0;
 const pickupEffects=new PickupEffects(scene,glowTexture);
+const bossHitEffects=new BossHitEffects(scene,glowTexture);
 const shadowEffects=new ShadowEffects(scene,glowTexture,$('shadow-vfx'),matchMedia('(prefers-reduced-motion: reduce)').matches);
 const rabbit=new THREE.Group();scene.add(rabbit);
 const catcherRay=new CatcherRay(scene,catcherGems);
@@ -326,7 +328,9 @@ function updateArena(dt){
   light=rabbitState.updateLight(light,dt,false,{passive:false});
   if(result.damage){light=Math.max(0,light-result.damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(140,.18);}
   if(result.phaseKill){light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.phaseHeal*result.kills);if(RUN_UPGRADES.resonance)abilities.cooldowns.phasing=Math.max(0,abilities.cooldowns.phasing-.5);}
-  if(result.hits)tone(result.kills?640:330,.18);
+  if(result.hits){tone(result.kills?640:330,.18);if(result.impact)bossHitEffects.hit(result.impact,result.impactPalette);}
+  if(result.reward){scene.attach(result.reward);pickupEffects.collect(result.reward);light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.shardHeal);collected++;progression.award(5);height=velocity=0;abilities.phase=null;tone(1200,.3);toast('+5 очков древа');}
+  if(result.returning)phasingFrame=true;
   if(result.teleported){s=result.returnedS;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=false;cameraNeedsReset=true;floorGates.arriveAt(s);}
   if(result.cleared){tone(1046,.35);toast('Арена пройдена');}
   shadowEffects.setDamage(false);
@@ -480,10 +484,13 @@ function emitSunParticle(particle,initial=false){
 let cameraNeedsReset=true;
 function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);if(!skillTree.element.hidden)return;visualTime+=dt;
   if(state==='playing')update(dt);
-  const arenaView=arenas.active?.stage==='fighting'?{y:arenas.active.y,radius:ARENA_RADIUS}:null;
+  const arenaView=arenas.active&&!arenas.active.collapse&&['fighting','cleared'].includes(arenas.active.stage)?{y:arenas.active.y,radius:ARENA_RADIUS}:null;
   threatVisuals.update(time);
   shelfRelics.updateDynamic();
   floatingParchment.update(state==='paused'?0:dt,arenaView);
+  arenas.updateRemnants(state==='paused'?0:dt);
+  bossHitEffects.update(state==='paused'?0:dt);
+  if(state==='intro'||state==='lost'||state==='won')bossHitEffects.reset();
   floorGates.update(state==='paused'?0:dt);
   if(state!=='paused'&&flareAge<1.8){flareAge+=dt;flareBurst.update(flareAge);}
   $('phase-status').textContent=abilities.cooldowns.phasing>.05?'Phasing '+abilities.cooldowns.phasing.toFixed(1)+'с':'Phasing';
@@ -615,6 +622,7 @@ function frame(now){requestAnimationFrame(frame);const dt=frameClock.step(now);i
   phaseTrailColor.copy(rabbitMat.color).multiplyScalar(brightness);
   phaseTrail.update(state==='paused'?0:dt,rabbit.position,state==='playing'&&phasingFrame&&!falling,camera,phaseTrailColor);
   if(state==='playing')shadowEffects.applyShake(camera);
+  if(state==='playing')bossHitEffects.applyShake(camera);
   windowLight.setArenaMask(arenaView,camera);
   towerMist.renderDepth(renderer,scene,camera);
   catcherRay.update(dt,visualTime,rabbit,state!=='won'&&state!=='lost'&&!falling,camera);
