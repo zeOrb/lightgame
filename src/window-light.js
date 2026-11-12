@@ -48,10 +48,11 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       // A full-size projection: one world unit of glass becomes one unit of floor.
       const scaleX=1,scaleY=1;
       const midX=(bounds.minX+bounds.maxX)/2,midY=(bounds.minY+bounds.maxY)/2;
-      const data={origin,radial,tangent,sourceTangent,center,patch,floor,scaleX,scaleY,midX,midY};windows.set(window,data);
-      if(floor)zones.push({s:floor.userData.s,lane:0,o:patch,taken:false,center:center.clone(),radial:radial.clone(),tangent:tangent.clone(),width:bounds.maxX-bounds.minX,length:bounds.maxY-bounds.minY,palette:pane.material.userData.glowPalette??[beam.color]});
+      const data={origin,radial,tangent,sourceTangent,center,patch,floor,scaleX,scaleY,midX,midY,window,panes:[],beams:[],replaced:[],extinguished:false};windows.set(window,data);
+      if(floor){data.zone={s:floor.userData.s,lane:0,o:patch,taken:false,center:center.clone(),radial:radial.clone(),tangent:tangent.clone(),width:(bounds.maxX-bounds.minX)*scaleX,length:(bounds.maxY-bounds.minY)*scaleY,palette:pane.material.userData.glowPalette??[beam.color],extinguished:false};zones.push(data.zone);}
     }
     const data=windows.get(window);
+    data.panes.push(pane);
     // Refract the entire pane mosaic into a compact horizontal carpet.
     const endCorners=beam.corners.map(point=>{
       const offset=point.clone().sub(data.origin);
@@ -73,7 +74,8 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     });
     material.userData.baseOpacity=baseOpacity;materials.push(material);
-    group.add(new THREE.Mesh(geometry,material));
+    material.userData.windowData=data;
+    const beamMesh=new THREE.Mesh(geometry,material);group.add(beamMesh);data.beams.push(beamMesh);
     if(data.floor){
       const floorGeometry=new THREE.BufferGeometry();floorGeometry.setAttribute('position',new THREE.Float32BufferAttribute(endCorners.flatMap(p=>[p.x,p.y,p.z]),3));floorGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(beam.sourceUV,2));floorGeometry.setIndex([0,1,2,0,2,3]);
       const floorMaterial=new THREE.ShaderMaterial({
@@ -98,9 +100,18 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
         }`,side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.NormalBlending,polygonOffset:true,polygonOffsetFactor:-1,
       });
       floorMaterial.userData.baseOpacity=.8;materials.push(floorMaterial);floorMaterials.push(floorMaterial);data.patch.add(new THREE.Mesh(floorGeometry,floorMaterial));
+      floorMaterial.userData.windowData=data;
     }
   }
   return {group,zones,
+    extinguish(zone){
+      const data=[...windows.values()].find(item=>item.zone===zone);if(!data||data.extinguished)return;
+      data.extinguished=true;data.fadeAge=0;zone.extinguished=true;zone.lightStrength=1;
+      const glass=new Set(data.panes);
+      data.window?.traverse(object=>{if(object.isMesh&&object.material?.isMeshBasicMaterial&&object.material.map)glass.add(object);});
+      for(const pane of glass){const original=pane.material,dim=original.clone();dim.onBeforeCompile=original.onBeforeCompile;dim.customProgramCacheKey=original.customProgramCacheKey;data.replaced.push({pane,original});pane.material=dim;}
+    },
+    reset(){for(const data of windows.values()){data.extinguished=false;data.fadeAge=0;if(data.zone){data.zone.extinguished=false;data.zone.lightStrength=1;}data.patch.visible=true;data.beams.forEach(beam=>beam.visible=true);for(const {pane,original} of data.replaced){pane.material.dispose();pane.material=original;}data.replaced=[];}},
     sampleLight(position,jumpHeight=0){
       if(jumpHeight>3.5)return null;
       for(const zone of zones){
@@ -114,5 +125,13 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       return null;
     },
     setDepthSource(texture,resolution,range){for(const material of floorMaterials){material.uniforms.projectionDepth.value=texture;material.uniforms.depthResolution.value=resolution;material.uniforms.depthRange.value=range;material.uniforms.depthEnabled.value=true;}},
-    update(daylight,time=0){for(const material of materials){material.uniforms.strength.value=material.userData.baseOpacity*daylight;if(material.uniforms.clock)material.uniforms.clock.value=time;}}};
+    update(daylight,time=0){
+      const dt=Math.max(0,time-(group.userData.lastLightTime??time));group.userData.lastLightTime=time;
+      for(const data of windows.values())if(data.extinguished){
+        data.fadeAge=Math.min(.5,data.fadeAge+dt);const t=data.fadeAge/.5,fade=t*t*(3-2*t);data.zone.lightStrength=1-fade;
+        data.patch.visible=fade<1;data.beams.forEach(beam=>beam.visible=fade<1);
+        for(const {pane,original} of data.replaced){pane.material.color.copy(original.color).lerp(new THREE.Color('#302a26'),fade);if(pane.material.emissive){pane.material.emissive.copy(original.emissive);pane.material.emissiveIntensity=original.emissiveIntensity*(1-fade);}}
+      }
+      for(const material of materials){material.uniforms.strength.value=material.userData.baseOpacity*daylight*(material.userData.windowData.zone?.lightStrength??1);if(material.uniforms.clock)material.uniforms.clock.value=time;}
+    }};
 }

@@ -20,7 +20,7 @@ export class VitralGlow {
   }
   reset(){this.remaining=0;this.strength=0;this.group.visible=false;}
   update(dt,zone,brightness,time){
-    if(zone){this.remaining=1;this.palette=zone.palette;}else this.remaining=Math.max(0,this.remaining-dt);
+    if(zone){this.remaining=zone.lightStrength??1;this.palette=zone.palette;}else this.remaining=Math.max(0,this.remaining-dt);
     this.strength=this.remaining*this.remaining*(3-2*this.remaining);
     const amount=this.strength*brightness;this.group.visible=amount>.001;
     const phase=time*.8,index=Math.floor(phase)%this.palette.length;

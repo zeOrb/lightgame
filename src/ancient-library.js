@@ -44,7 +44,9 @@ export function libraryLayout(){
   }
   return {cases,books};
 }
-function spineAtlas(){
+let sharedSpineAtlas;
+export function spineAtlas(){
+  if(sharedSpineAtlas)return sharedSpineAtlas;
   const random=createVisualRandom('library-spines'),canvas=document.createElement('canvas');canvas.width=1024;canvas.height=512;
   const ctx=canvas.getContext('2d'),titles=['LUX','NOX','ASTRA','ARCANA','SILVA','SOL','UMBRA','HERBA'];
   for(let i=0;i<32;i++){
@@ -59,7 +61,7 @@ function spineAtlas(){
     ctx.beginPath();ctx.moveTo(x+64,y+75);ctx.lineTo(x+75,y+83);ctx.lineTo(x+64,y+91);ctx.lineTo(x+53,y+83);ctx.closePath();ctx.stroke();
     for(let j=0;j<8;j++){ctx.strokeStyle='#d6bc8535';const yy=y+8+random()*112;ctx.beginPath();ctx.moveTo(x+6,yy);ctx.lineTo(x+12+random()*9,yy+random()*3);ctx.stroke();}
   }
-  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;return texture;
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;sharedSpineAtlas=texture;return texture;
 }
 export function createAncientLibrary(scene){
   const layout=libraryLayout(),group=new THREE.Group();group.name='Ancient library';scene.add(group);

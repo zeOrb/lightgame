@@ -22,9 +22,11 @@ export function createOldWoodAtlas(){
         const edge=Math.min(local,cuts[boardIndex+1]-y);
         const tone=THREE.MathUtils.clamp(.57+ridges*.14+fine+broad+grain-knot*.055+(edge<4?.035:0),0,1);
         const i=((Math.floor(variant/4)*h+y)*canvas.width+(variant%4)*w+x)*4;
-        image.data[i]=(seam?69:91+tone*84)*b.tint.r;
-        image.data[i+1]=(seam?48:61+tone*73)*b.tint.g;
-        image.data[i+2]=(seam?33:41+tone*57)*b.tint.b;
+        const red=(seam?69:91+tone*84)*b.tint.r,green=(seam?48:61+tone*73)*b.tint.g,blue=(seam?33:41+tone*57)*b.tint.b;
+        const neutral=red*.2126+green*.7152+blue*.0722;
+        image.data[i]=red*.78+neutral*.22;
+        image.data[i+1]=green*.78+neutral*.22;
+        image.data[i+2]=blue*.78+neutral*.22;
         image.data[i+3]=255;
       }
     }

@@ -29,7 +29,7 @@ test('each glass pane projects its complete texture once, preserving mosaic coun
     const p=patch.geometry.attributes.position;
     const a=new THREE.Vector3().fromBufferAttribute(p,0),b=new THREE.Vector3().fromBufferAttribute(p,1),d=new THREE.Vector3().fromBufferAttribute(p,3);
     assert.ok(Math.abs(a.distanceTo(b)/a.distanceTo(d)-1/1.6)<1e-5,'vertical glass must remain vertical, with identical physical proportions');
-    assert.ok(Math.abs(a.distanceTo(b)-1)<1e-5,'projection width must match the glass pane at 1:1 scale');
-    assert.ok(Math.abs(a.distanceTo(d)-1.6)<1e-5);
+    assert.ok(Math.abs(a.distanceTo(b)-1)<1e-5,'projection keeps the original glass width, regardless of shelf size');
+    assert.ok(Math.abs(a.distanceTo(d)-1.6)<1e-5,'projection keeps the original glass height');
   });
 });

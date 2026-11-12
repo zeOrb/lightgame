@@ -57,3 +57,19 @@ test('stained-glass projections never occupy a shelf reserved for shadows',()=>{
   assert.deepEqual(light.zones.map(z=>z.s),[28]);
   assert.equal(createWindowLight([pane],floors,new Set([0,28])).zones.length,0);
 });
+
+test('consumed windows extinguish their own glass, projection and beams, then reset for the next run',()=>{
+  const original=new THREE.MeshStandardMaterial({color:'#ffffff',emissive:'#ffcc88',emissiveIntensity:.65});
+  const windows=[106,122].map(y=>{const g=new THREE.Group();g.position.set(18,y,0);g.rotation.y=Math.PI/2;const pane=new THREE.Mesh(new THREE.BoxGeometry(2,4,.2),original);g.add(pane);return {g,pane};});
+  const floor=new THREE.Object3D();floor.userData={s:0,theta:0,y:100};
+  const light=createWindowLight(windows.map(w=>w.pane),[floor]),zone=light.zones[0];
+  light.update(1,0);light.extinguish(zone);light.update(1,.25);
+  assert.ok(zone.lightStrength>0&&zone.lightStrength<1);assert.equal(zone.o.visible,true);
+  light.update(1,.5);
+  assert.equal(zone.extinguished,true);assert.equal(zone.o.visible,false);
+  assert.equal(windows[0].pane.material.emissiveIntensity,0);assert.equal(windows[1].pane.material,original);
+  assert.equal(light.group.children.filter(o=>o.isMesh&&!o.visible).length,1);
+  light.extinguish(zone);light.reset();
+  assert.equal(zone.extinguished,false);assert.equal(zone.o.visible,true);assert.equal(windows[0].pane.material,original);
+  assert.ok(light.group.children.filter(o=>o.isMesh).every(o=>o.visible));
+});

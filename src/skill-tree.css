@@ -8,6 +8,8 @@
 .tree-body{display:grid;flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:minmax(0,1fr)}
 .tree-scroll{position:relative;overflow:hidden;min-height:0;cursor:grab;touch-action:none;user-select:none;overscroll-behavior:none;background-color:#0a0b0e;background-size:768px 768px;background-repeat:repeat}
 .tree-scroll.is-dragging,.tree-scroll.is-dragging *{cursor:grabbing!important}
+.tree-scroll{isolation:isolate;background-color:#12131b}
+.tree-scroll::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 44%,rgba(33,28,48,.12) 0%,rgba(4,5,10,.18) 38%,rgba(0,1,4,.65) 74%,rgba(0,0,2,.94) 100%)}
 .tree-sky-layer{position:absolute;inset:-384px;pointer-events:none;background-size:768px 768px;background-repeat:repeat;will-change:transform}
 .tree-map{position:absolute;z-index:1;top:0;left:0;width:1600px;height:1600px;transform-origin:0 0;will-change:transform}
 .tree-map.is-guiding{transition:transform .75s cubic-bezier(.22,.7,.2,1)}
@@ -17,6 +19,12 @@
 .tree-root span{visibility:hidden;display:block;height:150px}.tree-root small{font-size:7px;position:absolute;top:151px;left:50%;transform:translateX(-50%)}
 .skill-node{position:absolute;transform:translate(-50%,-50%);width:104px;height:104px;min-height:104px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;filter:none;font:8px/1.8 TowerPixel;text-align:center;cursor:pointer;color:#d8c7a2;outline:none}
 .skill-node span{visibility:hidden}.skill-node b{position:absolute;top:108px;left:50%;transform:translateX(-50%);width:154px;white-space:normal;font:8px/1.8 TowerPixel;color:#bdb49d;text-shadow:2px 2px #0e151a}
+.skill-node.is-root{width:130px;height:130px;min-height:130px}
+.skill-node.is-root b{top:135px;color:#df8968}
+.skill-node.is-root[data-status=owned]{width:210px;height:210px;min-height:210px}
+.skill-node.is-root[data-status=owned] b{top:190px}
+#skill-tree.is-source-awakening .skill-node:not(.is-root){animation:source-branch-reveal .35s .42s both}
+@keyframes source-branch-reveal{from{opacity:0}to{opacity:1}}
 .skill-node small{position:absolute;top:83px;left:0;width:100%;font-size:6px;color:#b7a581;line-height:12px}
 .skill-node[data-status=owned] b{color:#f6d997}.skill-node[data-status=owned] small{color:#e1c383}
 .skill-node[data-status=ready] b{color:#e7d5aa}.skill-node[data-status=locked] b{color:#8d8c80}

@@ -25,3 +25,16 @@ kbd{padding:6px;min-width:28px;height:28px;display:inline-flex;align-items:cente
 .panel .legend{justify-content:center}.panel .eyebrow,.panel p,.intro-note,.modal h2,.modal p,.modal .eyebrow{text-align:center}
 .modal-card .text-button{display:block;margin-left:auto;margin-right:auto;text-align:center}
 @media(max-width:760px){.primary{padding:20px 26px}.header-right button{padding:13px;min-height:38px}#toast{padding:18px 24px}.modal-card{padding:40px 25px}.modal .primary{min-width:220px}.objective strong::before{inset:-5px -7px}kbd{min-width:24px;height:25px}}
+/* Main menu sits on the screen centre at desktop and mobile sizes. */
+#intro{left:50%;top:50%;transform:translate(-50%,-50%);width:min(650px,calc(100% - 40px));max-width:none;max-height:calc(100dvh - 170px);overflow-y:auto;scrollbar-width:none}
+#intro::-webkit-scrollbar{display:none}
+#intro .primary{width:min(310px,100%);min-width:0}
+#intro .legend{flex-wrap:wrap}
+body>header{justify-content:flex-end}
+body:not(.playing) #vignette{background:radial-gradient(ellipse at center,rgba(6,10,16,.65),rgba(6,10,16,.35) 60%,rgba(6,10,16,.3))}
+body:not(.playing) footer{display:none}
+#intro>.text-button{display:block;margin:0 auto}
+/* Pause and end-of-run typography uses warm gold rather than orange. */
+#modal .eyebrow,#modal h2,#modal p{color:#936b25;text-shadow:0 0 5px #ffd57588,1px 1px #fff0c088}
+#modal .primary,#modal .text-button{color:#896319;text-shadow:0 0 4px #ffe39b88}
+#skill-tree .tree-header h2,#skill-tree #tree-outcome,#skill-tree #tree-points{color:#ebcd87;text-shadow:0 0 5px #ffd57566,0 0 12px #e7ae3a33}

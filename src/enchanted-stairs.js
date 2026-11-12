@@ -7,8 +7,8 @@ import {createOldWoodAtlas,mapWoodPanel} from './old-wood.js';
 export function createStairMaterials(){
   const texture=createOldWoodAtlas();
   return {
-    wood:applyTowerDepth(new THREE.MeshStandardMaterial({color:'#e0c5a4',map:texture,bumpMap:texture,bumpScale:.012,roughness:.9,vertexColors:true})),
-    carved:applyTowerDepth(new THREE.MeshStandardMaterial({color:'#af8863',map:texture,bumpMap:texture,bumpScale:.015,roughness:.88})),
+    wood:applyTowerDepth(new THREE.MeshStandardMaterial({color:'#d7c8b4',map:texture,bumpMap:texture,bumpScale:.012,roughness:.9,vertexColors:true})),
+    carved:applyTowerDepth(new THREE.MeshStandardMaterial({color:'#a48d75',map:texture,bumpMap:texture,bumpScale:.015,roughness:.88})),
     bronze:applyTowerDepth(new THREE.MeshStandardMaterial({color:'#756047',metalness:.55,roughness:.72})),
   };
 }

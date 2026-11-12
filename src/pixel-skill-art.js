@@ -1,4 +1,6 @@
-import {SKILLS,SKILL_BRANCH_COUNT,SKILL_MAP_SIZE} from './progression.js';
+import {createPixelSun,SUN_SPRITE_GRID,SUN_PIXEL} from './pixel-sun.js';
+import {skillIcon} from './skill-icons.js';
+import {SKILLS,ROOT_SKILL,SKILL_BRANCH_COUNT,SKILL_MAP_SIZE} from './progression.js';
 import {FrameClock} from './frame-clock.js';
 import {visualSample} from './visual-random.js';
 // U wraps once around the four edges; this keeps the shine attached to the rim.
@@ -8,6 +10,7 @@ export function diamondUV(u,radius){
   return {x:a[0]+(b[0]-a[0])*t,y:a[1]+(b[1]-a[1])*t};
 }
 export function skillPosition(skill){
+  if(skill.isRoot)return {x:SKILL_MAP_SIZE/2,y:SKILL_MAP_SIZE/2};
   const angle=-Math.PI/2+Math.PI/SKILL_BRANCH_COUNT+skill.ray*Math.PI*2/SKILL_BRANCH_COUNT,r=200+skill.tier*170;
   const bend=Math.sin(skill.tier*1.8+skill.ray*.8)*32;
   const center=SKILL_MAP_SIZE/2;
@@ -17,11 +20,12 @@ function curve(a,b,ray,tier){
   const dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy),nx=-dy/length,ny=dx/length,bend=(tier%2?-1:1)*(40+ray*4);
   return t=>{const u=1-t;return {x:u*u*u*a.x+3*u*u*t*(a.x+dx*.28+nx*bend)+3*u*t*t*(a.x+dx*.72-nx*bend*.45)+t*t*t*b.x,y:u*u*u*a.y+3*u*u*t*(a.y+dy*.28+ny*bend)+3*u*t*t*(a.y+dy*.72-ny*bend*.45)+t*t*t*b.y};};
 }
-const icons=[['0011100','0111110','1111111','1111111','0111110','0011100','0001000'],['0001000','0011100','0111110','1111111','0111110','0011100','0001000'],['0000100','0001100','0011100','0111110','1111100','0111000','0010000'],['1000001','1100011','0111110','0011100','0111110','1100011','1000001'],['0001000','0011100','0111110','0001000','0001000','0001000','0001000']];
 export class PixelSkillArt {
   constructor(map,isOpen){
-    this.canvas=document.createElement('canvas');this.canvas.className='pixel-skill-canvas';this.canvas.width=this.canvas.height=Math.round(SKILL_MAP_SIZE*.4);this.canvas.style.width=this.canvas.style.height=SKILL_MAP_SIZE+'px';this.canvas.setAttribute('aria-hidden','true');map.prepend(this.canvas);this.ctx=this.canvas.getContext('2d');this.isOpen=isOpen;this.nodes=new Map();this.time=0;this.frame=null;
+    this.canvas=document.createElement('canvas');this.canvas.className='pixel-skill-canvas';this.canvas.width=this.canvas.height=Math.round(SKILL_MAP_SIZE*.4);this.canvas.style.width=this.canvas.style.height=SKILL_MAP_SIZE+'px';this.canvas.setAttribute('aria-hidden','true');map.prepend(this.canvas);this.ctx=this.canvas.getContext('2d');this.isOpen=isOpen;this.nodes=new Map();this.clicks=new Map();this.time=0;this.frame=null;
   }
+  pulse(id){this.clicks.set(id,this.time);}
+  clickScale(id){const start=this.clicks.get(id);if(start===undefined)return 1;const t=(this.time-start)/.42;if(t>=1){this.clicks.delete(id);return 1;}return 1+.1*Math.sin(Math.PI*Math.max(0,t))**2;}
   sync(states){
     for(const state of states){
       const old=this.nodes.get(state.id);
@@ -39,7 +43,7 @@ export class PixelSkillArt {
   draw(){
     const c=this.ctx,scale=this.canvas.width/SKILL_MAP_SIZE;c.setTransform(scale,0,0,scale,0,0);c.clearRect(0,0,SKILL_MAP_SIZE,SKILL_MAP_SIZE);
     for(const skill of SKILLS){
-      const node=this.nodes.get(skill.id);if(!node||node.status==='hidden')continue;
+      const node=this.nodes.get(skill.id);if(skill.isRoot||!node||node.status==='hidden')continue;
       const to=skillPosition(skill),parent=skill.requires?skillPosition(SKILLS.find(s=>s.id===skill.requires)):{x:SKILL_MAP_SIZE/2,y:SKILL_MAP_SIZE/2};
       const sample=curve(parent,to,skill.ray,skill.tier),age=Math.max(0,this.time-node.born),progress=Math.min(1,age/.65);
       if(node.status==='preview'){this.path(sample,progress,'#84765b',3,true);continue;}
@@ -55,15 +59,34 @@ export class PixelSkillArt {
     for(const skill of SKILLS){const node=this.nodes.get(skill.id);if(!node||node.status==='hidden')continue;this.drawNode(skill,node);}
   }
   drawSun(){
-    const c=this.ctx;c.save();c.translate(SKILL_MAP_SIZE/2,SKILL_MAP_SIZE/2);
-    for(let i=0;i<12;i++){const angle=i*Math.PI/6; c.save();c.rotate(angle);c.beginPath();c.moveTo(37,0);c.bezierCurveTo(55,-9,75,12,62,21);c.strokeStyle=i%2?'#c18a49':'#edc885';c.lineWidth=5;c.stroke();c.restore();}
-    this.diamond(0,0,43,'#3d2b20','#98683d',4);this.diamond(-1,-2,34,'#c69b5b','#ffe7a5',3);
-    c.fillStyle='#fff3bd';c.fillRect(-9,-17,16,24);c.fillRect(-17,-9,32,9);c.fillStyle='#ffe3a0';c.fillRect(-5,8,10,6);c.restore();
+    // Rotate on the pixel grid, keeping the central diamond upright. Cached
+    // frames avoid blurring a rotated bitmap and doing repeated raster work.
+    this.sunFrames??=new Map();
+    const rootState=this.nodes.get(ROOT_SKILL?.id),unlocked=rootState?.status==='owned';
+    const frame=unlocked?Math.floor(this.time*.32/(Math.PI*2)*360)%360:0;
+    if(unlocked&&!this.sunFrames.has(frame))this.sunFrames.set(frame,createPixelSun(frame/360*Math.PI*2));
+    const c=this.ctx,center=SKILL_MAP_SIZE/2,root=this.nodes.get(ROOT_SKILL?.id),owned=root?.status==='owned';
+    const age=root?this.time-root.purchased:10;
+    const size=SUN_SPRITE_GRID*SUN_PIXEL*this.clickScale(ROOT_SKILL?.id);
+    this.dormantSun??=createPixelSun(0,true);
+    c.save();c.imageSmoothingEnabled=false;
+    c.drawImage(owned?this.sunFrames.get(frame):this.dormantSun,center-size/2,center-size/2,size,size);
+    if(root?.selected)this.diamond(center,center,size*.23,'#00000000',owned?'#fff0bc':'#e78b65',2);
+    if(owned&&age>=0&&age<1.1){
+      const t=age/1.1,r=30+t*460;c.globalAlpha=(1-t)**.7;
+      for(let i=0;i<112;i++){
+        const a=i/112*Math.PI*2,x=Math.round((center+Math.cos(a)*r)/5)*5,y=Math.round((center+Math.sin(a)*r)/5)*5;
+        c.fillStyle=i%4?'#ffd978':'#fff5c7';c.fillRect(x-5,y-5,10,10);
+        if(i%4===0){const sr=r+18+t*30;c.fillRect(Math.round((center+Math.cos(a)*sr)/5)*5,Math.round((center+Math.sin(a)*sr)/5)*5,5,5);}
+      }
+    }
+    c.restore();
   }
   drawNode(skill,node){
+    if(skill.isRoot)return;
     const p=skillPosition(skill),c=this.ctx,age=Math.max(0,this.time-node.born),birth=Math.max(0,Math.min(1,(age-.42)/.35));
     if(birth<=0)return;
-    c.save();c.translate(p.x,p.y);const pop=birth<1?1+Math.sin(birth*Math.PI)*.1:1;c.scale(pop,pop);c.globalAlpha=birth;
+    c.save();c.translate(p.x,p.y);const pop=birth<1?1+Math.sin(birth*Math.PI)*.1:1;const click=this.clickScale(skill.id);c.scale(pop*click,pop*click);c.globalAlpha=birth;
     if(node.status==='preview'){
       this.diamond(2,4,20,'#141a1e','#0e1418',3);
       this.diamond(0,0,18.4,'#35302a','#000000',3);
@@ -83,8 +106,8 @@ export class PixelSkillArt {
     if(owned){c.save();c.shadowColor='#ffecac';c.shadowBlur=6;this.diamond(0,0,43,'#00000000','#ffedb499',2);c.restore();}
     if(owned)this.drawGoldShine(skill);
     if(node.selected)this.diamond(0,0,50,'#00000000','#fff0b5',2);
-    const glyph=icons[skill.icon??(skill.ray+skill.tier)%icons.length],pixel=4;
-    glyph.forEach((row,y)=>[...row].forEach((bit,x)=>{if(bit==='1'){c.fillStyle='#211e19';c.fillRect((x-3)*pixel+2,(y-3)*pixel+3,pixel,pixel);c.fillStyle=owned?'#fff3bc':ready?'#e8c889':'#87816b';c.fillRect((x-3)*pixel,(y-3)*pixel,pixel,pixel);}}));
+    const glyph=skillIcon(skill.icon),pixel=2.5,center=(glyph.length-1)/2;
+    glyph.forEach((row,y)=>[...row].forEach((bit,x)=>{if(bit==='1'){c.fillStyle='#211e19';c.fillRect((x-center)*pixel+pixel,(y-center)*pixel+pixel,pixel,pixel);c.fillStyle=owned?'#fff3bc':ready?'#e8c889':'#87816b';c.fillRect((x-center)*pixel,(y-center)*pixel,pixel,pixel);}}));
     if(flash>0){this.diamond(0,0,36,`rgba(255,246,190,${flash*.9})`);c.globalAlpha*=flash;for(let i=0;i<12;i++){const a=i*Math.PI/6,r=48+(1-flash)*48;this.diamond(Math.cos(a)*r,Math.sin(a)*r,2+flash*3,i%3?'#fff1b7':'#f6b56f');}}
     c.restore();
   }

@@ -1,4 +1,13 @@
 {
+  "root": {
+    "id": "source",
+    "name": "Источник",
+    "description": "Открывает шесть ветвей древа света.",
+    "cost": 1,
+    "requires": null,
+    "icon": "sun-core",
+    "effects": {}
+  },
   "baseStats": {
     "maxHP": 100,
     "drainScale": 1,
@@ -31,8 +40,8 @@
           "name": "Тёплое сердце",
           "description": "Максимальный свет +25 HP.",
           "cost": 1,
-          "requires": null,
-          "icon": 0,
+          "requires": "source",
+          "icon": "heart",
           "effects": {
             "maxHP": {
               "add": 25
@@ -45,7 +54,7 @@
           "description": "Ещё +25 максимального HP.",
           "cost": 1,
           "requires": "heart",
-          "icon": 1,
+          "icon": "sun-core",
           "effects": {
             "maxHP": {
               "add": 25
@@ -58,7 +67,7 @@
           "description": "Пассивный расход света меньше на 18%.",
           "cost": 1,
           "requires": "heart2",
-          "icon": 2,
+          "icon": "hourglass",
           "effects": {
             "drainScale": {
               "multiply": 0.82
@@ -71,7 +80,7 @@
           "description": "Тени и удары снимают на 25% меньше света.",
           "cost": 1,
           "requires": "lasting",
-          "icon": 3,
+          "icon": "shield",
           "effects": {
             "damageScale": {
               "multiply": 0.75
@@ -89,8 +98,8 @@
           "name": "Быстрые лапки",
           "description": "Скорость движения по спирали +15%.",
           "cost": 1,
-          "requires": null,
-          "icon": 1,
+          "requires": "source",
+          "icon": "paw",
           "effects": {
             "speed": {
               "multiply": 1.15
@@ -103,7 +112,7 @@
           "description": "Начальная сила прыжка +15%.",
           "cost": 1,
           "requires": "speed",
-          "icon": 2,
+          "icon": "jump",
           "effects": {
             "jump": {
               "multiply": 1.15
@@ -116,7 +125,7 @@
           "description": "Пробел в воздухе: один дополнительный прыжок.",
           "cost": 1,
           "requires": "jump",
-          "icon": 3,
+          "icon": "double-jump",
           "effects": {
             "doubleJump": {
               "set": true
@@ -129,7 +138,7 @@
           "description": "Замедление и инверсия от склянок длятся вдвое меньше.",
           "cost": 1,
           "requires": "double",
-          "icon": 4,
+          "icon": "clarity",
           "effects": {
             "potionScale": {
               "multiply": 0.5
@@ -147,8 +156,8 @@
           "name": "Короткая тень",
           "description": "Перезарядка Phasing на 25% быстрее.",
           "cost": 1,
-          "requires": null,
-          "icon": 2,
+          "requires": "source",
+          "icon": "dash-clock",
           "effects": {
             "phaseCooldown": {
               "multiply": 0.75
@@ -161,7 +170,7 @@
           "description": "Дальность Phasing +20%.",
           "cost": 1,
           "requires": "phaseCool",
-          "icon": 3,
+          "icon": "long-dash",
           "effects": {
             "phaseDistance": {
               "multiply": 1.2
@@ -174,7 +183,7 @@
           "description": "Убийство дэшем восстанавливает 10 HP.",
           "cost": 1,
           "requires": "phaseReach",
-          "icon": 4,
+          "icon": "dash-heal",
           "effects": {
             "phaseHeal": {
               "add": 10
@@ -187,7 +196,7 @@
           "description": "Каждое убийство дэшем сокращает его перезарядку на 0,5 с.",
           "cost": 1,
           "requires": "phaseHeal",
-          "icon": 0,
+          "icon": "resonance",
           "effects": {
             "resonance": {
               "set": true
@@ -205,8 +214,8 @@
           "name": "Полные осколки",
           "description": "Осколок лечит на 12 HP больше и по-прежнему даёт 1 очко.",
           "cost": 1,
-          "requires": null,
-          "icon": 3,
+          "requires": "source",
+          "icon": "shard-heal",
           "effects": {
             "shardHeal": {
               "add": 12
@@ -219,7 +228,7 @@
           "description": "Дальность подбора осколков увеличена.",
           "cost": 1,
           "requires": "shard",
-          "icon": 4,
+          "icon": "magnet",
           "effects": {
             "magnet": {
               "set": 1.05
@@ -232,7 +241,7 @@
           "description": "Лечение витража ускоряется на 30%.",
           "cost": 1,
           "requires": "magnet",
-          "icon": 0,
+          "icon": "bloom",
           "effects": {
             "regen": {
               "multiply": 1.3
@@ -245,7 +254,7 @@
           "description": "Новая способность E: уничтожает тени в радиусе 3 м. Кулдаун 8 с.",
           "cost": 1,
           "requires": "regen",
-          "icon": 1,
+          "icon": "flare",
           "effects": {
             "flare": {
               "set": true
@@ -263,8 +272,8 @@
           "name": "Выше башня",
           "description": "Следующий забег: ещё 2 этажа с полками и угрозами.",
           "cost": 1,
-          "requires": null,
-          "icon": 4,
+          "requires": "source",
+          "icon": "tower",
           "effects": {
             "extraFloors": {
               "add": 2
@@ -277,7 +286,7 @@
           "description": "Ещё 2 этажа: всего 16.",
           "cost": 1,
           "requires": "floors",
-          "icon": 0,
+          "icon": "spiral",
           "effects": {
             "extraFloors": {
               "add": 2
@@ -290,7 +299,7 @@
           "description": "Осколки встречаются чаще: каждые 4 секции вместо 5.",
           "cost": 1,
           "requires": "floors2",
-          "icon": 1,
+          "icon": "constellation",
           "effects": {
             "glintSpacing": {
               "set": 4
@@ -303,7 +312,7 @@
           "description": "Один раз за забег при исчерпании HP возвращает 30% света. Не спасает от падения.",
           "cost": 1,
           "requires": "abundance",
-          "icon": 2,
+          "icon": "flame",
           "effects": {
             "lastLight": {
               "set": true
@@ -321,8 +330,8 @@
           "name": "Тёплые лучи",
           "description": "Лечение в лучах витража ускоряется на 50%.",
           "cost": 1,
-          "requires": null,
-          "icon": 0,
+          "requires": "source",
+          "icon": "healing-rays",
           "effects": {
             "regen": {
               "multiply": 1.5
@@ -332,10 +341,10 @@
         {
           "id": "rayEntry",
           "name": "Глоток солнца",
-          "description": "Вместо постоянного лечения каждый луч даёт 25 HP только при первом входе за забег. Пассивная потеря света сохраняется.",
+          "description": "Постоянного лечения нет. Каждый луч даёт 25 HP один раз за забег при прыжке или дэше через него, затем гаснет за 0,5 с. Обычный проход не лечит и не гасит свет.",
           "cost": 1,
           "requires": "rayRegen",
-          "icon": 1,
+          "icon": "window-heal",
           "effects": {
             "rayEntryHeal": {
               "set": 25
@@ -345,10 +354,10 @@
         {
           "id": "rayDash",
           "name": "Солнечный прорыв",
-          "description": "Каждый луч даёт 25 HP при первом входе и ещё 25 HP за первый дэш через него за забег. Повторные проходы не лечат. Постоянного лечения нет.",
+          "description": "Прыжок или дэш через луч даёт 25 HP, а первый дэш — ещё 25 HP. Каждый бонус одноразовый за забег. Луч плавно гаснет; обычный проход его не расходует.",
           "cost": 1,
           "requires": "rayEntry",
-          "icon": 2,
+          "icon": "window-dash",
           "effects": {
             "rayDashHeal": {
               "set": 25

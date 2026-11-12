@@ -18,7 +18,7 @@ test('moving nodes and whole branches preserves explicit dependencies, effects a
   const a=compileSkillTree(config),b=compileSkillTree(edited),owned=a.skills.map(s=>s.id);
   assert.deepEqual(evaluateSkillEffects(a.baseStats,a.skills,owned),evaluateSkillEffects(b.baseStats,b.skills,owned));
   assert.equal(b.skills.find(s=>s.id==='heart2').requires,'heart');
-  assert.deepEqual(cleanProgress({points:7,owned:['heart2','unknown','heart2']}),{points:7,owned:['heart2']});
+  assert.deepEqual(cleanProgress({points:7,owned:['heart2','unknown','heart2']}),{points:7,owned:['source','heart2']});
   assert.equal(skillStats({owned:['heart','heart2']}).maxHP,150);
   assert.ok(Math.abs(skillStats({owned:['regen','rayRegen']}).regen-1.95)<1e-10);
 });

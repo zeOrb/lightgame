@@ -26,5 +26,8 @@ test('selecting a node does not replay its reveal or purchase flash; unlocking i
     assert.equal(art.nodes.get('heart').purchased,2);
     assert.equal(art.nodes.get('heart2').born,born);
     assert.equal(art.frame,null);
+    art.pulse('heart');assert.equal(art.clickScale('heart'),1);
+    art.time+=.21;assert.ok(Math.abs(art.clickScale('heart')-1.1)<1e-8);
+    art.time+=.21;assert.equal(art.clickScale('heart'),1);
   }finally{globalThis.document=previous;}
 });

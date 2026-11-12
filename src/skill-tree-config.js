@@ -1,3 +1,4 @@
+import {SKILL_ICONS,LEGACY_SKILL_ICONS} from './skill-icons.js';
 const fail=message=>{throw new Error('skill-tree.json: '+message);};
 const text=value=>typeof value==='string'&&value.trim().length>0;
 
@@ -6,7 +7,9 @@ export function compileSkillTree(config){
   for(const [key,value] of Object.entries(config.baseStats))if(typeof value!=='boolean'&&!Number.isFinite(value))fail('некорректный baseStats.'+key);
   if(!Array.isArray(config.branches)||!config.branches.length)fail('branches должен содержать хотя бы одну ветку');
   const ids=new Set(),branchIds=new Set();
-  const skills=config.branches.flatMap((branch,ray)=>{
+  const branches=config.root?[{id:'source',name:'Источник',nodes:[config.root],isRoot:true},...config.branches]:config.branches;
+  const skills=branches.flatMap((branch,index)=>{
+    const ray=index-(config.root?1:0);
     if(!text(branch.id)||branchIds.has(branch.id))fail('повторяющийся или пустой id ветки: '+branch.id);
     branchIds.add(branch.id);
     if(!text(branch.name)||!Array.isArray(branch.nodes)||!branch.nodes.length)fail('у ветки '+branch.id+' нужны name и непустой nodes');
@@ -14,10 +17,10 @@ export function compileSkillTree(config){
       if(!text(node.id)||ids.has(node.id))fail('повторяющийся или пустой id навыка: '+node.id);
       ids.add(node.id);
       if(!text(node.name)||!text(node.description))fail('у '+node.id+' нужны name и description');
-      const cost=node.cost??1,requires=Object.hasOwn(node,'requires')?node.requires:(tier?branch.nodes[tier-1].id:null),icon=node.icon??(ray+tier)%5;
+      const cost=node.cost??1,requires=Object.hasOwn(node,'requires')?node.requires:(tier?branch.nodes[tier-1].id:branch.isRoot?null:config.root?.id??null),icon=node.icon??'sun-core';
       if(!Number.isInteger(cost)||cost<0)fail('cost у '+node.id+' должен быть целым числом от 0');
       if(requires!==null&&!text(requires))fail('requires у '+node.id+' должен быть id или null');
-      if(!Number.isInteger(icon)||icon<0||icon>4)fail('icon у '+node.id+' должен быть от 0 до 4');
+      if(!(typeof icon==='string'&&Object.hasOwn(SKILL_ICONS,icon))&&!(Number.isInteger(icon)&&icon>=0&&icon<LEGACY_SKILL_ICONS.length))fail('неизвестный icon у '+node.id+': '+icon);
       const effects=node.effects??{};
       if(typeof effects!=='object'||!effects||Array.isArray(effects))fail('effects у '+node.id+' должен быть объектом');
       for(const [stat,effect] of Object.entries(effects)){
@@ -27,7 +30,7 @@ export function compileSkillTree(config){
         const op=ops[0],value=effect[op],type=typeof config.baseStats[stat];
         if(type==='boolean'?(op!=='set'||typeof value!=='boolean'):!Number.isFinite(value))fail('неверное значение эффекта '+node.id+'.'+stat);
       }
-      return Object.freeze({id:node.id,name:node.name,description:node.description,cost,requires,icon,effects,branch:branch.name,branchId:branch.id,ray,tier,tiers:branch.nodes.length});
+      return Object.freeze({id:node.id,name:node.name,description:node.description,cost,requires,icon,effects,isRoot:!!branch.isRoot,branch:branch.name,branchId:branch.id,ray,tier,tiers:branch.nodes.length});
     });
   });
   const byId=new Map(skills.map(s=>[s.id,s])),done=new Set(),visiting=new Set();
