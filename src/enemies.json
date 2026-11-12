@@ -1,0 +1,118 @@
+{
+  "appearance": {
+    "bodyColor": "#000000",
+    "eyeColor": "#ff071d",
+    "eyeCore": "#ffd2b6"
+  },
+  "profiles": {
+    "animal": {
+      "hp": 1,
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "stompTop": 1.02,
+      "trackRange": 3,
+      "trackRate": 1.6,
+      "hopSpeed": 2.7,
+      "hopHeight": 0.8,
+      "blockSection": 0.7,
+      "laneRadius": 1,
+      "stompSection": 0.58,
+      "stompLaneRadius": 0.78,
+      "contactSection": 0.75,
+      "contactHeight": 1.2
+    },
+    "boss": {
+      "hp": 3,
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "stompTop": 2.4,
+      "maxHP": 5,
+      "hpEveryFloors": 4,
+      "damage": 24,
+      "hitCooldown": 0.9,
+      "hurtDuration": 0.6,
+      "contactRadius": 1.15,
+      "contactHeight": 1.25,
+      "edgeInset": 1.3,
+      "knockback": 2,
+      "recoil": 0.6,
+      "chaseSpeed": 1.05,
+      "chargeSpeed": 7,
+      "attackCycle": 3.8,
+      "windupStart": 2.1,
+      "chargeStart": 2.8,
+      "spawnDuration": 1,
+      "spawnDepth": 3.4,
+      "crownHeight": 3.05,
+      "rewardPoints": 5
+    }
+  },
+  "enemies": [
+    {
+      "id": "cat",
+      "name": "Теневая кошка",
+      "model": "cat",
+      "profile": "animal",
+      "stats": {
+        "stompTop": 1.02
+      }
+    },
+    {
+      "id": "wolf",
+      "name": "Теневой волк",
+      "model": "wolf",
+      "profile": "animal",
+      "stats": {
+        "stompTop": 1.15
+      }
+    },
+    {
+      "id": "fox",
+      "name": "Теневая лиса",
+      "model": "fox",
+      "profile": "animal",
+      "stats": {
+        "stompTop": 1.02
+      }
+    },
+    {
+      "id": "hare",
+      "name": "Теневой заяц",
+      "model": "hare",
+      "profile": "animal",
+      "stats": {
+        "stompTop": 1.03
+      }
+    },
+    {
+      "id": "reaper",
+      "name": "Теневой жнец",
+      "model": "reaper",
+      "profile": "boss",
+      "stats": {}
+    }
+  ],
+  "spiral": {
+    "afterSection": 12,
+    "everySections": 28,
+    "offset": 16,
+    "cycle": [
+      "cat",
+      "wolf",
+      "fox",
+      "hare"
+    ]
+  },
+  "arenas": {
+    "bossCycle": [
+      "reaper"
+    ],
+    "spawnInset": 2.2
+  }
+}

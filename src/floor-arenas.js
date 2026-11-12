@@ -1,9 +1,11 @@
 import * as THREE from 'three';
-import {ArenaRun,ARENA_RADIUS,clampArena} from './arena-state.js';
+import {ArenaRun,ARENA_RADIUS,clampArena,risingJumpHits} from './arena-state.js';
 import {route,canStomp} from './game.js';
 import {phaseHitsTarget} from './abilities.js';
-import {createShadowReaper,animateShadowBeast,killShadowBeast,animateBeastDeath,resetShadowBeast} from './shadow-beast.js';
+import {animateShadowBeast,killShadowBeast,animateBeastDeath,resetShadowBeast} from './shadow-beast.js';
 import {createVisualRandom} from './visual-random.js';
+import {ENEMY_CONFIG} from './enemy-config.js';
+import {createEnemy} from './enemy-factory.js';
 
 function fractureGeometry(inner,outer,count){
   const gap=.045,r0=inner===0?0:inner+gap*.5,r1=outer-gap*.5,half=Math.max(.01,Math.PI/count-.004),depth=outer-inner;
@@ -129,9 +131,10 @@ export class FloorArenas extends ArenaRun {
       // Its solid black foot then covers their colour instead of receiving it.
       a.wall.renderOrder=10;
       a.pillars=new THREE.Group();a.pillars.visible=false;a.group.add(a.pillars);
+      a.wall.material.uniforms.tongueMask={value:new Float32Array(8)};
       const pillarMaterial=new THREE.ShaderMaterial({transparent:true,side:THREE.DoubleSide,depthWrite:false,fog:false,toneMapped:false,
         uniforms:a.wall.material.uniforms,
-        vertexShader:`uniform float clock,hitTime,hitTheme;varying float flameHeight;varying float flameFlash;
+        vertexShader:`uniform float clock,hitTime,hitTheme;uniform float tongueMask[8];varying float flameHeight;varying float flameFlash;
           void main(){
             // Cap UVs do not encode height. Use geometry coordinates so all
             // copies of each seam/tip vertex receive identical deformation.
@@ -140,7 +143,9 @@ export class FloorArenas extends ArenaRun {
             float delay=fract(sin(phase*17.13)*43758.54)*.18;
             delay+=hitTheme*fract(sin(phase*7.9+hitTime)*19341.7)*.16;
             float gain=.55+fract(sin(phase*31.7)*21731.42)*.85;
-            float elapsed=clock-hitTime-delay;
+            int tongueIndex=int(mod(floor(atan(modelMatrix[3].z,modelMatrix[3].x)/.7853981634+.5)+8.,8.));
+            float selected=tongueMask[tongueIndex];
+            float elapsed=selected>.5?clock-hitTime-delay:-100.;
             float response=smoothstep(0.,.08,elapsed)*(1.-smoothstep(.15,1.45,elapsed))*gain*.10;
             float flashLength=mix(.65,mix(.55,.80,fract(sin(phase*23.4+hitTime)*31241.3)),hitTheme);
             flameFlash=step(0.,elapsed)*(1.-smoothstep(flashLength*.7,flashLength,elapsed));
@@ -376,26 +381,35 @@ export class FloorArenas extends ArenaRun {
     this.hitCooldown=.6;
     if(!a.enemies.length){
       for(let i=0;i<1;i++){
-        const boss=true,b=createShadowReaper();
-        Object.assign(b,{boss,s:a.s,hp:boss?3+Math.min(2,Math.floor(a.index/4)):1,maxHP:boss?3+Math.min(2,Math.floor(a.index/4)):1,hurt:0,attack:0,phase:this.random()*Math.PI*2});
+        const id=ENEMY_CONFIG.arenas.bossCycle[a.index%ENEMY_CONFIG.arenas.bossCycle.length];
+        const b=createEnemy(id,{floorIndex:a.index,s:a.s}),boss=b.boss;
+        b.phase=this.random()*Math.PI*2;
         if(boss){
-          const crown=new THREE.Group();crown.position.set(0,3.05,0);b.o.add(crown);
-          for(let j=0;j<5;j++){const gem=new THREE.Mesh(new THREE.OctahedronGeometry(.1),new THREE.MeshBasicMaterial({color:'#ff264d',fog:false,toneMapped:false}));gem.position.set((j-2)*.16,.12-Math.abs(j-2)*.025,0);crown.add(gem);}
+          const crown=new THREE.Group();crown.position.set(0,b.stats.crownHeight,0);b.o.add(crown);
+          for(let j=0;j<b.stats.maxHP;j++){const gem=new THREE.Mesh(new THREE.OctahedronGeometry(.1),new THREE.MeshBasicMaterial({color:'#ff264d',fog:false,toneMapped:false}));const offset=j-(b.stats.maxHP-1)/2;gem.position.set(offset*.16,.12-Math.abs(offset)*.025,0);crown.add(gem);}
           b.crown=crown;
         }
-        const offset=i===0?Math.PI:i===1?Math.PI/3:-Math.PI/3,spawnRadius=ARENA_RADIUS-2.2;
+        const offset=Math.PI,spawnRadius=ARENA_RADIUS-ENEMY_CONFIG.arenas.spawnInset;
         b.home={x:Math.cos(a.theta+offset)*spawnRadius,z:Math.sin(a.theta+offset)*spawnRadius};
         b.o.position.set(b.home.x,a.y,b.home.z);b.o.visible=false;this.scene.add(b.o);a.enemies.push(b);
       }
     }
-    for(const b of a.enemies){resetShadowBeast(b);b.hp=b.maxHP;b.hurt=0;b.revealAge=0;b.o.position.set(b.home.x,a.y-3.4,b.home.z);b.o.visible=false;if(b.crown)for(const gem of b.crown.children)gem.material.color.set('#ff264d');}
+    for(const b of a.enemies){resetShadowBeast(b);b.hp=b.maxHP;b.hurt=0;b.revealAge=0;b.o.position.set(b.home.x,a.y-b.stats.spawnDepth,b.home.z);b.o.visible=false;if(b.crown)for(const gem of b.crown.children)gem.material.color.set('#ff264d');}
     for(const other of this.arenas)other.group.visible=other.index>=a.index;
     a.pull=0;a.flashTime=0;a.wall.material.uniforms.pull.value=0;a.wall.material.uniforms.hitFlash.value=0;a.wall.material.uniforms.hitTime.value=-100;
     a.wall.visible=true;a.pillars.visible=true;return a;
   }
+  triggerHit(a,time,theme){
+    a.pull=1;a.flashTime=.5;
+    const uniforms=a.wall.material.uniforms;uniforms.hitTime.value=time;uniforms.hitTheme.value=theme;
+    const count=4+Math.floor(this.random()*5),order=[0,1,2,3,4,5,6,7];
+    for(let i=7;i>0;i--){const j=Math.floor(this.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+    uniforms.tongueMask.value.fill(0);
+    for(let i=0;i<count;i++)uniforms.tongueMask.value[order[i]]=1;
+  }
   hit(b,palette){
-    if(b.dead||b.hurt>0)return false;b.hp--;b.hurt=.6;
-    if(this.active){this.active.pull=1;this.active.flashTime=.5;this.active.wall.material.uniforms.hitTime.value=this.active.wall.material.uniforms.clock.value;this.active.wall.material.uniforms.hitTheme.value=1;}
+    if(b.dead||b.hurt>0)return false;b.hp--;b.hurt=b.stats.hurtDuration;
+    if(this.active)this.triggerHit(this.active,this.active.wall.material.uniforms.clock.value,1);
     if(b.boss)b.crown.children.forEach((gem,i)=>gem.material.color.set(i<b.hp?'#ff264d':'#381523'));
     if(b.hp<=0)killShadowBeast(b,palette);
     return true;
@@ -431,48 +445,50 @@ export class FloorArenas extends ArenaRun {
     const result={damage:0,kills:0,hits:0,bounce:0,phaseKill:false};
     for(const b of a.enemies){
       if(b.dead){animateBeastDeath(b,dt);continue;}
-      if(b.revealAge<1){
-        b.revealAge=Math.min(1,b.revealAge+dt);
-        b.o.position.y=a.y-3.4*(1-b.revealAge**3);
+      if(b.revealAge<b.stats.spawnDuration){
+        b.revealAge=Math.min(b.stats.spawnDuration,b.revealAge+dt);
+        b.o.position.y=a.y-b.stats.spawnDepth*(1-(b.revealAge/b.stats.spawnDuration)**3);
         b.o.rotation.y=Math.atan2(this.player.x-b.o.position.x,this.player.z-b.o.position.z);
         animateShadowBeast(b,time,0);
         continue;
       }
       b.hurt=Math.max(0,b.hurt-dt);
       const dx=this.player.x-b.o.position.x,dz=this.player.z-b.o.position.z,dist=Math.hypot(dx,dz)||1;
-      const cycle=(time+b.phase)%3.8,windup=b.boss&&cycle>2.1&&cycle<2.8;
+      const cycle=(time+b.phase)%b.stats.attackCycle,windup=cycle>b.stats.windupStart&&cycle<b.stats.chargeStart;
       const leap=b.boss?0:Math.max(0,Math.sin(time*2.5+b.phase))*.38;
-      const chase=b.boss?(windup?0:cycle>=2.8?7:1.05):1.7+a.index*.035;
+      const chase=windup?0:cycle>=b.stats.chargeStart?b.stats.chargeSpeed:b.stats.chaseSpeed;
       const oldX=b.o.position.x,oldZ=b.o.position.z;
-      if(b.hurt<=0){b.o.position.x+=dx/dist*chase*dt;b.o.position.z+=dz/dist*chase*dt;clampArena(b.o.position,ARENA_RADIUS-(b.boss?1.3:.8));}
+      if(b.hurt<=0){b.o.position.x+=dx/dist*chase*dt;b.o.position.z+=dz/dist*chase*dt;clampArena(b.o.position,ARENA_RADIUS-b.stats.edgeInset);}
       b.moveSpeed=dt>0?Math.hypot(b.o.position.x-oldX,b.o.position.z-oldZ)/dt:0;
       b.o.position.y=a.y+leap;b.o.rotation.y=Math.atan2(dx,dz);animateShadowBeast(b,time,leap);
       if(b.boss){
-        const recoil=b.hurt>0?Math.exp(-(.6-b.hurt)*15):0;
+        const recoil=b.hurt>0?Math.exp(-(b.stats.hurtDuration-b.hurt)*15):0;
         b.o.scale.set(1+recoil*.14,1-recoil*.13,1+recoil*.14);
-        b.o.rotation.z=Math.sin((.6-b.hurt)*38)*recoil*.12;
+        b.o.rotation.z=Math.sin((b.stats.hurtDuration-b.hurt)*38)*recoil*.12;
       }
       if(b.boss)b.head.rotation.x=windup?-.4:0;
       const target={x:b.o.position.x,y:a.y+leap+.7,z:b.o.position.z};
       const dashHit=!!dash&&phaseHitsTarget({...before,y:a.y+previousHeight+.45},{...this.player,y:a.y+height+.45},target);
-      const radius=b.boss?1.15:.72,overlap=Math.hypot(this.player.x-target.x,this.player.z-target.z)<radius;
+      const radius=b.stats.contactRadius,overlap=Math.hypot(this.player.x-target.x,this.player.z-target.z)<radius;
       const top=a.y+leap+b.stompTop;
       const stomp=!dash&&canStomp(a.y+previousHeight+.12,a.y+height+.12,b.lastTop??top,top,velocity,overlap);
-      if(dashHit||stomp||(flare&&dist<3)){
+      const jumpStrike=!dash&&b.boss&&risingJumpHits(previousHeight,height,velocity,overlap);
+      if(dashHit||stomp||jumpStrike||(flare&&dist<3)){
         const hit=this.hit(b,dashHit||flare?this.palette:chargedPalette);
         if(hit){
-          result.hits++;result.impact={x:b.o.position.x+dx/dist*.35,y:stomp?top:a.y+.95,z:b.o.position.z+dz/dist*.35};
+          result.hits++;result.impact={x:b.o.position.x+dx/dist*.35,y:stomp?top:jumpStrike?a.y+height+.45:a.y+.95,z:b.o.position.z+dz/dist*.35};
           result.impactPalette=dashHit||flare?this.palette:chargedPalette;
-          if(!b.dead){b.o.position.x-=dx/dist*.6;b.o.position.z-=dz/dist*.6;clampArena(b.o.position,ARENA_RADIUS-1.3);}
+          if(!b.dead){b.o.position.x-=dx/dist*b.stats.recoil;b.o.position.z-=dz/dist*b.stats.recoil;clampArena(b.o.position,ARENA_RADIUS-b.stats.edgeInset);}
           if(stomp)result.bounce=Math.max(result.bounce,top-a.y+.03);
+          if(jumpStrike){result.bounce=Math.max(result.bounce,height+.03);result.jumpRebound=true;}
           if(b.dead){result.kills++;result.phaseKill||=dashHit;}
         }
       }
       b.lastTop=top;
-      if(!b.dead&&!dash&&b.hurt<=0&&overlap&&height<1.25&&this.hitCooldown<=0){
-        result.damage+=b.boss?24:14;this.hitCooldown=.9;a.pull=1;a.flashTime=.5;a.wall.material.uniforms.hitTime.value=time;a.wall.material.uniforms.hitTheme.value=0;
+      if(!b.dead&&!dash&&!stomp&&!jumpStrike&&b.hurt<=0&&overlap&&height<b.stats.contactHeight&&this.hitCooldown<=0){
+        result.damage+=b.stats.damage;this.hitCooldown=b.stats.hitCooldown;this.triggerHit(a,time,0);
         const awayX=(this.player.x-b.o.position.x)/Math.max(.1,dist),awayZ=(this.player.z-b.o.position.z)/Math.max(.1,dist);
-        this.move(awayX*2,awayZ*2);
+        this.move(awayX*b.stats.knockback,awayZ*b.stats.knockback);
       }
     }
     a.living=a.enemies.filter(b=>!b.dead).length;
@@ -481,7 +497,7 @@ export class FloorArenas extends ArenaRun {
     if(a.stage==='cleared'&&!a.rewardTaken){
       a.rewardAge+=dt;
       if(a.rewardAge>.35&&Math.hypot(this.player.x,this.player.z)<1.2&&height<1.8){
-        a.rewardTaken=true;result.reward=a.reward;
+        a.rewardTaken=true;result.reward=a.reward;result.rewardPoints=a.enemies[0].stats.rewardPoints;
         this.setCombatLook(a,false);this.startCollapse(a);
         result.rewardCollected=true;
       }

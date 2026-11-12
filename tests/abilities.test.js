@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Abilities,AbilityType,applyPhaseDelta,applySpiralPhase,phaseHitsTarget} from '../src/abilities.js';
 import * as THREE from 'three';
 import {PhaseTrail} from '../src/phase-trail.js';
-import {route,JUMP_SPEED} from '../src/game.js';
+import {route,JUMP_SPEED,ROUTE_RADIUS} from '../src/game.js';
 test('jump is a registered ability with grounded activation and shared reset',()=>{
   const a=new Abilities();assert.equal(a.use(AbilityType.JUMP,{height:1}),null);
   assert.equal(a.use(AbilityType.JUMP).velocity,JUMP_SPEED);assert.equal(a.use(AbilityType.JUMP),null);
@@ -15,8 +15,8 @@ test('spiral phase follows the rail in either direction without radial drift',()
     const a=new Abilities();a.use(AbilityType.PHASING,{direction:{x:sign,z:0},distance:4});
     let s=27.8,lane=0;
     for(let i=0;i<fps;i++){const delta=a.advance(1/fps);if(delta){const moved=applySpiralPhase(s,lane,delta.x);s=moved.s;lane=moved.lane;}}
-    const point=route(s,lane);assert.equal(lane,0);assert.ok(Math.abs(Math.hypot(point.x,point.z)-12)<1e-9);
-    assert.ok(Math.abs((s-27.8)*Math.hypot(12*Math.PI/14,.5)-sign*4)<1e-9);
+    const point=route(s,lane);assert.equal(lane,0);assert.ok(Math.abs(Math.hypot(point.x,point.z)-ROUTE_RADIUS)<1e-9);
+    assert.ok(Math.abs((s-27.8)*Math.hypot(ROUTE_RADIUS*Math.PI/14,.5)-sign*4)<1e-9);
   }
 });
 test('dash hits enemies between frame endpoints, but not above or beside the path',()=>{

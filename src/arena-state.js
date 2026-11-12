@@ -1,6 +1,9 @@
 import {FLOOR_COUNT,END,route} from './game.js';
 // Leave clearance between the arena barrier and the spiral shelves.
 export const ARENA_RADIUS=11.25;
+export function risingJumpHits(previousHeight,height,velocity,overlaps){
+  return overlaps&&velocity>0&&height>.02&&height>previousHeight;
+}
 export function arenaLayout(){return Array.from({length:FLOOR_COUNT},(_,index)=>{
   const plank=13+index*14,p=route(plank);
   const gateS=Math.min(plank+.49,END-.2);

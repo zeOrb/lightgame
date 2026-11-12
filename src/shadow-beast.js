@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 import { BeastVitralBurst } from './beast-vitral-burst.js';
 import { createVisualRandom } from './visual-random.js';
+import {ENEMY_CONFIG,enemyStats} from './enemy-config.js';
 const random=createVisualRandom('beast-smoke');
 
 // Unlit black stays black even in the sunset and in the rabbit's point light.
-const fur = new THREE.MeshBasicMaterial({ color: '#000000', fog: false });
-const red = new THREE.MeshBasicMaterial({ color: '#ff071d', fog: false, toneMapped: false });
-const eyeCore = new THREE.MeshBasicMaterial({ color: '#ffd2b6', fog: false, toneMapped: false });
+const fur = new THREE.MeshBasicMaterial({ color: ENEMY_CONFIG.appearance.bodyColor, fog: false });
+const red = new THREE.MeshBasicMaterial({ color: ENEMY_CONFIG.appearance.eyeColor, fog: false, toneMapped: false });
+const eyeCore = new THREE.MeshBasicMaterial({ color: ENEMY_CONFIG.appearance.eyeCore, fog: false, toneMapped: false });
 const sphere = new THREE.SphereGeometry(1, 16, 12);
 let smokeTexture, circleTexture,eyeGlowTexture;
 function textures() {
@@ -31,7 +32,7 @@ function textures() {
 function ellipsoid(parent, material, position, scale) {
   const mesh=new THREE.Mesh(sphere,material);mesh.position.set(...position);mesh.scale.set(...scale);parent.add(mesh);return mesh;
 }
-export const BEAST_KINDS = ['cat','wolf','fox','hare'];
+export const BEAST_KINDS = ENEMY_CONFIG.enemies.filter(enemy=>enemy.profile==='animal').map(enemy=>enemy.model);
 export function createShadowBeast(kind = 'cat') {
   textures();
   const o=new THREE.Group();
@@ -143,7 +144,7 @@ export function createShadowReaper(){
     arms.push(arm);
   }
   beast.legs=arms;beast.paw=arms[1];beast.tail=new THREE.Group();o.add(beast.tail);
-  beast.kind='reaper';beast.stompTop=2.4;
+  beast.kind='reaper';beast.stompTop=enemyStats('reaper').stats.stompTop;
   beast.meshes=[];o.traverse(child=>{if(child.isMesh)beast.meshes.push(child);});
   return beast;
 }
@@ -166,7 +167,7 @@ export function killShadowBeast(beast,palette=null){
   beast.deathMotes=beast.smoke.map((mote,i)=>({x:Math.sin(i*2.4)*(.25+i%3*.13),z:Math.cos(i*2.4)*(.3+i%4*.15)}));
 }
 export function resetShadowBeast(beast){
-  beast.dead=false;beast.deathAge=0;beast.lastTop=null;beast.o.visible=true;beast.lane=0;
+  beast.dead=false;beast.deathAge=0;if(beast.maxHP!==undefined)beast.hp=beast.maxHP;beast.hurt=0;beast.lastTop=null;beast.o.visible=true;beast.lane=0;
   beast.dissolve.value=-10;
   beast.deathDirection.value=1;beast.vitralDeath=false;
   beast.vitralBurst.reset();

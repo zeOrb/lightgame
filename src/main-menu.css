@@ -1,0 +1,41 @@
+/* Unframed typography and quiet silver ornaments over the living tower. */
+body:not(.playing) #vignette{background:radial-gradient(ellipse at 50% 42%,rgba(12,10,9,.38),rgba(9,8,8,.68) 58%,rgba(3,3,3,.94) 100%)}
+#intro{isolation:isolate;display:flex;flex-direction:column;align-items:center;gap:0;overflow:visible;top:47%;width:min(680px,calc(100% - 48px));max-height:none;color:#e3e0d9;text-align:center;animation:menu-appear .65s ease-out both}
+#intro .menu-emblem{display:none}
+#intro h1{margin:0;font:400 clamp(16px,1.8vw,23px)/1.3 Georgia,'Times New Roman',serif;letter-spacing:.34em;color:#d0cec8;text-shadow:0 2px 8px #000,0 0 30px #000}
+#intro h1 span{display:block;margin-top:5px;font:400 clamp(48px,6.6vw,82px)/1.12 Georgia,'Times New Roman',serif;letter-spacing:.11em;color:#f0ede6;text-shadow:0 2px 8px #000,0 0 32px #ffffff15}
+#intro .menu-divider{width:245px;height:36px;position:relative;margin:14px 0 37px;background:url('./menu-flourish.svg') center/contain no-repeat;opacity:.66}
+#intro .menu-divider::before,#intro .menu-divider::after,#intro .menu-actions::before,#intro .menu-actions::after{content:none}
+#intro .menu-actions{position:relative;display:flex;flex-direction:column;align-items:center;gap:13px;width:min(440px,100%);padding:0;background:none;border:0;box-shadow:none}
+#intro button,#intro #start{position:relative;display:block;width:max-content;max-width:100%;min-width:0;min-height:42px;border:0;border-radius:0;clip-path:none;filter:none;box-shadow:none;background:none;color:#bcb8b1;text-shadow:0 2px 5px #000,0 0 16px #000;font:400 17px/1.5 Georgia,'Times New Roman',serif;letter-spacing:.025em;text-align:center;padding:8px 12px;margin:0;transition:color .2s,text-shadow .2s;transform:none}
+#intro button{text-decoration:none}
+#intro #start{font-size:25px;color:#e9e5dc;margin-bottom:5px;letter-spacing:.04em}
+#intro #reset-progress,#intro #sound{font-size:15px;color:#a6a29d;line-height:1.7}
+#intro button:hover,#intro button:focus-visible,#intro #start:hover,#intro #start:focus-visible,#intro #sound:hover,#intro #sound:focus-visible{color:#fffef9;text-shadow:0 0 11px #f4efe449,0 2px 6px #000;background:none;border:0;box-shadow:none;filter:none;outline:0;transform:none}
+#intro button::before,#intro button::after{content:'';display:block;position:absolute;top:50%;width:38px;height:20px;background:transparent url('./menu-selector.svg') center/contain no-repeat;border:0;box-shadow:none;opacity:0;transform:translateY(-50%);transition:opacity .2s}
+#intro button::before{left:-43px}#intro button::after{right:-43px;transform:translateY(-50%) scaleX(-1)}
+#intro button:hover::before,#intro button:hover::after,#intro button:focus-visible::before,#intro button:focus-visible::after{opacity:.9}
+@keyframes menu-appear{from{opacity:0}to{opacity:1}}
+@media(max-width:480px){#intro{width:calc(100% - 44px)}#intro h1{font-size:15px;letter-spacing:.24em}#intro h1 span{font-size:51px}#intro #reset-progress,#intro #sound{font-size:13px}#intro button::before{left:-28px}#intro button::after{right:-28px}#intro button::before,#intro button::after{width:26px}}
+@media(max-height:580px){#intro{top:48%}#intro h1{font-size:15px}#intro h1 span{font-size:48px}#intro .menu-divider{margin:7px 0 15px;height:26px}#intro .menu-actions{gap:3px}#intro #start{font-size:21px}#intro button{padding:5px 10px}}
+@media(prefers-reduced-motion:reduce){#intro{animation:none}#intro button,#intro button::before,#intro button::after{transition:none}}
+
+/* Pause uses the same unframed silver typography as the title screen. */
+#modal{z-index:40;background:radial-gradient(ellipse at 50% 45%,#0a0908a6,#030303eb);backdrop-filter:blur(3px)}
+#modal .modal-card{display:flex;flex-direction:column;align-items:center;width:min(600px,calc(100% - 48px));max-width:none;padding:24px 0;border:0;outline:0;background:none;box-shadow:none;filter:none;clip-path:none;text-align:center;animation:menu-appear .22s ease-out}
+#modal .modal-card::before,#modal .modal-card::after{content:none}
+#modal .eyebrow,#modal #modal-text{display:none}
+#modal h2{margin:0;color:#f0ede6;font:400 clamp(42px,5.4vw,66px)/1.2 Georgia,'Times New Roman',serif;letter-spacing:.09em;text-shadow:0 2px 8px #000,0 0 32px #ffffff15}
+#modal .menu-divider{width:245px;height:36px;margin:17px 0 27px;background:url('./menu-flourish.svg') center/contain no-repeat;opacity:.66}
+#modal .menu-actions{display:flex;flex-direction:column;align-items:center;gap:13px;width:100%}
+#modal button,#modal .primary{position:relative;display:block;width:max-content;max-width:100%;min-width:0;min-height:42px;padding:8px 12px;margin:0;border:0;border-radius:0;background:none;box-shadow:none;filter:none;clip-path:none;outline:0;color:#bcb8b1;font:400 19px/1.5 Georgia,'Times New Roman',serif;letter-spacing:.025em;text-decoration:none;text-shadow:0 2px 5px #000,0 0 16px #000;transform:none;transition:color .2s,text-shadow .2s}
+#modal #resume{font-size:25px;color:#e9e5dc;margin-bottom:5px;letter-spacing:.04em}
+#modal .text-button{color:#bcb8b1;font:400 19px/1.5 Georgia,'Times New Roman',serif;text-shadow:0 2px 5px #000,0 0 16px #000}
+#modal #resume span{display:none}
+#modal button:hover,#modal button:focus-visible{background:none;border:0;color:#fffef9;text-shadow:0 0 11px #f4efe449,0 2px 6px #000;box-shadow:none;filter:none;transform:none}
+#modal .text-button:hover,#modal .text-button:focus-visible{color:#fffef9;text-shadow:0 0 11px #f4efe449,0 2px 6px #000}
+#modal button::before,#modal button::after{content:'';display:block;position:absolute;top:50%;width:38px;height:20px;background:transparent url('./menu-selector.svg') center/contain no-repeat;border:0;box-shadow:none;opacity:0;transform:translateY(-50%);transition:opacity .2s}
+#modal button::before{left:-43px}#modal button::after{right:-43px;transform:translateY(-50%) scaleX(-1)}
+#modal button:hover::before,#modal button:hover::after,#modal button:focus-visible::before,#modal button:focus-visible::after{opacity:.9}
+@media(max-height:480px){#modal h2{font-size:38px}#modal .menu-divider{margin:7px 0 12px;height:26px}#modal .menu-actions{gap:3px}}
+@media(prefers-reduced-motion:reduce){#modal .modal-card{animation:none}#modal button,#modal button::before,#modal button::after{transition:none}}

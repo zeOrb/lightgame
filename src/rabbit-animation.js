@@ -5,7 +5,7 @@ export class RabbitAnimation {
     this.visual=visual;this.ears=ears;this.paws=paws;this.tail=tail;this.reset();
   }
   reset(){
-    this.phase=0;this.blend=0;this.air=0;this.landing=0;this.wasAirborne=false;this.fallTime=0;
+    this.phase=0;this.blend=0;this.air=0;this.landing=0;this.lastVelocity=0;this.wasAirborne=false;this.fallTime=0;
     this.visual.position.set(0,0,0);this.visual.rotation.set(0,0,0);this.visual.scale.setScalar(1);
     this.pose(0,0,0);
   }
@@ -26,9 +26,10 @@ export class RabbitAnimation {
     });
     this.tail.rotation.x=Math.sin(t*13)*.25;
   }
-  update(dt,{speed,height,velocity,turn=0}){
+  update(dt,{speed,height,velocity,turn=0,skidding=false}){
     const airborne=height>.025;
-    if(this.wasAirborne&&!airborne)this.landing=.22;
+    if(this.wasAirborne&&!airborne)this.landing=.16+THREE.MathUtils.clamp(-this.lastVelocity/9,0,1)*.16;
+    this.lastVelocity=velocity;
     this.wasAirborne=airborne;
     this.landing=Math.max(0,this.landing-dt);
     this.blend=THREE.MathUtils.damp(this.blend,Math.min(1,speed/3.6),12,dt);
@@ -36,12 +37,12 @@ export class RabbitAnimation {
     this.phase+=speed*dt*5.5;
     const step=Math.sin(this.phase),hop=Math.max(0,step),ground=1-this.air;
     this.visual.position.y=hop*.14*this.blend*ground;
-    this.visual.rotation.x=.13*this.blend*ground+THREE.MathUtils.clamp(-velocity*.023,-.22,.2)*this.air;
+    this.visual.rotation.x=(skidding?-.18:.13)*this.blend*ground+THREE.MathUtils.clamp(-velocity*.023,-.22,.2)*this.air;
     this.visual.rotation.z=Math.sin(this.phase*.5)*.045*this.blend*ground-THREE.MathUtils.clamp(turn,-1,1)*.07;
     const squash=1+(hop*.13-Math.max(0,-step)*.1)*this.blend*ground+.1*this.air-this.landing*.85;
     const y=THREE.MathUtils.damp(this.visual.scale.y,squash,18,dt),width=1/Math.sqrt(y);
     this.visual.scale.set(width,y,width);
-    this.pose(step,ground,velocity);
+    this.pose(skidding?step*.3:step,ground,velocity);
   }
   pose(step,ground,velocity){
     this.ears.forEach((ear,i)=>{
