@@ -3,12 +3,13 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {SHELF_HALF_ANGLE,SHELF_OUTER_RADIUS,shelfInnerRadius} from './game.js';
 import {applyTowerDepth} from './tower-depth.js';
 import {createOldWoodAtlas,mapWoodPanel} from './old-wood.js';
+import {applyWoodPOM} from './wood-pom.js';
 
 export function createStairMaterials(){
   const texture=createOldWoodAtlas();
   return {
-    wood:applyTowerDepth(new THREE.MeshStandardMaterial({color:'#d7c8b4',map:texture,bumpMap:texture,bumpScale:.012,roughness:.9,vertexColors:true})),
-    carved:applyTowerDepth(new THREE.MeshStandardMaterial({color:'#a48d75',map:texture,bumpMap:texture,bumpScale:.015,roughness:.88})),
+    wood:applyWoodPOM(applyTowerDepth(new THREE.MeshStandardMaterial({color:'#d7c8b4',map:texture,bumpMap:texture.userData.heightMap,bumpScale:.055,roughness:.9,vertexColors:true}))),
+    carved:applyWoodPOM(applyTowerDepth(new THREE.MeshStandardMaterial({color:'#a48d75',map:texture,bumpMap:texture.userData.heightMap,bumpScale:.055,roughness:.88}))),
     bronze:applyTowerDepth(new THREE.MeshStandardMaterial({color:'#756047',metalness:.55,roughness:.72})),
   };
 }

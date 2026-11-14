@@ -34,14 +34,21 @@ export class UnderShelfRelics {
       if(!parts.length)return;
       const material=applyTowerDepth(new THREE.MeshStandardMaterial({color:kind===0?'#735039':'#665343',roughness:kind===0?.98:.86,metalness:kind===0?0:.5}));
       const batch=new THREE.InstancedMesh(geometries[kind],material,parts.length);batch.name='under-shelf-relics-'+kind;batch.frustumCulled=false;
-      parts.forEach((part,index)=>{part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);batch.setMatrixAt(index,this.matrix);batch.setColorAt(index,part.color);if(part.moving)this.dynamic.push({...part,batch,index});});
+      parts.forEach((part,index)=>{part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);batch.setMatrixAt(index,this.matrix);batch.setColorAt(index,part.color);this.dynamic.push({...part,batch,index,visible:true});});
       batch.instanceMatrix.needsUpdate=true;this.scene.add(batch);
     });
     this.parts=null;
   }
   updateDynamic(){
     const batches=new Set();
-    for(const part of this.dynamic){part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);part.batch.setMatrixAt(part.index,this.matrix);batches.add(part.batch);}
+    for(const part of this.dynamic){
+      const visible=part.group.visible;
+      if(visible===part.visible&&(!part.moving||!visible))continue;
+      part.visible=visible;
+      if(visible){part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);}
+      else this.matrix.makeScale(0,0,0);
+      part.batch.setMatrixAt(part.index,this.matrix);batches.add(part.batch);
+    }
     for(const batch of batches)batch.instanceMatrix.needsUpdate=true;
   }
 }

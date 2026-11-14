@@ -6,6 +6,8 @@ import {animateShadowBeast,killShadowBeast,animateBeastDeath,resetShadowBeast} f
 import {createVisualRandom} from './visual-random.js';
 import {ENEMY_CONFIG} from './enemy-config.js';
 import {createEnemy} from './enemy-factory.js';
+import {applyWoodPOM} from './wood-pom.js';
+import {flashBossOnDash,updateBossFlash,clearBossFlash} from './boss-flash.js';
 
 function fractureGeometry(inner,outer,count){
   const gap=.045,r0=inner===0?0:inner+gap*.5,r1=outer-gap*.5,half=Math.max(.01,Math.PI/count-.004),depth=outer-inner;
@@ -47,7 +49,7 @@ function disposeGroupResources(group,preservedMaterials=[]){
 export class FloorArenas extends ArenaRun {
   constructor(scene,materials,palette){
     super();this.scene=scene;this.palette=palette;this.random=createVisualRandom('arena-enemies');this.collapseRandom=createVisualRandom('arena-collapse');this.hitCooldown=0;this.remnants=[];
-    const wood=new THREE.MeshStandardMaterial({color:'#735b43',map:materials.carved.map,roughness:.85});
+    const wood=applyWoodPOM(new THREE.MeshStandardMaterial({color:'#735b43',map:materials.carved.map,roughness:.85}));
     const edge=materials.bronze.clone();edge.fog=false;edge.color.set('#493423');this.wood=wood;this.edge=edge;
     this.fightBase=new THREE.MeshBasicMaterial({color:'#000000',fog:false,toneMapped:false});
     this.fightEdge=new THREE.MeshBasicMaterial({color:'#242424',fog:false,toneMapped:false});
@@ -67,6 +69,7 @@ export class FloorArenas extends ArenaRun {
         diffuseColor.rgb=vec3(dot(diffuseColor.rgb,vec3(.2126,.7152,.0722)))*(1.-shadowFade);`);
     };
     this.fightWood.customProgramCacheKey=()=> 'arena-gray-wood-noisy-edge';
+    applyWoodPOM(this.fightWood);
     for(const a of this.arenas){
       a.group=new THREE.Group();a.group.position.y=a.y;scene.add(a.group);
       a.floor=new THREE.Mesh(new THREE.CylinderGeometry(ARENA_RADIUS,ARENA_RADIUS,.38,64),wood);a.floor.position.y=-.19;a.group.add(a.floor);
@@ -408,7 +411,7 @@ export class FloorArenas extends ArenaRun {
     for(let i=0;i<count;i++)uniforms.tongueMask.value[order[i]]=1;
   }
   hit(b,palette){
-    if(b.dead||b.hurt>0)return false;b.hp--;b.hurt=b.stats.hurtDuration;
+    if(b.dead||b.hurt>0)return false;clearBossFlash(b);b.hp--;b.hurt=b.stats.hurtDuration;
     if(this.active)this.triggerHit(this.active,this.active.wall.material.uniforms.clock.value,1);
     if(b.boss)b.crown.children.forEach((gem,i)=>gem.material.color.set(i<b.hp?'#ff264d':'#381523'));
     if(b.hp<=0)killShadowBeast(b,palette);
@@ -444,6 +447,7 @@ export class FloorArenas extends ArenaRun {
     const before={...this.player};this.move(dash?.x??direction.x*speed*dt,dash?.z??direction.z*speed*dt);
     const result={damage:0,kills:0,hits:0,bounce:0,phaseKill:false};
     for(const b of a.enemies){
+      updateBossFlash(b,dt);
       if(b.dead){animateBeastDeath(b,dt);continue;}
       if(b.revealAge<b.stats.spawnDuration){
         b.revealAge=Math.min(b.stats.spawnDuration,b.revealAge+dt);
@@ -476,6 +480,7 @@ export class FloorArenas extends ArenaRun {
       if(dashHit||stomp||jumpStrike||(flare&&dist<3)){
         const hit=this.hit(b,dashHit||flare?this.palette:chargedPalette);
         if(hit){
+          if(dashHit)flashBossOnDash(b);
           result.hits++;result.impact={x:b.o.position.x+dx/dist*.35,y:stomp?top:jumpStrike?a.y+height+.45:a.y+.95,z:b.o.position.z+dz/dist*.35};
           result.impactPalette=dashHit||flare?this.palette:chargedPalette;
           if(!b.dead){b.o.position.x-=dx/dist*b.stats.recoil;b.o.position.z-=dz/dist*b.stats.recoil;clampArena(b.o.position,ARENA_RADIUS-b.stats.edgeInset);}
@@ -497,7 +502,7 @@ export class FloorArenas extends ArenaRun {
     if(a.stage==='cleared'&&!a.rewardTaken){
       a.rewardAge+=dt;
       if(a.rewardAge>.35&&Math.hypot(this.player.x,this.player.z)<1.2&&height<1.8){
-        a.rewardTaken=true;result.reward=a.reward;result.rewardPoints=a.enemies[0].stats.rewardPoints;
+        a.rewardTaken=true;result.reward=a.reward;result.rewardPoints=a.enemies[0].rewardPoints;
         this.setCombatLook(a,false);this.startCollapse(a);
         result.rewardCollected=true;
       }

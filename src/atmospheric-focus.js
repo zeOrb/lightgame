@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {FXAAShader} from 'three/addons/shaders/FXAAShader.js';
+import {createSunsetLUT,SUNSET_LUT_STYLE,SUNSET_LUT_GLSL} from './sunset-lut.js';
 
 // Gaussian gives soft transitions; disk and box remain available for art tuning.
 export const BLUR_VARIANTS=Object.freeze({gaussian:0,disk:1,box:2});
@@ -81,10 +82,11 @@ export class AtmosphericFocus {
       }`});
     this.scene=new THREE.Scene();this.camera=new THREE.Camera();
     this.quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),this.material);this.quad.frustumCulled=false;this.scene.add(this.quad);
-    this.antialias=new THREE.ShaderMaterial({uniforms:{...THREE.UniformsUtils.clone(FXAAShader.uniforms),solidDepth:{value:null}},vertexShader:FXAAShader.vertexShader,fragmentShader:'uniform sampler2D solidDepth;\n'+FXAAShader.fragmentShader.replace('gl_FragColor = ApplyFXAA( tDiffuse, resolution.xy, vUv );',`gl_FragColor = ApplyFXAA( tDiffuse, resolution.xy, vUv );
+    this.antialias=new THREE.ShaderMaterial({uniforms:{...THREE.UniformsUtils.clone(FXAAShader.uniforms),solidDepth:{value:null},sunsetLUT:{value:createSunsetLUT()},sunsetLUTStrength:{value:SUNSET_LUT_STYLE.strength}},vertexShader:FXAAShader.vertexShader,fragmentShader:SUNSET_LUT_GLSL+'\nuniform sampler2D solidDepth;\n'+FXAAShader.fragmentShader.replace('gl_FragColor = ApplyFXAA( tDiffuse, resolution.xy, vUv );',`gl_FragColor = ApplyFXAA( tDiffuse, resolution.xy, vUv );
       gl_FragDepth=texture2D(solidDepth,vUv).r;
       #include <tonemapping_fragment>
-      #include <colorspace_fragment>`),depthTest:true,depthWrite:true,depthFunc:THREE.AlwaysDepth});
+      #include <colorspace_fragment>
+      gl_FragColor.rgb=applySunsetLUT(gl_FragColor.rgb);`),depthTest:true,depthWrite:true,depthFunc:THREE.AlwaysDepth});
   }
   render(renderer,scene,camera,focus,daylight,depthTexture,fallDarkness=0,arena=null){
     renderer.getDrawingBufferSize(this.size);

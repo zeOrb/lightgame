@@ -3,11 +3,12 @@ import {TreeViewport,TREE_PAN_KEYS,treeKeyboardDelta,PanTail,SmoothTreeZoom} fro
 import {PixelSkillArt,skillPosition} from './pixel-skill-art.js';
 import {createSkillStarfield} from './skill-stars.js';
 import {StarParallax} from './star-parallax.js';
+import {SkillComets} from './skill-comets.js';
 export class SkillTree {
   constructor(onNext){
     this.onNext=onNext;this.selected=null;this.hovered=null;this.navKeys=new Set();this.panTail=new PanTail();this.smoothZoom=new SmoothTreeZoom();this.dragging=false;
     this.element=document.createElement('section');this.element.id='skill-tree';this.element.hidden=true;this.element.setAttribute('role','dialog');this.element.setAttribute('aria-modal','true');this.element.setAttribute('aria-label','Древо солнечного света');
-    this.element.innerHTML=`<header class="tree-header"><div><small id="tree-outcome"></small><h2>Древо света</h2><p>Осколок — одно очко. Знания остаются после заката.</p></div><strong id="tree-points"></strong><button id="tree-next" class="primary">Следующий забег →</button></header><div class="tree-body"><div class="tree-scroll"><div class="tree-map"><div class="tree-root"><span>☀</span><small>ИСТОЧНИК</small></div></div></div><aside class="tree-detail"><small id="tree-branch"></small><h3 id="tree-name"></h3><p id="tree-description"></p><p id="tree-requirement"></p><button id="tree-buy" class="primary"></button><small>Улучшения вступят в силу в следующем забеге.<br>Неиспользованные очки сохраняются.</small></aside></div>`;
+    this.element.innerHTML=`<header class="tree-header"><div><small id="tree-outcome"></small><h2>Древо света</h2></div><strong id="tree-points"></strong><button id="tree-next" class="primary">Следующий забег →</button></header><div class="tree-body"><div class="tree-scroll"><div class="tree-map"><div class="tree-root"><span>☀</span><small>ИСТОЧНИК</small></div></div></div><aside class="tree-detail"><small id="tree-branch"></small><h3 id="tree-name"></h3><p id="tree-description"></p><p id="tree-requirement"></p><button id="tree-buy" class="primary"></button><small>Улучшения вступят в силу в следующем забеге.<br>Неиспользованные очки сохраняются.</small></aside></div>`;
     document.body.append(this.element);this.map=this.element.querySelector('.tree-map');this.buttons=new Map();
     this.map.style.width=this.map.style.height=SKILL_MAP_SIZE+'px';
     const root=this.map.querySelector('.tree-root');root.style.left=root.style.top=SKILL_MAP_SIZE/2+'px';root.hidden=true;
@@ -24,7 +25,8 @@ export class SkillTree {
     }
     this.art=new PixelSkillArt(this.map,()=>!this.element.hidden);
     this.viewport=this.element.querySelector('.tree-scroll');this.camera=new TreeViewport(SKILL_MAP_SIZE/2);
-    this.sky=new StarParallax(this.viewport,createSkillStarfield());this.art.onFrame=dt=>{if(this.smoothZoom.step(this.camera,dt))this.applyCamera();if(this.rootRevealUntil&&this.art.time>this.rootRevealUntil){this.element.classList.remove('is-source-awakening');this.rootRevealUntil=0;}const moving=this.updateKeyboard(dt);if(!moving&&!this.dragging){const tail=this.panTail.step(dt);if(Math.abs(tail.x)+Math.abs(tail.y)>.001)this.panView(tail.x,tail.y);}this.sky.update(dt);};this.bindNavigation();
+    this.comets=new SkillComets(this.viewport);
+    this.sky=new StarParallax(this.viewport,createSkillStarfield());this.art.onFrame=dt=>{if(this.smoothZoom.step(this.camera,dt))this.applyCamera();if(this.rootRevealUntil&&this.art.time>this.rootRevealUntil){this.element.classList.remove('is-source-awakening');this.rootRevealUntil=0;}const moving=this.updateKeyboard(dt);if(!moving&&!this.dragging){const tail=this.panTail.step(dt);if(Math.abs(tail.x)+Math.abs(tail.y)>.001)this.panView(tail.x,tail.y);}this.sky.update(dt);this.comets.update(dt,this.sky.motion);};this.bindNavigation();
     const center=document.createElement('button');center.className='text-button';center.textContent='☀ К солнцу';center.onclick=()=>this.center();this.element.querySelector('.tree-header').insertBefore(center,this.element.querySelector('#tree-next'));
     this.element.querySelector('#tree-buy').onclick=()=>{
       const selected=SKILLS.find(skill=>skill.id===this.selected);
@@ -82,10 +84,11 @@ export class SkillTree {
     this.viewport.addEventListener('wheel',event=>{event.preventDefault();this.panTail.clear();this.interruptCamera();const rect=this.viewport.getBoundingClientRect(),delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?this.viewport.clientHeight:1);this.smoothZoom.queue(this.camera,event.clientX-rect.left,event.clientY-rect.top,Math.exp(-delta*.0015));},{passive:false});
     this.observer=new ResizeObserver(()=>{const w=this.viewport.clientWidth,h=this.viewport.clientHeight;if(!w||!h)return;if(lastWidth&&lastHeight)this.camera.pan((w-lastWidth)/2,(h-lastHeight)/2);else this.camera.center(w,h);lastWidth=w;lastHeight=h;this.applyCamera();});this.observer.observe(this.viewport);
   }
-  open(won,collected){
+  open(won,collected,victoryBonus=0){
+    this.comets.reset();
     this.navKeys.clear();
     this.selected=null;this.hovered=null;this.rootRevealUntil=0;this.element.classList.remove('is-source-awakening');
-    this.element.hidden=false;this.element.querySelector('#tree-outcome').textContent=(won?'КРИСТАЛЛ ПРОБУЖДЁН':'ЗАБЕГ ЗАВЕРШЁН')+' · СОБРАНО '+collected;
+    this.element.hidden=false;this.element.querySelector('#tree-outcome').textContent=(won?'КРИСТАЛЛ ПРОБУЖДЁН':'ЗАБЕГ ЗАВЕРШЁН')+' · СОБРАНО '+collected+(victoryBonus?' · ПОБЕДА +'+victoryBonus:'');
     this.render();this.center();this.art.start();this.element.querySelector('#tree-next').focus();
   }
   render(){

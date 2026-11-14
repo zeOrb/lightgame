@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+const TRAIL_LIFETIME=.32*1.25;
+const TRAIL_FADE_DELAY=.06;
 export class PhaseTrail {
   constructor(scene){
     this.color=new THREE.Color('#fff1bc');this.samples=[];this.geometry=new THREE.BufferGeometry();this.positions=new Float32Array(64*6);this.colors=new Float32Array(64*6);this.alphas=new Float32Array(64*2);
@@ -11,7 +13,7 @@ export class PhaseTrail {
   reset(){this.samples=[];this.mesh.visible=false;}
   update(dt,position,active,camera,color=this.color){
     for(const sample of this.samples)sample.age+=dt;
-    this.samples=this.samples.filter(s=>s.age<.32);
+    this.samples=this.samples.filter(s=>s.age<TRAIL_LIFETIME);
     if(active){
       const start=this.samples.at(-1)?.point??position;
       const count=Math.max(1,Math.ceil(start.distanceTo(position)/.14));
@@ -22,9 +24,10 @@ export class PhaseTrail {
     this.mesh.visible=samples.length>1;
     for(let i=0;i<samples.length;i++){
       const sample=samples[i],next=samples[Math.min(i+1,samples.length-1)],prev=samples[Math.max(0,i-1)];
-      this.direction.subVectors(next.point,prev.point);this.view.subVectors(camera.position,sample.point);this.side.crossVectors(this.direction,this.view).normalize().multiplyScalar(.3*(1-sample.age/.32));
+      const fade=1-THREE.MathUtils.smoothstep(sample.age,TRAIL_FADE_DELAY,TRAIL_LIFETIME);
+      this.direction.subVectors(next.point,prev.point);this.view.subVectors(camera.position,sample.point);this.side.crossVectors(this.direction,this.view).normalize().multiplyScalar(.3*fade);
       const color=sample.color;
-      for(let j=0;j<2;j++){const k=i*2+j,sign=j?1:-1;this.positions.set([sample.point.x+this.side.x*sign,sample.point.y+.38+this.side.y*sign,sample.point.z+this.side.z*sign],k*3);this.colors.set([color.r,color.g,color.b],k*3);this.alphas[k]=Math.pow(1-sample.age/.32,1.3);}
+      for(let j=0;j<2;j++){const k=i*2+j,sign=j?1:-1;this.positions.set([sample.point.x+this.side.x*sign,sample.point.y+.38+this.side.y*sign,sample.point.z+this.side.z*sign],k*3);this.colors.set([color.r,color.g,color.b],k*3);this.alphas[k]=fade;}
     }
     this.geometry.setDrawRange(0,Math.max(0,samples.length-1)*6);for(const attr of Object.values(this.geometry.attributes))attr.needsUpdate=true;
   }

@@ -12,6 +12,7 @@
 .tree-scroll::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 50% 44%,rgba(33,28,48,.12) 0%,rgba(4,5,10,.18) 38%,rgba(0,1,4,.65) 74%,rgba(0,0,2,.94) 100%)}
 .tree-sky-layer{position:absolute;inset:-384px;pointer-events:none;background-size:768px 768px;background-repeat:repeat;will-change:transform}
 .tree-map{position:absolute;z-index:1;top:0;left:0;width:1600px;height:1600px;transform-origin:0 0;will-change:transform}
+.tree-comets{position:absolute;inset:0;z-index:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}
 .tree-map.is-guiding{transition:transform .75s cubic-bezier(.22,.7,.2,1)}
 .pixel-skill-canvas{position:absolute;inset:0;width:1600px;height:1600px;image-rendering:pixelated;pointer-events:none}
 .tree-lines{display:none}

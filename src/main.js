@@ -1,3 +1,9 @@
+import {createRabbitTraveler} from './rabbit-model.js';
+import {flashRunStart} from './start-flash.js';
+import {VitralEntryEffects} from './vitral-entry-effects.js';
+import {ArenaShelfVisibility} from './arena-shelf-visibility.js';
+import {Springboards,bounceVelocity} from './springboards.js';
+import {VICTORY_BONUS} from './progression-balance.js';
 import {initializeMainMenu} from './main-menu.js';
 import {FloorArenas} from './floor-arenas.js';
 import {BossHitEffects} from './boss-hit-effects.js';
@@ -131,6 +137,7 @@ const hazards=[], glints=[], bottles=[], beasts=[], books=[];
 const reservedThreatShelves=new Set(Array.from({length:END},(_,s)=>s).filter(s=>(s>4&&s%RUN_UPGRADES.glintSpacing===0)||(s>6&&s%11===0)||!!spiralEnemyAt(s,0)||(s>20&&s%29===23)||(s>10&&s%27===13)));
 for(let section=0;section<=END;section++)if(section%14>=11)reservedThreatShelves.add(section);
 const threats=createThreats(gaps,END,reservedThreatShelves);
+const springboards=new Springboards(scene,threats);
 for(const threat of threats)if(threat.type===ThreatType.THORNS)threat.lane=0;
 const movingPlatforms=threats.filter(threat=>threat.type===ThreatType.MOVING_PLATFORM);
 const walkableFloors=[];
@@ -190,6 +197,7 @@ scene.updateMatrixWorld(true);
 const shadowShelves=new Set([...hazards,...beasts,...books,...threats].map(object=>object.s));
 const threatVisuals=new ThreatVisuals(scene,threats);
 const windowLight=createWindowLight(windowPanes,walkableFloors,shadowShelves);scene.add(windowLight.group);
+const arenaShelfVisibility=new ArenaShelfVisibility(walkableFloors);
 windowLight.setDepthSource(towerMist.depthTarget.depthTexture,towerMist.material.uniforms.resolution.value,towerMist.material.uniforms.cameraRange.value);
 const groundSmoke=new GroundShadowSmoke(scene,hazards.map(h=>({...route(h.s,h.lane),gap:false})));
 // Shared soft texture for VFX and the rabbit's small emissive halo.
@@ -206,6 +214,7 @@ const arenas=new FloorArenas(scene,stairMaterials,glassGlowPalette);
 const arenaForward=new THREE.Vector3(),arenaFacing={x:0,z:1};
 let arenaCameraReturn=0;
 const pickupEffects=new PickupEffects(scene,glowTexture);
+const vitralEntryEffects=new VitralEntryEffects(scene);
 const bossHitEffects=new BossHitEffects(scene,glowTexture);
 const landingEffects=new LandingEffects(scene,glowTexture);
 let hitStop=0;
@@ -223,7 +232,6 @@ const rabbitShadowMaterial=new THREE.MeshBasicMaterial({map:rabbitShadowTexture,
 const rabbitShadow=mesh(new THREE.PlaneGeometry(1,1),rabbitShadowMaterial,0,0,0);
 rabbitShadow.rotation.x=-Math.PI/2;rabbitShadow.scale.set(1.35,.92,1);rabbitShadow.renderOrder=1;
 const shadowRaycaster=new THREE.Raycaster(),shadowRayOrigin=new THREE.Vector3(),shadowRayDown=new THREE.Vector3(0,-1,0);
-const rabbitEars=[],rabbitPaws=[];
 const rabbitMat=new THREE.MeshStandardMaterial({color:'#fff1bc',emissive:'#ffe4a0',emissiveIntensity:1,roughness:1});
 const rabbitHPFade={value:1};
 const rabbitDissolve={value:0};
@@ -234,20 +242,12 @@ rabbitMat.onBeforeCompile=shader=>{
 };
 const rabbitGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:'#ffe7ac',transparent:true,opacity:.2,depthWrite:false,blending:THREE.AdditiveBlending}));
 rabbitGlow.position.y=.45;rabbitGlow.scale.set(1.3,1.55,1);rabbitVisual.add(rabbitGlow);
-mesh(new THREE.SphereGeometry(.28,16,12),rabbitMat,0,.27,0,rabbitVisual).scale.set(1,1,.8);
-mesh(new THREE.SphereGeometry(.2,12,10),rabbitMat,0,.49,.14,rabbitVisual);
 const eyeMat=new THREE.MeshBasicMaterial({color:'#252137',fog:false});
 const eyeSparkMat=new THREE.MeshBasicMaterial({color:'#fff9e8',fog:false});
 const eyeBaseColor=eyeMat.color.clone(),eyeSparkBaseColor=eyeSparkMat.color.clone();
-for(const x of [-.085,.085]){
-  const eye=mesh(new THREE.SphereGeometry(.046,12,10),eyeMat,x,.535,.316,rabbitVisual);
-  eye.scale.set(.84,1.12,.55);
-  mesh(new THREE.SphereGeometry(.012,8,6),eyeSparkMat,x-.009,.55,.339,rabbitVisual);
-}
-for(const x of [-.11,.11]) {const ear=mesh(new THREE.SphereGeometry(.08,12,8),rabbitMat,x,.79,.12,rabbitVisual);ear.scale.y=2.5;ear.rotation.z=-x*1.5;rabbitEars.push(ear);}
-for(const x of [-.13,.13]){const paw=mesh(new THREE.SphereGeometry(1,12,8),rabbitMat,x,.065,.12,rabbitVisual);paw.scale.set(.1,.065,.16);rabbitPaws.push(paw);}
-const rabbitTail=mesh(new THREE.SphereGeometry(.13,10,8),rabbitMat,0,.3,-.26,rabbitVisual);
-const rabbitAnimation=new RabbitAnimation(rabbitVisual,rabbitEars,rabbitPaws,rabbitTail);
+const traveler=createRabbitTraveler(rabbitVisual,rabbitMat,eyeMat,eyeSparkMat);
+const rabbitEars=traveler.ears,rabbitPaws=traveler.paws,rabbitTail=traveler.coat;
+const rabbitAnimation=new RabbitAnimation(rabbitVisual,rabbitEars,rabbitPaws,rabbitTail,traveler.arms,traveler.head);
 const vitralGlow=new VitralGlow(rabbitVisual,glowTexture);
 const abilities=new Abilities(RUN_UPGRADES),phaseTrail=new PhaseTrail(scene),phaseTrailColor=new THREE.Color();
 const flareBurst=new BeastVitralBurst(scene,glowTexture);
@@ -285,11 +285,11 @@ function beginRabbitFall(outward,message,launched=true){
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
   abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent='Падение';
 }
-function reset(){motion.reset();arenas.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;phaseGlowWasActive=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints){g.taken=false;g.o.visible=true;g.o.scale.setScalar(1);}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
-function start(){frameClock.reset();skillTree.element.hidden=true;reset();state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);}
+function reset(){springboards.reset();motion.reset();arenas.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;phaseGlowWasActive=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints){g.taken=false;g.o.visible=true;g.o.scale.setScalar(1);}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function start(){frameClock.reset();skillTree.element.hidden=true;reset();state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';keys.clear();showModal('','Пауза','','Продолжить');$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('modal').hidden=true;}}
-function finish(won){state=won?'won':'lost';keys.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;tone(won?1046:164,won?1.8:.6);skillTree.open(won,collected);}
+function finish(won){if(state==='won'||state==='lost')return;if(won)progression.award(VICTORY_BONUS);state=won?'won':'lost';keys.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;tone(won?1046:164,won?1.8:.6);skillTree.open(won,collected,won?VICTORY_BONUS:0);}
 $('start').onclick=start;$('restart').onclick=start;$('resume').onclick=()=>state==='paused'?pause():start();
 $('main-menu').onclick=()=>{reset();state='intro';$('modal').hidden=true;$('hud').hidden=true;$('intro').hidden=false;document.body.classList.remove('playing');toastTime=0;$('toast').style.opacity=0;};
 $('reset-progress').onclick=()=>{progression.reset();const url=new URL(location.href);url.searchParams.delete('sunny-run');url.searchParams.set('sunny-reset',String(Date.now()));location.assign(url.href);};
@@ -320,8 +320,8 @@ function updateArena(dt){
     if(Math.hypot(direction.x,direction.z)>.01){arenaFacing.x=direction.x;arenaFacing.z=direction.z;}
     const grounded=height<=.001;motion.ground(grounded);if(grounded)abilities.land();
     const jumpVelocity=motion.tryJump(abilities,height,grounded,Math.hypot(motion.x,motion.z)/(4.8*RUN_UPGRADES.speed));
-    if(jumpVelocity){velocity=jumpVelocity;tone(470,.1);}
-    if(phaseQueued&&abilities.use(AbilityType.PHASING,{direction:arenaFacing,distance:4*RUN_UPGRADES.phaseDistance})){
+    if(jumpVelocity){velocity=jumpVelocity;rabbitAnimation.jump(jumpVelocity,Math.max(Math.hypot(motion.x,motion.z),Math.hypot(direction.x,direction.z)*4.8*RUN_UPGRADES.speed));tone(470,.1);}
+    if(phaseQueued&&abilities.use(AbilityType.PHASING,{direction:arenaFacing,distance:AbilityInfo.phasing.arenaDistance*RUN_UPGRADES.phaseDistance})){
       phaseTrail.reset();tone(950,.15);
     }
   }
@@ -333,7 +333,7 @@ function updateArena(dt){
   const result=arenas.update(dt,time,{direction:movement,dash:movable?dash:null,height,previousHeight,velocity,speed:4.8*RUN_UPGRADES.speed,flare,chargedPalette:rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null});
   const p=arenas.player,dx=p.x-old.x,dz=p.z-old.z;moveSpeed=result.teleported?0:Math.hypot(dx,dz)/Math.max(.0001,dt);
   if(Math.hypot(dx,dz)>.0001)facingTarget=Math.atan2(dx,dz);
-  if(result.bounce){height=Math.max(height,result.bounce);velocity=result.jumpRebound?Math.max(velocity,7):6;motion.cuttable=false;}
+  if(result.bounce){height=Math.max(height,result.bounce);velocity=result.jumpRebound?Math.max(velocity,7):bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;if(!result.jumpRebound)abilities.land();}
   rabbitState.setVitral(null);currentVitralZone=null;
   light=rabbitState.updateLight(light,dt,false,{passive:false});
   if(result.damage){light=Math.max(0,light-result.damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(140,.18);}
@@ -358,6 +358,12 @@ function updateArena(dt){
     if(s>=END-.1&&light>0)finish(true);
   }
   updateHUD();
+}
+function activateSpring(spring){
+  height=Math.max(height,.09);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump)*1.15;
+  rabbitAnimation.jump(velocity,moveSpeed);
+  motion.cuttable=false;motion.jumpBuffer=0;abilities.land();
+  landingEffects.land(new THREE.Vector3(spring.p.x,spring.p.y+.07,spring.p.z),.75);tone(keys.has('Space')?880:640,.16);
 }
 function update(dt){
   motion.tick(dt,jumpQueued);jumpQueued=false;
@@ -405,8 +411,12 @@ function update(dt){
   if(dx*dx+dz*dz>1e-10)facingTarget=Math.atan2(dx,dz);
   const grounded=height<=.001&&hasShelfSupport(threats,s,lane);
   motion.ground(grounded);if(grounded)abilities.land();
-  if(!knocked){const jumpVelocity=motion.tryJump(abilities,height,grounded,Math.abs(motion.rail)/(1.6*RUN_UPGRADES.speed));if(jumpVelocity){velocity=jumpVelocity;tone(470,.1);}}
+  const spring=!knocked&&!dash?springboards.contact(s,lane,height,velocity):null;
+  if(spring)activateSpring(spring);
+  else if(!knocked){const jumpVelocity=motion.tryJump(abilities,height,grounded,Math.abs(motion.rail)/(1.6*RUN_UPGRADES.speed));if(jumpVelocity){velocity=jumpVelocity;rabbitAnimation.jump(jumpVelocity,Math.max(moveSpeed,Math.abs(forward)));tone(470,.1);}}
   const jump=motion.jumpStep(height,velocity,dt,keys.has('Space'));height=jump.height;velocity=jump.velocity;
+  const landedSpring=!knocked&&!dash?springboards.contact(s,lane,height,velocity):null;
+  if(landedSpring)activateSpring(landedSpring);
   if(knocked){height=knocked.height;velocity=0;}
   if(flareQueued&&abilities.use(AbilityType.FLARE)){flareFrame=true;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+height+.5,afterMove.z),glassGlowPalette);tone(1150,.3);}flareQueued=false;
   for(const threat of threats)if(ThreatInfo[threat.type]&&!threat.introduced&&Math.abs(s-threat.s)<2.3){threat.introduced=true;toast(ThreatInfo[threat.type].hint);tone(320,.16);}
@@ -441,7 +451,7 @@ function update(dt){
     const top=p.y+leap*b.stats.hopHeight+b.stompTop,foot=route(s,lane).y+height+.12;
     const overlaps=Math.abs(s-b.s)<b.stats.stompSection&&Math.abs(lane-b.lane)<b.stats.stompLaneRadius;
     if(!phasingFrame&&canStomp(previousFoot,foot,b.lastTop??top,top,velocity,overlaps)){
-      const killed=damageEnemy(b,(rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null)??currentVitralZone?.palette??(vitralGlow.strength>.01?vitralGlow.palette:null));height=Math.max(height,top-route(s,lane).y+.03);velocity=5.5;motion.cuttable=false;
+      const killed=damageEnemy(b,(rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null)??currentVitralZone?.palette??(vitralGlow.strength>.01?vitralGlow.palette:null));height=Math.max(height,top-route(s,lane).y+.03);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;abilities.land();
       tone(360,.25);if(killed)toast('Тень рассеяна!');continue;
     }
     b.lastTop=top;
@@ -452,6 +462,12 @@ function update(dt){
   }
   for(const b of books){const cycle=(time+b.phase)%5;const p=route(b.s);b.o.position.set(p.x,p.y+(cycle<3?6:Math.max(.25,6-(cycle-3)*8)),p.z);b.o.rotation.set(cycle*.3,cycle,.25);b.warning.visible=cycle>2.2;b.warning.material.opacity=.2+Math.sin(time*12)*.1;if(cycle>3.6&&Math.abs(s-b.s)<.65&&height<.8)inShadow=true;}
   const wasInVitral=!!currentVitralZone,lightPosition=route(s,lane);
+  const lightSteps=Math.max(1,Math.ceil(Math.abs(s-beforeMoveS)/.08));
+  for(let i=1;i<=lightSteps;i++){
+    const point=route(beforeMoveS+(s-beforeMoveS)*i/lightSteps,lane);
+    const zone=windowLight.sampleLight(new THREE.Vector3(point.x,point.y,point.z),height);
+    vitralEntryEffects.sample({x:point.x,y:point.y+height,z:point.z},zone);
+  }
   if(phasingFrame&&RUN_UPGRADES.rayEntryHeal)traceVitralPath(rabbitState,beforeMoveS,s,lane,height,(point,h)=>windowLight.sampleLight(new THREE.Vector3(point.x,point.y,point.z),h));
   currentVitralZone=windowLight.sampleLight(new THREE.Vector3(lightPosition.x,lightPosition.y,lightPosition.z),height);
   if(currentVitralZone&&!wasInVitral){tone(1100,.3);toast('Свет витража · лечение ускоряется, пока ты в свете');}
@@ -508,10 +524,14 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
     landingEffects.land(new THREE.Vector3(p.x,p.y+.05,p.z),clamp(Math.abs(landingVelocity)/9,.35,1));
   }
   landingEffects.update(state==='paused'?0:dt);
+  vitralEntryEffects.update(state==='playing'?dt:0);
+  if(state==='intro'||state==='lost'||state==='won'||rabbitState.mode===RabbitMode.FALLING)vitralEntryEffects.reset();
   if(state==='intro'||state==='lost'||state==='won')landingEffects.reset();
   const arenaView=arenas.active&&!arenas.active.collapse&&['fighting','cleared'].includes(arenas.active.stage)?{y:arenas.active.y,radius:ARENA_RADIUS}:null;
   threatVisuals.update(time);
+  arenaShelfVisibility.update(arenas.active);
   shelfRelics.updateDynamic();
+  springboards.update(state==='paused'?0:dt,time);
   floatingParchment.update(state==='paused'?0:dt,arenaView);
   arenas.updateRemnants(state==='paused'?0:dt);
   bossHitEffects.update(state==='paused'?0:realDt);
@@ -589,12 +609,12 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
   rabbitShadowMaterial.opacity=.9*(1-THREE.MathUtils.smoothstep(shadowHeight,0,2.5)*.72);
   shadowEffects.setVisible(state==='playing');
   if(state==='playing')shadowEffects.update(dt,rabbit.position);
-  if(state==='playing')facing=turnTowards(facing,facingTarget,dt);
+  if(state==='playing')facing=turnTowards(facing,facingTarget,dt*(phasingFrame?4.5:1));
   rabbit.rotation.y=facing;
-  if(state==='playing'&&!falling)rabbitAnimation.update(dt,{speed:moveSpeed,height,velocity,skidding:!arenas.active&&motion.skidding,turn:Math.atan2(Math.sin(facingTarget-facing),Math.cos(facingTarget-facing))});
+  if(state==='playing'&&!falling)rabbitAnimation.update(dt,{speed:moveSpeed,height,velocity,dashing:phasingFrame,skidding:!arenas.active&&motion.skidding,turn:Math.atan2(Math.sin(facingTarget-facing),Math.cos(facingTarget-facing))});
   const brightness=hpBrightness(light/RUN_UPGRADES.maxHP*100)*(falling?1-rabbitState.fall.dissolve:1);rabbitHPFade.value=brightness;
-  rabbitMat.color.setRGB(1,.91,.64);
-  rabbitMat.emissive.setRGB(.62,.47,.2);
+  rabbitMat.color.setRGB(1,.98,.94);
+  rabbitMat.emissive.setRGB(.48,.46,.42);
   eyeMat.color.copy(eyeBaseColor).multiplyScalar(brightness);eyeSparkMat.color.copy(eyeSparkBaseColor).multiplyScalar(brightness);
   rabbitGlow.material.opacity=.2*brightness;
   rabbitGlow.material.color.set('#ffe7ac');
@@ -611,6 +631,7 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
     rabbitGlow.material.color.lerp(vitralGlow.bodyColor,vitralGlow.strength);
   }
   if(state==='playing'&&shadowEffects.active){const dim=1-shadowEffects.intensity*.25;rabbitMat.color.multiplyScalar(dim);rabbitMat.emissive.multiplyScalar(dim);rabbitGlow.material.opacity*=dim;}
+  for(const hem of traveler.hemMaterials){hem.color.copy(rabbitMat.color);hem.emissive.copy(rabbitMat.emissive);hem.emissiveIntensity=rabbitMat.emissiveIntensity*3;}
   for(const g of glints)if(!g.taken){g.o.rotation.y=visualTime;g.o.rotation.z=visualTime*.7;g.o.position.y=route(g.s).y+.7+Math.sin(visualTime*2+g.s)*.15;}
   catcher.rotation.y=Math.sin(visualTime*.3)*.4;crystal.rotation.y=visualTime*.3;dust.rotation.y=visualTime*.004;
   catcherGlows.forEach((halo,i)=>halo.material.opacity=1.05+Math.sin(visualTime*1.6+i)*.06);
@@ -663,4 +684,4 @@ if(runURL.searchParams.has('sunny-run')){
   history.replaceState(history.state,'',runURL.href);
 }else try{if(sessionStorage.getItem('sunny.next-run')==='1'){sessionStorage.removeItem('sunny.next-run');start();}}catch{}
 requestAnimationFrame(frame);
-requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();frameClock.reset();state='playing';}}));
+requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();frameClock.reset();state='playing';flashRunStart();}}));

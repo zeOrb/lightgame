@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { BeastVitralBurst } from './beast-vitral-burst.js';
 import { createVisualRandom } from './visual-random.js';
 import {ENEMY_CONFIG,enemyStats} from './enemy-config.js';
+import {clearBossFlash} from './boss-flash.js';
 const random=createVisualRandom('beast-smoke');
 
 // Unlit black stays black even in the sunset and in the rabbit's point light.
@@ -167,6 +168,7 @@ export function killShadowBeast(beast,palette=null){
   beast.deathMotes=beast.smoke.map((mote,i)=>({x:Math.sin(i*2.4)*(.25+i%3*.13),z:Math.cos(i*2.4)*(.3+i%4*.15)}));
 }
 export function resetShadowBeast(beast){
+  clearBossFlash(beast);
   beast.dead=false;beast.deathAge=0;if(beast.maxHP!==undefined)beast.hp=beast.maxHP;beast.hurt=0;beast.lastTop=null;beast.o.visible=true;beast.lane=0;
   beast.dissolve.value=-10;
   beast.deathDirection.value=1;beast.vitralDeath=false;

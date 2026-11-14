@@ -147,6 +147,6 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
         data.patch.visible=fade<1;data.beams.forEach(beam=>beam.visible=fade<1);
         for(const {pane,original} of data.replaced){pane.material.color.copy(original.color).lerp(new THREE.Color('#302a26'),fade);if(pane.material.emissive){pane.material.emissive.copy(original.emissive);pane.material.emissiveIntensity=original.emissiveIntensity*(1-fade);}}
       }
-      for(const material of materials){material.uniforms.strength.value=material.userData.baseOpacity*daylight*(material.userData.windowData.zone?.lightStrength??1);if(material.uniforms.clock)material.uniforms.clock.value=time;}
+      for(const material of materials){material.uniforms.strength.value=material.userData.baseOpacity*daylight*(material.userData.windowData.zone?.lightStrength??1)*(floorMaterials.includes(material)&&material.userData.windowData.floor?.parent.visible===false?0:1);if(material.uniforms.clock)material.uniforms.clock.value=time;}
     }};
 }

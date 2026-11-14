@@ -18,23 +18,24 @@ test('only the dormant source is visible until its one-point unlock',()=>{
   p.award();assert.equal(p.canBuy('heart'),false);assert.equal(p.canBuy('source'),true);
   assert.equal(p.buy('source'),true);assert.equal(p.state.points,0);assert.equal(p.buy('source'),false);
   assert.equal(SKILLS.filter(s=>isSkillVisible(p.state,s.id)&&!s.isRoot).length,6);
-  assert.equal(p.canBuy('heart'),false);p.award();assert.equal(p.buy('heart'),true);
+  assert.equal(p.canBuy('heart'),false);p.award(4);assert.equal(p.buy('heart'),true);
   assert.equal(isSkillVisible(p.state,'heart2'),true);assert.equal(isSkillVisible(p.state,'lasting'),false);
 });
 
 test('neighbour previews stay hidden before the source and reveal one step afterwards',()=>{
   const p=new SkillProgression();assert.equal(isSkillPreview(p.state,'heart2'),false);
   p.award();p.buy('source');
-  assert.equal(SKILLS.filter(s=>isSkillPreview(p.state,s.id)).length,6);
+  const nextTier=SKILLS.filter(s=>SKILLS.find(parent=>parent.id===s.requires)?.requires==='source');
+  assert.equal(SKILLS.filter(s=>isSkillPreview(p.state,s.id)).length,nextTier.length);
   assert.equal(isSkillPreview(p.state,'heart2'),true);assert.equal(isSkillPreview(p.state,'lasting'),false);
-  p.award();p.buy('heart');assert.equal(isSkillPreview(p.state,'heart2'),false);assert.equal(isSkillPreview(p.state,'lasting'),true);
+  p.award(4);p.buy('heart');assert.equal(isSkillPreview(p.state,'heart2'),false);assert.equal(isSkillPreview(p.state,'lasting'),true);
 });
 
 test('each shard banks one point, purchases enforce prerequisites and survive reload',()=>{
   const saved=new Map(),storage={getItem:key=>saved.get(key)??null,setItem:(key,value)=>saved.set(key,value)};
   const p=new SkillProgression(storage);p.award();assert.equal(p.buy('source'),true);assert.equal(p.buy('heart'),false);p.award();assert.equal(p.state.points,1);
-  assert.equal(p.buy('heart2'),false);assert.equal(p.buy('heart'),true);assert.equal(p.state.points,0);
-  assert.equal(p.buy('heart'),false);p.award();assert.equal(p.buy('heart2'),true);
+  assert.equal(p.buy('heart2'),false);p.award(3);assert.equal(p.buy('heart'),true);assert.equal(p.state.points,0);
+  assert.equal(p.buy('heart'),false);p.award(9);assert.equal(p.buy('heart2'),true);
   const restored=new SkillProgression(storage);assert.deepEqual(restored.state,p.state);assert.equal(skillStats(restored.state).maxHP,150);
 });
 test('corrupt saves are contained and all nodes purchase once without negative points',()=>{
@@ -62,8 +63,8 @@ test('upgrades alter live abilities and light math, not only tree labels',()=>{
   assert.ok(a.use(AbilityType.FLARE));assert.equal(a.use(AbilityType.FLARE),null);
   a.use(AbilityType.PHASING);assert.equal(a.cooldowns.phasing,1.35);
   assert.ok(rabbit.updateLight(150,1,false)>138);
-  rabbit.setVitral({},false,true);let light=rabbit.updateLight(100,0,false);assert.equal(light,125);
-  light=rabbit.updateLight(light,1,false);assert.ok(light<125);assert.equal(stats.rayDashHeal,25);
+  rabbit.setVitral({},false,true);let light=rabbit.updateLight(100,0,false);assert.equal(light,150);
+  light=rabbit.updateLight(light,1,false);assert.ok(light<150);assert.equal(stats.rayDashHeal,.25);
 });
 
 test('legacy learned trees migrate the source without spending points; fresh reset keeps it locked',()=>{

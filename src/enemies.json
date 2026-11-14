@@ -50,7 +50,10 @@
       "spawnDuration": 1,
       "spawnDepth": 3.4,
       "crownHeight": 3.05,
-      "rewardPoints": 5
+      "rewardPoints": 5,
+      "rewardEveryFloors": 3,
+      "rewardStep": 1,
+      "maxRewardPoints": 8
     }
   },
   "enemies": [

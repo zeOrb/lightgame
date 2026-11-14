@@ -1,13 +1,13 @@
 import {ROUTE_RADIUS,JUMP_SPEED,ROUTE_ANGLE} from './game.js';
 export const AbilityType=Object.freeze({JUMP:'jump',PHASING:'phasing',FLARE:'flare'});
-export const AbilityInfo=Object.freeze({jump:{key:'Space',cooldown:.12},phasing:{key:'Shift',cooldown:1.8,duration:.18,distanceScale:.75},flare:{key:'E',cooldown:8}});
+export const AbilityInfo=Object.freeze({jump:{key:'Space',cooldown:.12},phasing:{key:'Shift',cooldown:1.8,duration:.18*1.33,distanceScale:.75*1.33,arenaDistance:4*1.33},flare:{key:'E',cooldown:8}});
 export class Abilities {
   constructor(upgrades={}){this.upgrades=upgrades;this.reset();}
   reset(){this.cooldowns={jump:0,phasing:0,flare:0};this.phase=null;this.airJumpUsed=false;}
   land(){this.airJumpUsed=false;}
   use(type,{falling=false,height=0,direction={x:0,z:1},distance=5.4}={}){
     if(falling||!AbilityInfo[type]||this.cooldowns[type]>0)return null;
-    if(type===AbilityType.JUMP){if(height>.001){if(!this.upgrades.doubleJump||this.airJumpUsed)return null;this.airJumpUsed=true;}this.cooldowns.jump=AbilityInfo.jump.cooldown;return {velocity:JUMP_SPEED*(this.upgrades.jump??1)};}
+    if(type===AbilityType.JUMP){if(height>.001){if(!this.upgrades.doubleJump||this.airJumpUsed)return null;this.airJumpUsed=true;}this.cooldowns.jump=AbilityInfo.jump.cooldown;return {velocity:JUMP_SPEED*(this.upgrades.jump??1),airJump:height>.001};}
     if(type===AbilityType.FLARE){if(!this.upgrades.flare)return null;this.cooldowns.flare=AbilityInfo.flare.cooldown;return {flare:true};}
     if(this.phase)return null;
     const length=Math.hypot(direction.x,direction.z);if(length<.001)return null;

@@ -2,7 +2,7 @@ import {AbilityType} from './abilities.js';
 const approach=(v,target,rate,dt)=>v+Math.sign(target-v)*Math.min(Math.abs(target-v),rate*dt);
 export class PlatformerMotion {
   constructor(){this.reset();}
-  reset(){this.rail=0;this.x=this.z=0;this.jumpBuffer=0;this.coyote=0;this.cuttable=false;this.skidding=false;}
+  reset(){this.rail=0;this.x=this.z=0;this.jumpBuffer=0;this.coyote=0;this.cuttable=false;this.skidding=false;this.didDoubleJump=false;}
   tick(dt,pressed){this.jumpBuffer=pressed?.13:Math.max(0,this.jumpBuffer-dt);this.coyote=Math.max(0,this.coyote-dt);}
   ground(supported){if(supported)this.coyote=.085;}
   railStep(input,maxSpeed,airborne,dt){
@@ -23,6 +23,7 @@ export class PlatformerMotion {
     const effectiveHeight=grounded||this.coyote>0&&height<=.001?0:Math.max(.01,height);
     const jump=abilities.use(AbilityType.JUMP,{height:effectiveHeight});if(!jump)return null;
     this.jumpBuffer=0;this.coyote=0;this.cuttable=true;
+    this.didDoubleJump=!!jump.airJump;
     return jump.velocity*(1.27+Math.min(1,speedRatio)*.035);
   }
   jumpStep(height,velocity,dt,held){
