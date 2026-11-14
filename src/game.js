@@ -1,6 +1,6 @@
 import { visualSample } from './visual-random.js';
 import {RUN_UPGRADES} from './progression.js';
-export const FLOOR_COUNT = 12+RUN_UPGRADES.extraFloors;
+export const FLOOR_COUNT = 10+RUN_UPGRADES.extraFloors;
 export const END = FLOOR_COUNT*14-1;
 export const TOWER_TOP=100+RUN_UPGRADES.extraFloors*7;
 export function floorAt(s) { return FLOOR_COUNT - Math.min(FLOOR_COUNT-1, Math.floor(clamp(s,0,END)/14)); }
@@ -32,9 +32,10 @@ export function fellIntoGap(s, height, velocity) {
   return isGap(s) && height<=0 && velocity<=0;
 }
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+export const SHADOW_LIGHT_THRESHOLD=20;
 export function hpBrightness(hp){
-  const t=clamp(hp/100,0,1),lit=t*t*t,dark=(1-t)*(1-t)*(1-t);
-  return Math.pow(lit/(lit+dark),1.4);
+  const t=clamp(hp/SHADOW_LIGHT_THRESHOLD,0,1);
+  return t*t*(3-2*t);
 }
 export function turnTowards(current, target, dt) {
   const delta = Math.atan2(Math.sin(target-current), Math.cos(target-current));

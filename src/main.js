@@ -1,7 +1,10 @@
+import {RabbitHitEffects} from './rabbit-hit-effects.js';
+import {LightBarRecovery} from './light-bar-recovery.js';
 import {createRabbitTraveler} from './rabbit-model.js';
 import {flashRunStart} from './start-flash.js';
 import {VitralEntryEffects} from './vitral-entry-effects.js';
 import {ArenaShelfVisibility} from './arena-shelf-visibility.js';
+import {ArenaCameraCutaway} from './arena-camera-cutaway.js';
 import {Springboards,bounceVelocity} from './springboards.js';
 import {VICTORY_BONUS} from './progression-balance.js';
 import {initializeMainMenu} from './main-menu.js';
@@ -48,7 +51,7 @@ import {BeastVitralBurst} from './beast-vitral-burst.js';
 import { CatcherRay } from './catcher-ray.js';
 import {createShelfDecorations} from './shelf-decorations.js';
 import {FloatingParchment} from './floating-parchment.js';
-import {BeastKnockback} from './beast-knockback.js';
+import {BeastKnockback,canDamageDashCancel} from './beast-knockback.js';
 import {AtmosphericFocus} from './atmospheric-focus.js';
 import {UnderShelfRelics} from './under-shelf-relics.js';
 
@@ -198,6 +201,7 @@ const shadowShelves=new Set([...hazards,...beasts,...books,...threats].map(objec
 const threatVisuals=new ThreatVisuals(scene,threats);
 const windowLight=createWindowLight(windowPanes,walkableFloors,shadowShelves);scene.add(windowLight.group);
 const arenaShelfVisibility=new ArenaShelfVisibility(walkableFloors);
+const arenaCameraCutaway=new ArenaCameraCutaway(renderer);
 windowLight.setDepthSource(towerMist.depthTarget.depthTexture,towerMist.material.uniforms.resolution.value,towerMist.material.uniforms.cameraRange.value);
 const groundSmoke=new GroundShadowSmoke(scene,hazards.map(h=>({...route(h.s,h.lane),gap:false})));
 // Shared soft texture for VFX and the rabbit's small emissive halo.
@@ -246,14 +250,15 @@ const eyeMat=new THREE.MeshBasicMaterial({color:'#252137',fog:false});
 const eyeSparkMat=new THREE.MeshBasicMaterial({color:'#fff9e8',fog:false});
 const eyeBaseColor=eyeMat.color.clone(),eyeSparkBaseColor=eyeSparkMat.color.clone();
 const traveler=createRabbitTraveler(rabbitVisual,rabbitMat,eyeMat,eyeSparkMat);
+const rabbitHitEffects=new RabbitHitEffects(scene,rabbit,rabbitVisual);
 const rabbitEars=traveler.ears,rabbitPaws=traveler.paws,rabbitTail=traveler.coat;
 const rabbitAnimation=new RabbitAnimation(rabbitVisual,rabbitEars,rabbitPaws,rabbitTail,traveler.arms,traveler.head);
 const vitralGlow=new VitralGlow(rabbitVisual,glowTexture);
-const abilities=new Abilities(RUN_UPGRADES),phaseTrail=new PhaseTrail(scene),phaseTrailColor=new THREE.Color();
+const abilities=new Abilities(RUN_UPGRADES),phaseTrail=new PhaseTrail(scene),phaseTrailColor=new THREE.Color(),phaseTrailHead=new THREE.Vector3();
 const flareBurst=new BeastVitralBurst(scene,glowTexture);
 let flareAge=2,flareQueued=false,flareFrame=false,rescueUsed=false,rescueInvul=0;
-const phaseGlowZone={palette:glassGlowPalette};
-let phaseQueued=false,phasingFrame=false,phaseGlowWasActive=false,railFacing=1;
+
+let phaseQueued=false,phasingFrame=false,railFacing=1,damageInputLocked=false;
 const rabbitState=new RabbitState(RUN_UPGRADES);
 const fallingShadows=new FallingShadows(scene,glowTexture);
 const fallCameraOffset=new THREE.Vector3();
@@ -270,6 +275,11 @@ const dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute('position',new THR
 const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f8d8a1',size:.065,transparent:true,opacity:.65,depthWrite:false}));scene.add(dust);
 
 let state='intro',s=0,lane=0,height=0,velocity=0,light=RUN_UPGRADES.maxHP,collected=0,invert=0,slow=0,time=0,toastTime=0,currentVitralZone=null;
+const lightBarRecovery=new LightBarRecovery(light);
+function healFromShard(){
+  light=clamp(light+RUN_UPGRADES.shardHeal,0,RUN_UPGRADES.maxHP);
+  lightBarRecovery.receive(light);
+}
 let facing=-.5,facingTarget=-.5,moveSpeed=0;
 const beastKnockback=new BeastKnockback();
 const motion=new PlatformerMotion();
@@ -285,7 +295,7 @@ function beginRabbitFall(outward,message,launched=true){
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
   abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent='Падение';
 }
-function reset(){springboards.reset();motion.reset();arenas.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;phaseGlowWasActive=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints){g.taken=false;g.o.visible=true;g.o.scale.setScalar(1);}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function reset(){damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints){g.taken=false;g.o.visible=true;g.o.scale.setScalar(1);}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
 function start(){frameClock.reset();skillTree.element.hidden=true;reset();state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';keys.clear();showModal('','Пауза','','Продолжить');$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('modal').hidden=true;}}
@@ -299,14 +309,16 @@ addEventListener('keydown',e=>{if(state==='lost'||state==='won'||state==='loadin
 addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();if(state==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')pause();});
 for(const button of document.querySelectorAll('[data-key]')){button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);keys.add(button.dataset.key);if(button.dataset.key==='Space')jumpQueued=true;if(button.dataset.key==='KeyE')flareQueued=true;if(button.dataset.key==='ShiftLeft')phaseQueued=true;};button.onpointerup=button.onpointercancel=()=>keys.delete(button.dataset.key);}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-function updateHUD(){
+function updateHUD(dt=0){
+  lightBarRecovery.update(light,RUN_UPGRADES.maxHP,dt);
   $('arena-controls').hidden=!arenas.active;$('movement-mode').textContent=arenas.active?'по арене':'по спирали';
   for(const button of document.querySelectorAll('.arena-touch'))button.hidden=!arenas.active;
   const lightPercent=clamp(light/RUN_UPGRADES.maxHP*100,0,100);
   $('light-value').innerHTML=Math.ceil(lightPercent)+'<small>%</small>';$('light-value').title=Math.ceil(light)+' / '+RUN_UPGRADES.maxHP+' HP';
-  const lightFill=$('light-fill');lightFill.style.width=lightPercent+'%';lightFill.dataset.empty=String(light<=0);
-  const lightSun=$('light-sun');lightSun.style.left=lightPercent+'%';lightSun.hidden=light<=0;
-  lightFill.parentElement.style.setProperty('--sun-position',lightPercent+'%');
+  const barPercent=clamp(lightBarRecovery.displayed/RUN_UPGRADES.maxHP*100,0,100);
+  const lightFill=$('light-fill');lightFill.style.width=barPercent+'%';lightFill.dataset.empty=String(light<=0);
+  const lightSun=$('light-sun');lightSun.style.left=barPercent+'%';lightSun.hidden=light<=0;
+  lightFill.parentElement.style.setProperty('--sun-position',barPercent+'%');
   lightFill.parentElement.style.setProperty('--sun-power',light>0?'1':'0');
   $('progress').style.width=s/END*100+'%';$('floor').textContent='Этаж '+floorAt(s)+' / '+FLOOR_COUNT;$('shards').textContent='Блики: '+collected+' · ✦ '+progression.state.points;
 }
@@ -315,35 +327,38 @@ function updateArena(dt){
   const active=arenas.active,old={...arenas.player},previousHeight=height;
   camera.getWorldDirection(arenaForward);const direction=arenaInput(keys,arenaForward);
   const entering=active.stage==='entering';
-  const movable=!active.collapse&&(active.stage==='fighting'||active.stage==='cleared');
+  const movable=!active.collapse&&!arenas.recoil&&!damageInputLocked&&(active.stage==='fighting'||active.stage==='cleared');
   if(movable){
     if(Math.hypot(direction.x,direction.z)>.01){arenaFacing.x=direction.x;arenaFacing.z=direction.z;}
-    const grounded=height<=.001;motion.ground(grounded);if(grounded)abilities.land();
+    const grounded=height<=.001;motion.ground(grounded);if(grounded&&!abilities.phase&&!phasingFrame&&abilities.gravityDelay<=0)abilities.land();
     const jumpVelocity=motion.tryJump(abilities,height,grounded,Math.hypot(motion.x,motion.z)/(4.8*RUN_UPGRADES.speed));
-    if(jumpVelocity){velocity=jumpVelocity;rabbitAnimation.jump(jumpVelocity,Math.max(Math.hypot(motion.x,motion.z),Math.hypot(direction.x,direction.z)*4.8*RUN_UPGRADES.speed));tone(470,.1);}
-    if(phaseQueued&&abilities.use(AbilityType.PHASING,{direction:arenaFacing,distance:AbilityInfo.phasing.arenaDistance*RUN_UPGRADES.phaseDistance})){
+    if(jumpVelocity){velocity=jumpVelocity;abilities.jumpLaunched(jumpVelocity,height);rabbitAnimation.jump(jumpVelocity,Math.max(Math.hypot(motion.x,motion.z),Math.hypot(direction.x,direction.z)*4.8*RUN_UPGRADES.speed));tone(470,.1);}
+    if(phaseQueued&&abilities.use(AbilityType.PHASING,{height,direction:arenaFacing,distance:AbilityInfo.phasing.arenaDistance*RUN_UPGRADES.phaseDistance})){
       phaseTrail.reset();tone(950,.15);
     }
   }
   jumpQueued=phaseQueued=false;
   const dash=abilities.advance(dt);phasingFrame=entering||(movable&&!!dash);
-  if(movable){const jump=motion.jumpStep(height,velocity,dt,keys.has('Space'));height=jump.height;velocity=jump.velocity;}
+  if(movable){height+=abilities.consumePhaseRise();if(dash||abilities.gravityDelay>0)velocity=0;const jump=motion.jumpStep(height,velocity,abilities.gravityDt,keys.has('Space'));height=jump.height;velocity=jump.velocity;}
   let flare=false;if(movable&&flareQueued&&abilities.use(AbilityType.FLARE)){flare=true;flareAge=0;flareBurst.start(new THREE.Vector3(old.x,old.y+height+.5,old.z),glassGlowPalette);}flareQueued=false;
   const movement=movable?motion.arenaStep(direction,4.8*RUN_UPGRADES.speed,height>.025,dt):{x:0,z:0};
   const result=arenas.update(dt,time,{direction:movement,dash:movable?dash:null,height,previousHeight,velocity,speed:4.8*RUN_UPGRADES.speed,flare,chargedPalette:rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null});
   const p=arenas.player,dx=p.x-old.x,dz=p.z-old.z;moveSpeed=result.teleported?0:Math.hypot(dx,dz)/Math.max(.0001,dt);
   if(Math.hypot(dx,dz)>.0001)facingTarget=Math.atan2(dx,dz);
-  if(result.bounce){height=Math.max(height,result.bounce);velocity=result.jumpRebound?Math.max(velocity,7):bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;if(!result.jumpRebound)abilities.land();}
+  if(result.bounce){height=Math.max(height,result.bounce);velocity=result.jumpRebound?Math.max(velocity,7):bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;if(!result.jumpRebound)abilities.resetAirJump();}
   rabbitState.setVitral(null);currentVitralZone=null;
+  const absorbedVitral=rabbitState.pendingHeal>0;
   light=rabbitState.updateLight(light,dt,false,{passive:false});
-  if(result.damage){light=Math.max(0,light-result.damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(140,.18);}
+  if(absorbedVitral)lightBarRecovery.receive(light);
+  if(result.knockbackHeight!==undefined){height=result.knockbackHeight;velocity=0;}
+  if(result.damage){rabbitHitEffects.hit(new THREE.Vector3(result.damageSource.x,result.damageSource.y,result.damageSource.z));light=Math.max(0,light-result.damage*RUN_UPGRADES.damageScale);rabbitAnimation.hit();facingTarget=facing;motion.reset();abilities.phase=null;shadowEffects.hit();tone(140,.18);}
   if(result.phaseKill){light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.phaseHeal*result.kills);if(RUN_UPGRADES.resonance)abilities.cooldowns.phasing=Math.max(0,abilities.cooldowns.phasing-.5);}
   if(result.hits){
     hitStop=result.kills?.065:.045;
     if(!muted){audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();playImpact(audio,!!result.kills);}
     if(result.impact)bossHitEffects.hit(result.impact,result.impactPalette);
   }
-  if(result.reward){scene.attach(result.reward);pickupEffects.collect(result.reward);light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.shardHeal);collected++;progression.award(result.rewardPoints);height=velocity=0;abilities.phase=null;tone(1200,.3);toast('+'+result.rewardPoints+' очков древа');}
+  if(result.reward){scene.attach(result.reward);pickupEffects.collect(result.reward);healFromShard();collected++;progression.award(result.rewardPoints);height=velocity=0;abilities.phase=null;tone(1200,.3);toast('+'+result.rewardPoints+' очков древа');}
   if(result.returning)phasingFrame=true;
   if(result.teleported){s=result.returnedS;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=false;cameraNeedsReset=true;floorGates.arriveAt(s);}
   if(result.cleared){tone(1046,.35);toast('Арена пройдена');}
@@ -357,15 +372,30 @@ function updateArena(dt){
     s=result.returnedS;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=false;arenaCameraReturn=.8;cameraNeedsReset=true;
     if(s>=END-.1&&light>0)finish(true);
   }
-  updateHUD();
+  updateHUD(dt);
 }
 function activateSpring(spring){
   height=Math.max(height,.09);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump)*1.15;
   rabbitAnimation.jump(velocity,moveSpeed);
-  motion.cuttable=false;motion.jumpBuffer=0;abilities.land();
+  motion.cuttable=false;motion.jumpBuffer=0;abilities.resetAirJump();
   landingEffects.land(new THREE.Vector3(spring.p.x,spring.p.y+.07,spring.p.z),.75);tone(keys.has('Space')?880:640,.16);
 }
 function update(dt){
+  const recovery=beastKnockback.motion??arenas.recoil??(rabbitAnimation.recoiling?{age:rabbitAnimation.hitAge}:null);
+  damageInputLocked=!!recovery;
+  if(damageInputLocked){
+    jumpQueued=flareQueued=false;motion.jumpBuffer=0;
+    if(phaseQueued&&canDamageDashCancel(recovery.age,RUN_UPGRADES)){
+      const arena=!!arenas.active;
+      const direction=arena?{x:Math.sin(facing),z:Math.cos(facing)}:{x:railFacing,z:0};
+      const distance=arena?AbilityInfo.phasing.arenaDistance:(SHELF_OUTER_RADIUS-shelfInnerRadius(Math.max(0,Math.round(s))))*AbilityInfo.phasing.distanceScale;
+      if(abilities.use(AbilityType.PHASING,{height,direction,distance:distance*RUN_UPGRADES.phaseDistance,recoveryCancel:true})){
+        beastKnockback.motion=null;arenas.recoil=null;rabbitAnimation.hitAge=1;rabbitAnimation.hitClothBlend=0;
+        damageInputLocked=false;motion.reset();phaseTrail.reset();tone(950,.15);
+      }
+    }
+    phaseQueued=false;
+  }
   motion.tick(dt,jumpQueued);jumpQueued=false;
   if(arenas.active){updateArena(dt);return;}
   if(rabbitState.mode===RabbitMode.FALLING){
@@ -382,14 +412,14 @@ function update(dt){
   updateThreats(threats,time);
   if(passenger){const carried=carryPlatformPassenger(passenger,s,lane,previousOffset);s=carried.s;lane=carried.lane;}
   for(const platform of movingPlatforms)if(platform.warning&&!platform.notified&&Math.abs(s-platform.s)<2){platform.notified=true;toast('Полка сдвигается! Она несёт тебя к центру — следи за краями.');tone(240,.12);}
-  const forward=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
+  const forward=damageInputLocked?0:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
   const direction=invert>0?-1:1;
   if(forward)railFacing=Math.sign(forward*direction);
   const beforeMoveS=s,beforeMove=route(s,lane);
   const knocked=beastKnockback.advance(dt);
   if(phaseQueued&&!knocked){
     const dashDirection={x:railFacing,z:0};
-    if(abilities.use(AbilityType.PHASING,{direction:dashDirection,distance:(SHELF_OUTER_RADIUS-shelfInnerRadius(Math.max(0,Math.round(s))))*AbilityInfo.phasing.distanceScale*RUN_UPGRADES.phaseDistance})){phaseTrail.reset();phaseTrail.update(0,new THREE.Vector3(beforeMove.x,beforeMove.y+.12+height,beforeMove.z),true,camera,rabbitMat.color.clone().multiplyScalar(hpBrightness(light/RUN_UPGRADES.maxHP*100)));tone(950,.15);}
+    if(abilities.use(AbilityType.PHASING,{height,direction:dashDirection,distance:(SHELF_OUTER_RADIUS-shelfInnerRadius(Math.max(0,Math.round(s))))*AbilityInfo.phasing.distanceScale*RUN_UPGRADES.phaseDistance})){phaseTrail.reset();tone(950,.15);}
   }
   phaseQueued=false;
   const dash=abilities.advance(dt);phasingFrame=!!dash;
@@ -410,12 +440,14 @@ function update(dt){
   moveSpeed=Math.hypot(dx,dz)/Math.max(dt,.0001);
   if(dx*dx+dz*dz>1e-10)facingTarget=Math.atan2(dx,dz);
   const grounded=height<=.001&&hasShelfSupport(threats,s,lane);
-  motion.ground(grounded);if(grounded)abilities.land();
-  const spring=!knocked&&!dash?springboards.contact(s,lane,height,velocity):null;
+  motion.ground(grounded);if(grounded&&!abilities.phase&&!phasingFrame&&abilities.gravityDelay<=0)abilities.land();
+  const spring=!damageInputLocked&&!knocked&&!dash?springboards.contact(s,lane,height,velocity):null;
   if(spring)activateSpring(spring);
-  else if(!knocked){const jumpVelocity=motion.tryJump(abilities,height,grounded,Math.abs(motion.rail)/(1.6*RUN_UPGRADES.speed));if(jumpVelocity){velocity=jumpVelocity;rabbitAnimation.jump(jumpVelocity,Math.max(moveSpeed,Math.abs(forward)));tone(470,.1);}}
-  const jump=motion.jumpStep(height,velocity,dt,keys.has('Space'));height=jump.height;velocity=jump.velocity;
-  const landedSpring=!knocked&&!dash?springboards.contact(s,lane,height,velocity):null;
+  else if(!damageInputLocked&&!knocked){const jumpVelocity=motion.tryJump(abilities,height,grounded,Math.abs(motion.rail)/(1.6*RUN_UPGRADES.speed));if(jumpVelocity){velocity=jumpVelocity;abilities.jumpLaunched(jumpVelocity,height);rabbitAnimation.jump(jumpVelocity,Math.max(moveSpeed,Math.abs(forward)));tone(470,.1);}}
+  if(dash||abilities.gravityDt<dt){height=Math.max(0,height+beforeMove.y-afterMove.y);velocity=0;}
+  height+=abilities.consumePhaseRise();
+  const jump=motion.jumpStep(height,velocity,abilities.gravityDt,keys.has('Space'));height=jump.height;velocity=jump.velocity;
+  const landedSpring=!damageInputLocked&&!knocked&&!dash?springboards.contact(s,lane,height,velocity):null;
   if(landedSpring)activateSpring(landedSpring);
   if(knocked){height=knocked.height;velocity=0;}
   if(flareQueued&&abilities.use(AbilityType.FLARE)){flareFrame=true;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+height+.5,afterMove.z),glassGlowPalette);tone(1150,.3);}flareQueued=false;
@@ -429,8 +461,8 @@ function update(dt){
   }
   let inShadow=false;
   for(const h of hazards){const p=route(h.s,h.lane),player=route(s,lane);if(Math.hypot(player.x-p.x,player.z-p.z)<1.12&&Math.abs(player.y+height-p.y)<.8&&height<.8)inShadow=true;}
-  if(!phasingFrame&&!hasShelfSupport(threats,s,lane)&&height===0&&velocity<=0&&motion.coyote<=0){beginRabbitFall(lane>2.5,'Под лапами больше нет полки…',false);return;}
-  for(const g of glints)if(!g.taken&&Math.abs(s-g.s)<RUN_UPGRADES.magnet&&Math.abs(lane-g.lane)<1.15&&height<1.8){g.taken=true;pickupEffects.collect(g.o);light=clamp(light+RUN_UPGRADES.shardHeal,0,RUN_UPGRADES.maxHP);collected++;progression.award();tone(800+collected%4*90);toast('+'+RUN_UPGRADES.shardHeal+' света · +1 очко древа');}
+  if(!phasingFrame&&abilities.gravityDelay<=0&&!hasShelfSupport(threats,s,lane)&&height===0&&velocity<=0&&motion.coyote<=0){beginRabbitFall(lane>2.5,'Под лапами больше нет полки…',false);return;}
+  for(const g of glints)if(!g.taken&&g.s>Math.min(beforeMoveS,s)-RUN_UPGRADES.magnet&&g.s<Math.max(beforeMoveS,s)+RUN_UPGRADES.magnet&&Math.abs(lane-g.lane)<1.15&&height<1.8){g.taken=true;pickupEffects.collect(g.o);healFromShard();collected++;progression.award();tone(800+collected%4*90);toast('+'+RUN_UPGRADES.shardHeal+' света · +1 очко древа');}
   for(const b of bottles){b.cooldown=Math.max(0,b.cooldown-dt);if(!phasingFrame&&Math.abs(s-b.s)<.65&&Math.abs(lane-b.lane)<.7&&height<1&&b.cooldown===0){b.cooldown=7;if(b.s%2){invert=2.5*RUN_UPGRADES.potionScale;toast('Преломление! Управление отражено на 2,5 секунды');}else{slow=3*RUN_UPGRADES.potionScale;toast('Густой свет · замедление на 3 секунды');}tone(270,.2);}}
   for(const b of beasts){
     if(b.dead){animateBeastDeath(b,dt);continue;}
@@ -451,13 +483,13 @@ function update(dt){
     const top=p.y+leap*b.stats.hopHeight+b.stompTop,foot=route(s,lane).y+height+.12;
     const overlaps=Math.abs(s-b.s)<b.stats.stompSection&&Math.abs(lane-b.lane)<b.stats.stompLaneRadius;
     if(!phasingFrame&&canStomp(previousFoot,foot,b.lastTop??top,top,velocity,overlaps)){
-      const killed=damageEnemy(b,(rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null)??currentVitralZone?.palette??(vitralGlow.strength>.01?vitralGlow.palette:null));height=Math.max(height,top-route(s,lane).y+.03);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;abilities.land();
+      const killed=damageEnemy(b,(rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null)??currentVitralZone?.palette??(vitralGlow.strength>.01?vitralGlow.palette:null));height=Math.max(height,top-route(s,lane).y+.03);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;abilities.resetAirJump();
       tone(360,.25);if(killed)toast('Тень рассеяна!');continue;
     }
     b.lastTop=top;
     if(!phasingFrame&&Math.abs(s-b.s)<b.stats.contactSection&&Math.abs(lane-b.lane)<b.stats.laneRadius&&height<b.stats.contactHeight){
       inShadow=true;
-      if(beastKnockback.start(s,b.s,railFacing)){height=Math.max(height,.06);velocity=0;phaseQueued=jumpQueued=false;shadowEffects.hit();tone(140,.18);}
+      if(beastKnockback.start(s,b.s,railFacing,height)){motion.reset();abilities.phase=null;const source=route(b.s,b.lane);rabbitHitEffects.hit(new THREE.Vector3(source.x,source.y+.5,source.z));height=Math.max(height,.06);velocity=0;rabbitAnimation.hit();facingTarget=facing;phaseQueued=jumpQueued=false;shadowEffects.hit();tone(140,.18);}
     }
   }
   for(const b of books){const cycle=(time+b.phase)%5;const p=route(b.s);b.o.position.set(p.x,p.y+(cycle<3?6:Math.max(.25,6-(cycle-3)*8)),p.z);b.o.rotation.set(cycle*.3,cycle,.25);b.warning.visible=cycle>2.2;b.warning.material.opacity=.2+Math.sin(time*12)*.1;if(cycle>3.6&&Math.abs(s-b.s)<.65&&height<.8)inShadow=true;}
@@ -473,7 +505,9 @@ function update(dt){
   if(currentVitralZone&&!wasInVitral){tone(1100,.3);toast('Свет витража · лечение ускоряется, пока ты в свете');}
   rabbitState.setVitral(currentVitralZone,phasingFrame,height>.025||velocity>0);
   if(phasingFrame||rescueInvul>0)inShadow=false;
-  light=rabbitState.updateLight(light,dt,inShadow);
+  const absorbedVitral=rabbitState.pendingHeal>0;
+  light=rabbitState.updateLight(light,dt,lightBarRecovery.holding?false:inShadow,{passive:!lightBarRecovery.holding});
+  if(absorbedVitral)lightBarRecovery.receive(light);
   if(RUN_UPGRADES.rayEntryHeal){
     for(const zone of rabbitState.entryHealedZones)if(!zone.extinguished)windowLight.extinguish(zone);
     if(currentVitralZone?.extinguished&&currentVitralZone.lightStrength<=0){currentVitralZone=null;rabbitState.setVitral(null);if(rabbitState.lightCharge<=0)vitralGlow.reset();}
@@ -483,14 +517,14 @@ function update(dt){
   if(height<3.8){const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){tone(880,.35);toast(gate.plank===END?'Последняя арка · кристалл рядом':'Переход на этаж '+gate.nextFloor);}}
   if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;rescueInvul=1;light=RUN_UPGRADES.maxHP*.3;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+.5,afterMove.z),glassGlowPalette);toast('Последний огонёк · свет вернулся!');}
   if(light<=0)finish(false);else if(s>=END-.1)finish(true);
-  updateHUD();
+  updateHUD(dt);
 }
 const frameClock=new FrameClock();
 let visualTime=0,viewAnchor=0,smoothAnchor=0,anchorVelocity=0;
 let previousSunLight=100,sunMotion=0,sunOrbit=0,sunWasRegenerating=false;
 const sunParticleColors=['#ff95db','#ad98ff','#7de4ff','#9affca','#fff09a'];
 const sunDisc=document.createElement('span');sunDisc.className='sun-disc';$('light-sun').prepend(sunDisc);
-for(let i=0;i<18;i++){
+for(let i=0;i<7;i++){
   const particle=document.createElement('i');particle.className='sun-particle';
   const angle=sunRandom()*Math.PI*2,distance=24+sunRandom()*20;
   particle.style.setProperty('--particle-x',Math.cos(angle)*distance+'px');
@@ -501,16 +535,20 @@ for(let i=0;i<18;i++){
 }
 const target=new THREE.Vector3(),desired=new THREE.Vector3();
 function emitSunParticle(particle,initial=false){
-  const angle=sunRandom()*Math.PI*2,distance=24+sunRandom()*20;
-  const x=Math.cos(angle)*distance,y=Math.sin(angle)*distance-10;
-  const duration=2200+sunRandom()*650;
+  const angle=sunRandom()*Math.PI*2,distance=6+Math.pow(sunRandom(),.7)*21;
+  const x=Math.cos(angle)*distance,y=Math.sin(angle)*distance;
+  const bend=(sunRandom()-.5)*distance*.8,bx=-Math.sin(angle)*bend,by=Math.cos(angle)*bend;
+  const duration=400,launch=90+sunRandom()*100,fade=140;
+  const size=4+Math.floor(sunRandom()*4),scale=.65+sunRandom()*.4;
+  particle.style.width=particle.style.height=size+'px';
+  particle.style.left=particle.style.top=`calc(50% - ${size/2}px)`;
   particle.style.setProperty('--particle-color',sunParticleColors[Math.floor(sunRandom()*sunParticleColors.length)]);
   const animation=particle.animate([
-    {transform:'translate(0px,0px) scale(0)',opacity:0,offset:0,easing:'cubic-bezier(.2,0,.4,1)'},
-    {transform:`translate(${x*.65}px,${y*.65}px) scale(.7)`,opacity:.85,offset:550/duration,easing:'ease-out'},
-    {transform:`translate(${x}px,${y}px) scale(.65)`,opacity:.85,offset:1-360/duration,easing:'cubic-bezier(.2,0,.4,1)'},
-    {transform:'translate(0px,0px) scale(0)',opacity:0,offset:1},
-  ],{duration,delay:sunRandom()*(initial?300:160)});
+    {transform:'translate(0px,0px) scale(0)',opacity:0,offset:0,easing:'cubic-bezier(.12,.65,.25,1)'},
+    {transform:`translate(${x*.72+bx*.3}px,${y*.72+by*.3}px) scale(${scale})`,opacity:.85,offset:launch/duration,easing:'ease-out'},
+    {transform:`translate(${x+bx}px,${y+by-1.5}px) scale(${scale*.8})`,opacity:.7,offset:1-fade/duration,easing:'cubic-bezier(.2,0,.4,1)'},
+    {transform:`translate(${x+bx}px,${y+by-1.5}px) scale(${scale*.8})`,opacity:0,offset:1},
+  ],{duration,delay:sunRandom()*(initial?90:40)});
   animation.onfinish=()=>{if(sunWasRegenerating)emitSunParticle(particle);};
 }
 let cameraNeedsReset=true;
@@ -518,6 +556,7 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
   const stopped=state==='playing'&&hitStop>0,dt=stopped?0:realDt;
   hitStop=state==='playing'?Math.max(0,hitStop-realDt):0;
   const previousJumpHeight=height,landingVelocity=velocity;
+  if(state==='playing')lightBarRecovery.tick(dt);
   if(state==='playing'&&!stopped)update(dt);
   if(state==='playing'&&previousJumpHeight>.025&&height<=.025&&rabbitState.mode!==RabbitMode.FALLING&&!arenas.active?.collapse){
     const p=arenas.active?arenas.player:route(s,lane);
@@ -543,10 +582,13 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
   previousSunLight=light;
   sunMotion=THREE.MathUtils.damp(sunMotion,sunMoving?1:0,sunMoving?7:9,dt);
   sunOrbit+=dt*(2.4+.8*Math.sin(visualTime*.73)+.35*Math.sin(visualTime*1.31))*sunMotion;
-  const sunRadius=2.5*sunMotion*(.75+.25*Math.sin(sunOrbit*1.37));
+  const sunRadius=lightBarRecovery.holding?0:2.5*sunMotion*(.75+.25*Math.sin(sunOrbit*1.37));
+  $('light-sun').style.setProperty('--pickup-scale',String(lightBarRecovery.scale));
   $('light-sun').style.setProperty('--sun-x',(Math.cos(sunOrbit)*sunRadius).toFixed(3)+'px');
   $('light-sun').style.setProperty('--sun-y',(Math.sin(sunOrbit)*sunRadius).toFixed(3)+'px');
-  const sunHealth=clamp(light/RUN_UPGRADES.maxHP,0,1);
+  const sunHealth=clamp(lightBarRecovery.displayed/RUN_UPGRADES.maxHP,0,1);
+  $('light-sun').classList.toggle('is-shadow',sunHealth<=.2);
+  $('light-sun').parentElement.classList.toggle('is-shadow',sunHealth<=.2);
   $('light-sun').style.setProperty('--sun-health',sunHealth.toFixed(3));
   $('light-sun').style.setProperty('--sun-sunset',Math.pow(1-sunHealth,.8).toFixed(3));
   $('light-sun').style.setProperty('--sun-glow-color',`hsl(${8+sunHealth*38} 85% ${24+sunHealth*43}%)`);
@@ -563,9 +605,8 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
         particle.style.animation='none';
         particle.animate([
           {transform,opacity,offset:0},
-          {transform:'translate(0px,0px) scale(.15)',opacity,offset:.88},
-          {transform:'translate(0px,0px) scale(0)',opacity:0,offset:1},
-        ],{duration:360,easing:'cubic-bezier(.2,0,.4,1)',fill:'forwards'});
+          {transform,opacity:0,offset:1},
+        ],{duration:550+sunRandom()*450,delay:(sunRandom()-.5)*500,easing:'ease-out',fill:'both'});
       }
     }
     sunWasRegenerating=sunRegenerating;
@@ -609,6 +650,7 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
   rabbitShadowMaterial.opacity=.9*(1-THREE.MathUtils.smoothstep(shadowHeight,0,2.5)*.72);
   shadowEffects.setVisible(state==='playing');
   if(state==='playing')shadowEffects.update(dt,rabbit.position);
+  if(rabbitAnimation.recoiling)facingTarget=facing;
   if(state==='playing')facing=turnTowards(facing,facingTarget,dt*(phasingFrame?4.5:1));
   rabbit.rotation.y=facing;
   if(state==='playing'&&!falling)rabbitAnimation.update(dt,{speed:moveSpeed,height,velocity,dashing:phasingFrame,skidding:!arenas.active&&motion.skidding,turn:Math.atan2(Math.sin(facingTarget-facing),Math.cos(facingTarget-facing))});
@@ -620,9 +662,9 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
   rabbitGlow.material.color.set('#ffe7ac');
   if(state==='playing'){
     const heldCharge=rabbitState.lightCharge>0?rabbitState.chargeZone:null;
-    if(phaseGlowWasActive&&!phasingFrame&&!currentVitralZone&&!heldCharge)vitralGlow.reset();
-    vitralGlow.update(dt,heldCharge??(phasingFrame?phaseGlowZone:currentVitralZone),brightness,time);
-    phaseGlowWasActive=phasingFrame;
+
+    vitralGlow.update(dt,heldCharge??currentVitralZone,brightness,time);
+
   }
   else if(state==='lost'||state==='won')vitralGlow.reset();
   if(vitralGlow.strength>0){
@@ -661,19 +703,23 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
     else{camera.position.copy(desired);target.copy(nextTarget);}
     cameraNeedsReset=false;
   }
+  rabbitHitEffects.update(state==='playing'?dt:0);
   const desiredFov=58;
   camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,6,dt);camera.updateProjectionMatrix();
   camera.lookAt(target);
   catcherAura.update(visualTime,camera,$('vignette'),innerWidth,innerHeight);
-  phaseTrailColor.copy(rabbitMat.color).multiplyScalar(brightness);
-  phaseTrail.update(state==='paused'?0:dt,rabbit.position,state==='playing'&&phasingFrame&&!falling,camera,phaseTrailColor);
+  phaseTrailColor.setRGB(1,1,1);if(vitralGlow.strength>.01)phaseTrailColor.copy(rabbitMat.color);phaseTrailColor.multiplyScalar(brightness);
+  traveler.head.localToWorld(phaseTrailHead.set(0,.155,.246));
+  phaseTrailHead.y+=.08;
+  phaseTrail.update(state==='paused'?0:dt,phaseTrailHead,state==='playing'&&phasingFrame&&!falling,camera,phaseTrailColor,vitralGlow.strength>.01);
   if(state==='playing')shadowEffects.applyShake(camera);
   if(state==='playing')bossHitEffects.applyShake(camera);
+  arenaCameraCutaway.update(arenas.active,camera,ARENA_RADIUS);
   windowLight.setArenaMask(arenaView,camera);
   towerMist.renderDepth(renderer,scene,camera);
   catcherRay.update(dt,visualTime,rabbit,state!=='won'&&state!=='lost'&&!falling,camera);
   const fallFade=falling?Math.min(.94,(1-Math.exp(-rabbitState.fall.time*1.2))*.48+rabbitState.fall.dissolve*.46):0;
-  atmosphericFocus.render(renderer,scene,camera,rabbit.position,depthLight(s),towerMist.depthTarget.depthTexture,fallFade,arenaView);
+  atmosphericFocus.render(renderer,scene,camera,rabbit.position,depthLight(s),towerMist.depthTarget.depthTexture,fallFade,arenaView,phaseTrail,rabbitHitEffects);
 }
 $('flare-hint').hidden=!RUN_UPGRADES.flare;$('flare-touch').hidden=!RUN_UPGRADES.flare;
 camera.position.set(3,TOWER_TOP+4,16);
@@ -685,3 +731,19 @@ if(runURL.searchParams.has('sunny-run')){
 }else try{if(sessionStorage.getItem('sunny.next-run')==='1'){sessionStorage.removeItem('sunny.next-run');start();}}catch{}
 requestAnimationFrame(frame);
 requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();frameClock.reset();state='playing';flashRunStart();}}));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

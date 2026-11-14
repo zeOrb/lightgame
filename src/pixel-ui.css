@@ -1,4 +1,6 @@
 @font-face{font-family:TowerPixel;src:url('./assets/PressStart2P-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+.light-track .shadow-band{position:absolute;left:0;top:0;bottom:0;width:min(20%,var(--sun-position,100%));z-index:1;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 17px,#14151980 17px 20px),linear-gradient(#626367 0 20%,#36373c 20% 75%,#222329 75%);box-shadow:inset 0 2px #85817a,inset 0 -2px #17181d}
+.light-track .shadow-threshold{position:absolute;left:20%;top:50%;width:22px;height:36px;transform:translate(-50%,-50%);z-index:12;background:url('./shadow-divider.svg') center/contain no-repeat;pointer-events:none;image-rendering:pixelated}
 :root{font-family:TowerPixel,monospace;font-synthesis:none}
 body,button,.brand,.brand small,.header-right,.header-right button,.eyebrow,.panel p,.primary,.intro-note,.legend,.light-stat strong,.light-stat strong small,.objective strong,.objective small,#effect,#toast,.modal h2,.modal p,.text-button,.controls,kbd,.chapter{font-family:TowerPixel,monospace;font-weight:400}
 h1{font-family:TowerPixel,monospace;font-size:clamp(28px,3.2vw,48px);line-height:1.5;letter-spacing:-1px;text-shadow:4px 4px #080e15}
@@ -10,7 +12,7 @@ h1{font-family:TowerPixel,monospace;font-size:clamp(28px,3.2vw,48px);line-height
 .light-track{height:28px;border:3px solid #0b1118;background:#111820;box-shadow:inset 0 3px #05090d,0 3px #536663}
 .light-track::after{inset:-44px -35px;background-image:url('./floral-frame.svg');image-rendering:auto}
 #light-fill{position:relative;width:100%;background:linear-gradient(#fff5a6 0 20%,#f4ce49 20% 75%,#b58a24 75%);box-shadow:inset 0 3px #fffbd2,inset 0 -3px #795a18;transition:none}
-#light-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent calc(100% - 62px),#fff6b34d calc(100% - 30px),#ffffdce6 100%),repeating-linear-gradient(90deg,transparent 0 17px,#59421450 17px 20px);pointer-events:none}
+#light-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,#ed8a4933 30%,#d95f444d 60%,#bf433b66 100%) right center/min(110px,100%) 100% no-repeat,linear-gradient(90deg,transparent calc(100% - 62px),#fff6b34d calc(100% - 30px),#ffffdce6 100%),repeating-linear-gradient(90deg,transparent 0 17px,#59421450 17px 20px);pointer-events:none}
 #light-fill{overflow:hidden}
 #light-fill .solar-flow{position:absolute;inset:3px 0;overflow:hidden;pointer-events:none;mask:repeating-linear-gradient(90deg,#000 0 17px,transparent 17px 20px);opacity:.48}
 .solar-flow::before{content:'';position:absolute;inset:-8px -30px;background:url('./solar-flow.svg') 0 center/192px 32px repeat-x;animation:solar-drift 5s linear infinite,solar-warp 3.4s ease-in-out infinite alternate}
@@ -22,7 +24,7 @@ h1{font-family:TowerPixel,monospace;font-size:clamp(28px,3.2vw,48px);line-height
 .light-track::before{content:'';position:absolute;inset:-44px -35px;z-index:2;pointer-events:none;background:radial-gradient(ellipse 115px 65px at var(--sun-position,100%) 50%,#ffda91df 0%,#e5b86385 30%,#ae9b4730 65%,transparent 100%);mask:url('./floral-frame.svg') center/100% 100% no-repeat;mix-blend-mode:color-dodge;opacity:var(--sun-power,1)}
 @media(max-width:760px){.light-track::before{inset:-23px -20px}}
 #light-sun{position:absolute;display:block;z-index:10;left:100%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%);background:url('./hud-sun.svg') center/contain no-repeat;filter:drop-shadow(0 0 3px #fff6bb) drop-shadow(0 0 9px #ffd95c) drop-shadow(0 0 20px #f7c848b3);pointer-events:none}
-#light-sun{transform:translate(calc(-50% + var(--sun-x,0px)),calc(-50% + var(--sun-y,0px)))}
+#light-sun{transform:translate(calc(-50% + var(--sun-x,0px)),-50%) scale(var(--pickup-scale,1))}
 #light-sun .sun-disc{isolation:isolate;filter:drop-shadow(0 0 2px var(--sun-glow-color,#ffe6a0)) drop-shadow(0 0 var(--sun-glow,17px) var(--sun-glow-color,#ffb842));transition:filter .25s linear}
 #light-sun .sun-disc::after{content:'';position:absolute;inset:11px;border-radius:50%;background:conic-gradient(#ff75c8,#ad84ff,#69d9ff,#85ffc6,#fff296,#ff987b,#ff75c8);opacity:0;transition:opacity .4s;pointer-events:none;box-shadow:inset 0 0 4px 2px #fff8d6}
 #light-sun.vitral-sun .sun-disc::after{opacity:.9;animation:sun-rainbow-turn 4s linear infinite}
@@ -30,6 +32,9 @@ h1{font-family:TowerPixel,monospace;font-size:clamp(28px,3.2vw,48px);line-height
 #light-sun.vitral-sun .sun-disc::before{display:block}
 #light-sun .sun-particle{position:absolute;left:calc(50% - 2.5px);top:calc(50% - 2.5px);width:5px;height:5px;background:#fff;box-shadow:0 0 0 1px var(--particle-color),0 0 5px 2px var(--particle-color),0 0 11px var(--particle-color);opacity:0;pointer-events:none;z-index:2}
 #light-sun .sun-particle{animation:none}
+#light-sun .sun-particle{background:none;box-shadow:none;filter:drop-shadow(0 0 2px var(--particle-color)) drop-shadow(0 0 4px var(--particle-color))}
+#light-sun .sun-particle::before{content:'';position:absolute;inset:0;background:var(--particle-color);clip-path:polygon(50% 0,63% 35%,100% 50%,63% 63%,50% 100%,37% 63%,0 50%,37% 35%)}
+#light-sun .sun-particle::after{content:'';position:absolute;left:37%;top:37%;width:26%;height:26%;background:#fff9ed}
 @keyframes solar-particle-out{0%{transform:translate(0,0) scale(.7);animation-timing-function:ease-out}86%{transform:translate(var(--particle-x),var(--particle-y)) scale(.65);animation-timing-function:cubic-bezier(.8,0,1,.15)}100%{transform:translate(0,0) scale(.05)}}
 @keyframes solar-particle-flash{0%{opacity:0;animation-timing-function:cubic-bezier(.65,0,.9,.3)}22%{opacity:var(--particle-strength,0)}94%{opacity:var(--particle-strength,0);animation-timing-function:ease-in}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){#light-sun.vitral-sun .sun-particle{animation:none}}
@@ -56,7 +61,7 @@ body.playing .header-right{top:151px;right:41px}.controls{font-size:7px;line-hei
 .light-stat strong{font-size:14px}.objective strong{font-size:14px;line-height:24px}
 .light-track{height:18px;align-self:center}.progress-track{height:12px}
 .light-track::after,.light-track::before{inset:-32px -22px;image-rendering:pixelated}
-#light-sun{width:32px;height:32px;image-rendering:pixelated}
+#light-sun{width:28px;height:28px;image-rendering:pixelated}
 #light-sun .sun-disc::after{inset:9px}
 :root{--silver:#eee8ce;--rim:#bdb396}
 .brand,.light-stat>.eyebrow,.objective strong,.light-stat strong,.objective small{color:#f0ead4}
@@ -72,3 +77,19 @@ kbd{border-color:#b6ab8e;background:#302c25;color:#f3ecd7;box-shadow:2px 2px #09
 
 #light-sun{background:none;filter:none}
 #light-sun .sun-disc{position:absolute;inset:0;display:block;background:url('./hud-sun.svg') center/contain no-repeat;pointer-events:none}
+#light-sun .sun-disc{filter:drop-shadow(0 0 2px var(--sun-glow-color,#ffe6a0)) drop-shadow(0 0 var(--sun-glow,17px) var(--sun-glow-color,#ffb842))}
+#light-sun .sun-disc{transition:filter .3s ease-out}
+#light-sun.is-shadow .sun-disc{filter:grayscale(1) drop-shadow(0 0 2px #d4d0c5) drop-shadow(0 0 var(--sun-glow,17px) #aaa7a0);transition:filter .3s ease-out}
+.light-track::before,#light-fill::after{transition:filter .3s ease-out}
+.light-track.is-shadow::before{filter:grayscale(1) brightness(.3);mix-blend-mode:normal}
+.light-track.is-shadow #light-fill::after{filter:grayscale(1) brightness(.3)}
+
+
+
+
+
+
+
+
+
+

@@ -17,11 +17,11 @@
       "trackRate": 1.6,
       "hopSpeed": 2.7,
       "hopHeight": 0.8,
-      "blockSection": 0.7,
+      "blockSection": 0.6,
       "laneRadius": 1,
       "stompSection": 0.58,
       "stompLaneRadius": 0.78,
-      "contactSection": 0.75,
+      "contactSection": 0.65,
       "contactHeight": 1.2
     },
     "boss": {
@@ -37,7 +37,7 @@
       "damage": 24,
       "hitCooldown": 0.9,
       "hurtDuration": 0.6,
-      "contactRadius": 1.15,
+      "contactRadius": 1.05,
       "contactHeight": 1.25,
       "edgeInset": 1.3,
       "knockback": 2,

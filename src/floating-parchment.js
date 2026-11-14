@@ -83,6 +83,11 @@ export class FloatingParchment {
         vec4 paperTex=texture2D(map,vMapUv)*.2;
         for(int i=0;i<8;i++){float a=float(i)*.78539816;paperTex+=texture2D(map,clamp(vMapUv+vec2(cos(a),sin(a))*.06*nearBlur,vec2(0.),vec2(1.)))*.1;}
         diffuseColor*=paperTex;
+        if(!gl_FrontFacing){
+          vec3 reverseHSV=paperRGBtoHSV(diffuseColor.rgb);
+          reverseHSV.x=mix(reverseHSV.x,.075,.2);reverseHSV.z*=.8;
+          diffuseColor.rgb=paperHSVtoRGB(reverseHSV);
+        }
       `);
       // A subdued warm light floor keeps either side readable as it tumbles.
       // Apply before tone mapping and tower fog so distant sheets still recede.
@@ -91,25 +96,31 @@ export class FloatingParchment {
         float fleck=fract(sin(dot(floor(vMapUv*96.),vec2(12.9898,78.233))+paperSeed)*43758.5453);
         if(fleck<smoothstep(3.9,5.,paperAge))discard;
         diffuseColor.a*=lifeFade;
+        float paperAmbient=mix(.008,.07,smoothstep(10.,${TOWER_TOP.toFixed(1)},towerWorldHeight));
+        outgoingLight=max(outgoingLight,diffuseColor.rgb*paperAmbient);
         #include <opaque_fragment>
       `);
-      // The architectural depth grade runs after lighting. Keep a warm minimum
-      // after that grade too, so it cannot turn the unlit reverse into black/navy.
+      // Preserve the parchment hue, but retain brightness from scene lighting
+      // and the tower depth grade on both faces. Never restore the texture value.
       shader.fragmentShader=shader.fragmentShader.replace('#include <dithering_fragment>',`
         #include <dithering_fragment>
-        vec3 paperOriginal=pow(max(diffuseColor.rgb,vec3(0.)),vec3(1./2.2));
-        vec3 paperHSV=paperRGBtoHSV(paperOriginal);
-        paperHSV.x=mix(paperHSV.x,.075,.2);paperHSV.y=max(paperHSV.y,.22);paperHSV.z*=.8;
-        vec3 paperReverse=paperHSVtoRGB(paperHSV);
-        float paperDepth=mix(.48,1.,smoothstep(10.,${TOWER_TOP.toFixed(1)},towerWorldHeight));
-        if(!gl_FrontFacing)gl_FragColor.rgb=paperReverse*paperDepth;
-        else {vec3 lit=paperRGBtoHSV(max(gl_FragColor.rgb,vec3(0.)));lit.x=paperHSV.x;lit.y=paperHSV.y;lit.z=max(lit.z,paperHSV.z*paperDepth*.8);gl_FragColor.rgb=paperHSVtoRGB(lit);}
+        vec3 paperHSV=paperRGBtoHSV(max(diffuseColor.rgb,vec3(0.)));
+        vec3 lit=paperRGBtoHSV(max(gl_FragColor.rgb,vec3(0.)));
+        float paperDaylight=smoothstep(10.,${TOWER_TOP.toFixed(1)},towerWorldHeight);
+        lit.x=mix(paperHSV.x,.095,.65);
+        lit.y=min(.16,paperHSV.y*.35);
+        // A small display-space floor prevents tumbling faces from disappearing
+        // while still leaving a clear brightness difference between floors.
+        lit.z=max(lit.z,mix(.15,.32,paperDaylight)*(.85+.15*paperHSV.z));
+        gl_FragColor.rgb=paperHSVtoRGB(lit);
+        vec3 paperLightTint=mix(vec3(.76,.73,1.),vec3(1.,.94,.82),paperDaylight);
+        gl_FragColor.rgb=mix(gl_FragColor.rgb,gl_FragColor.rgb*paperLightTint,.42);
         if(paperArenaSphere.w>0.&&distance(paperWorld,paperArenaSphere.xyz)<=paperArenaSphere.w){
           gl_FragColor.rgb=vec3(dot(gl_FragColor.rgb,vec3(.2126,.7152,.0722)));
         }
       `);
     };
-    material.customProgramCacheKey=()=> 'floating-parchment-arena-sphere-v10';
+    material.customProgramCacheKey=()=> 'floating-parchment-height-tint-v13';
     const batch=new THREE.InstancedMesh(geometry,material,count),dummy=new THREE.Object3D();batch.name='Floating parchment';batch.frustumCulled=false;batch.renderOrder=1;batch.layers.set(2);
     for(let i=0;i<count;i++){
       const angle=random()*Math.PI*2,r=3.5+random()*6.1,size=.32+random()*.32;

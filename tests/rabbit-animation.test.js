@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { RabbitAnimation } from '../src/rabbit-animation.js';
 import {createRabbitTraveler} from '../src/rabbit-model.js';
+test('hit pose leans backwards without rotating the root and releases after the recoil',()=>{
+  const root=new THREE.Group(),visual=new THREE.Group();root.add(visual);root.rotation.y=1.2;
+  const material=new THREE.MeshStandardMaterial(),t=createRabbitTraveler(visual,material,material,material);
+  const a=new RabbitAnimation(visual,t.ears,t.paws,t.coat,t.arms,t.head);
+  a.hit();a.update(.1,{speed:0,height:.5,velocity:0});
+  assert.equal(a.recoiling,true);assert.ok(visual.rotation.x<-.4);assert.ok(t.ears[0].rotation.x>0);
+  assert.equal(root.rotation.y,1.2);assert.equal(root.position.length(),0);
+  a.update(.4,{speed:0,height:0,velocity:0});assert.equal(a.recoiling,false);
+  a.hit();a.reset();assert.equal(a.recoiling,false);assert.equal(visual.rotation.x,0);
+});
 
 test('jump squashes 33%, stretches 33%, and is neutral at the apex without sideways wobble',()=>{
   const visual=new THREE.Group(),material=new THREE.MeshStandardMaterial();

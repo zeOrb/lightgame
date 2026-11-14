@@ -4,6 +4,18 @@ import {Abilities,AbilityType,applyPhaseDelta,applySpiralPhase,phaseHitsTarget} 
 import * as THREE from 'three';
 import {PhaseTrail} from '../src/phase-trail.js';
 import {route,JUMP_SPEED,ROUTE_RADIUS} from '../src/game.js';
+test('dash budget only refreshes on landing, independently from cooldown',()=>{
+  const a=new Abilities();assert.ok(a.use(AbilityType.PHASING));a.advance(1);
+  assert.equal(a.use(AbilityType.PHASING),null);
+  a.resetAirJump();assert.equal(a.use(AbilityType.PHASING),null);
+  a.land();assert.ok(a.use(AbilityType.PHASING));
+  a.land();assert.equal(a.use(AbilityType.PHASING),null);
+  const b=new Abilities({maxAirDashes:2});
+  assert.ok(b.use(AbilityType.PHASING));b.advance(1);
+  assert.ok(b.use(AbilityType.PHASING));b.advance(1);
+  assert.equal(b.use(AbilityType.PHASING),null);
+  b.reset();assert.ok(b.use(AbilityType.PHASING));
+});
 test('jump is a registered ability with grounded activation and shared reset',()=>{
   const a=new Abilities();assert.equal(a.use(AbilityType.JUMP,{height:1}),null);
   assert.equal(a.use(AbilityType.JUMP).velocity,JUMP_SPEED);assert.equal(a.use(AbilityType.JUMP),null);
@@ -42,7 +54,7 @@ test('phase captures direction, travels the requested distance at different FPS,
     let x=0,z=0;for(let i=0;i<fps;i++){const d=a.advance(1/fps);if(d){x+=d.x;z+=d.z;}}
     assert.ok(Math.abs(x-3.24)<1e-9);assert.ok(Math.abs(z-4.32)<1e-9);
     assert.equal(a.phase,null);assert.equal(a.use(AbilityType.PHASING),null);
-    a.advance(1);assert.ok(a.use(AbilityType.PHASING));a.reset();assert.equal(a.phase,null);
+    a.advance(1);a.land();assert.ok(a.use(AbilityType.PHASING));a.reset();assert.equal(a.phase,null);
   }
 });
 test('world-space phase translation stays continuous across spiral turns',()=>{
@@ -51,3 +63,4 @@ test('world-space phase translation stays continuous across spiral turns',()=>{
     assert.ok(Math.abs(after.x-before.x-delta.x)<1e-9);assert.ok(Math.abs(after.z-before.z-delta.z)<1e-9);
   }
 });
+

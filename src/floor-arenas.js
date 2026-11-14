@@ -7,6 +7,7 @@ import {createVisualRandom} from './visual-random.js';
 import {ENEMY_CONFIG} from './enemy-config.js';
 import {createEnemy} from './enemy-factory.js';
 import {applyWoodPOM} from './wood-pom.js';
+import {applyTowerDepth} from './tower-depth.js';
 import {flashBossOnDash,updateBossFlash,clearBossFlash} from './boss-flash.js';
 
 function fractureGeometry(inner,outer,count){
@@ -49,8 +50,8 @@ function disposeGroupResources(group,preservedMaterials=[]){
 export class FloorArenas extends ArenaRun {
   constructor(scene,materials,palette){
     super();this.scene=scene;this.palette=palette;this.random=createVisualRandom('arena-enemies');this.collapseRandom=createVisualRandom('arena-collapse');this.hitCooldown=0;this.remnants=[];
-    const wood=applyWoodPOM(new THREE.MeshStandardMaterial({color:'#735b43',map:materials.carved.map,roughness:.85}));
-    const edge=materials.bronze.clone();edge.fog=false;edge.color.set('#493423');this.wood=wood;this.edge=edge;
+    const wood=applyWoodPOM(applyTowerDepth(new THREE.MeshStandardMaterial({color:materials.carved.color,map:materials.carved.map,roughness:.88,fog:true})));
+    const edge=applyTowerDepth(materials.bronze.clone());edge.fog=true;edge.color.set('#493423');this.wood=wood;this.edge=edge;
     this.fightBase=new THREE.MeshBasicMaterial({color:'#000000',fog:false,toneMapped:false});
     this.fightEdge=new THREE.MeshBasicMaterial({color:'#242424',fog:false,toneMapped:false});
     this.fightWood=new THREE.MeshBasicMaterial({map:materials.carved.map,vertexColors:true,side:THREE.DoubleSide,fog:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1});
@@ -275,7 +276,7 @@ export class FloorArenas extends ArenaRun {
     }
   }
   reset(){
-    super.reset();this.hitCooldown=0;this.fallHidden=false;
+    super.reset();this.hitCooldown=0;this.fallHidden=false;this.recoil=null;
     for(const effect of this.remnants??[]){this.scene.remove(effect.group);disposeGroupResources(effect.group);}this.remnants=[];
     for(const a of this.arenas){if(!this.scene||!a.group)continue;
       if(a.collapse){this.scene.remove(a.collapse.group);disposeGroupResources(a.collapse.group);a.collapse=null;}
@@ -444,8 +445,15 @@ export class FloorArenas extends ArenaRun {
       if(a.stage==='fighting'){this.setCombatLook(a,true);for(const b of a.enemies)b.o.visible=true;}
       return {};
     }
-    const before={...this.player};this.move(dash?.x??direction.x*speed*dt,dash?.z??direction.z*speed*dt);
     const result={damage:0,kills:0,hits:0,bounce:0,phaseKill:false};
+    const before={...this.player};
+    if(this.recoil){
+      const r=this.recoil;r.age=Math.min(.46,r.age+dt);const t=Math.min(1,r.age/(.46*.8)),e=1-(1-t)**3;
+      this.player.x=r.x+r.dx*e;this.player.z=r.z+r.dz*e;clampArena(this.player);
+      height=r.height*(1-e)+Math.sin(t*Math.PI)*.65;velocity=0;dash=null;
+      result.knockbackHeight=height;
+      if(r.age>=.46)this.recoil=null;
+    }else this.move(dash?.x??direction.x*speed*dt,dash?.z??direction.z*speed*dt);
     for(const b of a.enemies){
       updateBossFlash(b,dt);
       if(b.dead){animateBeastDeath(b,dt);continue;}
@@ -491,9 +499,9 @@ export class FloorArenas extends ArenaRun {
       }
       b.lastTop=top;
       if(!b.dead&&!dash&&!stomp&&!jumpStrike&&b.hurt<=0&&overlap&&height<b.stats.contactHeight&&this.hitCooldown<=0){
-        result.damage+=b.stats.damage;this.hitCooldown=b.stats.hitCooldown;this.triggerHit(a,time,0);
+        result.damageSource={...target};result.damage+=b.stats.damage;this.hitCooldown=b.stats.hitCooldown;this.triggerHit(a,time,0);
         const awayX=(this.player.x-b.o.position.x)/Math.max(.1,dist),awayZ=(this.player.z-b.o.position.z)/Math.max(.1,dist);
-        this.move(awayX*b.stats.knockback,awayZ*b.stats.knockback);
+        this.recoil={x:this.player.x,z:this.player.z,dx:awayX*b.stats.knockback,dz:awayZ*b.stats.knockback,height,age:0};
       }
     }
     a.living=a.enemies.filter(b=>!b.dead).length;
@@ -510,3 +518,4 @@ export class FloorArenas extends ArenaRun {
     return result;
   }
 }
+

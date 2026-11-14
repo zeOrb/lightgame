@@ -102,7 +102,7 @@ export class SkillTree {
     this.detail.classList.toggle('is-visible',!!selected);this.detail.classList.toggle('is-pinned',!!this.selected);this.detail.setAttribute('aria-hidden',String(!selected));
     if(!selected){buy.disabled=true;return;}
     const owned=progression.state.owned.includes(selected.id),canBuy=progression.canBuy(selected.id);
-    this.element.querySelector('#tree-name').textContent=selected.name;this.element.querySelector('#tree-branch').textContent=selected.isRoot?'Источник':selected.branch+' · '+(selected.tier+1)+'/'+selected.tiers;this.element.querySelector('#tree-description').textContent=!owned&&!canBuy?'???':selected.description;
+    this.element.querySelector('#tree-name').textContent=selected.name;this.element.querySelector('#tree-branch').textContent=selected.isRoot?'Источник':selected.branch+' · '+(selected.tier+1)+'/'+selected.tiers;this.element.querySelector('#tree-description').textContent=isSkillPreview(progression.state,selected.id)?'???':selected.description;
     const conditions=[];
     if(selected.requires&&!progression.state.owned.includes(selected.requires))conditions.push('Изучи «'+SKILLS.find(s=>s.id===selected.requires).name+'»');
     if(!owned&&progression.state.points<selected.cost)conditions.push('Нужно '+selected.cost+' очко · сейчас '+progression.state.points);

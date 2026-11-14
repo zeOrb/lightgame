@@ -8,7 +8,7 @@ export function arenaLayout(){return Array.from({length:FLOOR_COUNT},(_,index)=>
   const plank=13+index*14,p=route(plank);
   const gateS=Math.min(plank+.49,END-.2);
   return {index,plank,s:gateS,exitS:Math.min(END,plank+.8),returnS:gateS,y:p.y,theta:p.theta,cleared:false};
-});}
+}).filter(arena=>(arena.index+1)%10===0);}
 export function clampArena(point,radius=ARENA_RADIUS-.45){
   const length=Math.hypot(point.x,point.z);
   if(length>radius){point.x*=radius/length;point.z*=radius/length;}

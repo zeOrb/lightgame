@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="42" viewBox="0 0 24 42" fill="none" shape-rendering="crispEdges">
+ <defs>
+  <linearGradient id="metal" x2="0" y2="1"><stop stop-color="#626367"/><stop offset=".42" stop-color="#36373c"/><stop offset="1" stop-color="#222329"/></linearGradient>
+  <g id="leaves" stroke-linecap="square" stroke-linejoin="bevel">
+   <path d="M12 38C15 29 9 19 13 5M13 14C6 14 3 9 5 4C8 9 14 8 13 14M12 22C17 22 21 17 20 12C16 15 12 14 12 22M12 30C5 29 3 24 4 19C8 24 13 23 12 30M13 36C19 34 21 29 19 25C17 29 13 29 13 36M13 8C10 5 12 2 15 1C14 4 17 6 13 8" fill="currentColor"/>
+   <path d="M11 14L6 7M13 22L18 16M11 29L5 23M14 34L18 28" stroke="#222329" stroke-width=".6"/>
+  </g>
+ </defs>
+ <path d="M11 12V31" stroke="#08090c" stroke-width="5"/>
+ <path d="M11 12V31" stroke="#36373c" stroke-width="1"/>
+ <g color="#36373c" stroke="#08090c" stroke-width="2.8"><use href="#leaves"/></g>
+ <g color="#36373c" stroke="url(#metal)" stroke-width=".9"><use href="#leaves"/></g>
+</svg>
+
+

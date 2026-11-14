@@ -18,6 +18,9 @@
     "potionScale": 1,
     "phaseCooldown": 1,
     "phaseDistance": 1,
+    "maxAirDashes": 1,
+    "damageDashCancel": true,
+    "damageDashCancelWindow": 0.2,
     "phaseHeal": 0,
     "resonance": false,
     "shardHeal": 22,
@@ -428,3 +431,5 @@
     }
   ]
 }
+
+

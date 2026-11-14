@@ -14,6 +14,7 @@ export class RabbitAnimation {
     this.clothTime=0;this.clothWind=0;this.clothTurn=0;this.fallClothBlend=0;this.dashClothBlend=0;this.dashClothTime=0;
     this.dashActive=false;this.dashTransition=0;this.dashFrom=0;
     this.jumpAge=1;this.jumpActive=false;this.launchVelocity=1;this.jumpRise=0;this.jumpMoving=false;this.launchSpeed=0;this.apexAge=-1;this.jumpBounce=0;
+    this.hitAge=1;this.hitClothBlend=0;
     this.visual.position.set(0,0,0);this.visual.rotation.set(0,0,0);this.visual.scale.setScalar(1);
     this.tail.rotation.set(0,0,0);
     if(this.head){this.head.rotation.set(0,0,0);this.head.position.copy(this.headRest);}
@@ -56,6 +57,12 @@ export class RabbitAnimation {
         let normalX=x+wave*loose*wind*.065;
         let normalY=y+Math.sin(time*12+loose*4+phase)*loose*wind*.045+.09*loose*wind;
         let normalZ=z+loose*loose*wind*(-.38+wave*.12);
+        if(!falling&&this.hitClothBlend>.001){
+          const bend=loose*loose,blend=this.hitClothBlend;
+          normalX=THREE.MathUtils.lerp(normalX,x+Math.sin(time*10-loose*3+phase)*loose*.025,blend);
+          normalY=THREE.MathUtils.lerp(normalY,y+bend*.38,blend);
+          normalZ=THREE.MathUtils.lerp(normalZ,z-loose*.2-Math.sin(loose*Math.PI)*.08,blend);
+        }
         if(!falling&&this.dashClothBlend>.001){
           const rush=this.dashClothBlend,clock=this.dashClothTime;
           const ripple=Math.sin(clock*23-loose*8+phase*1.7);
@@ -85,6 +92,7 @@ export class RabbitAnimation {
     });
   }
   update(dt,{speed,height,velocity,turn=0,skidding=false,dashing=false}){
+    this.hitAge=Math.min(1,this.hitAge+dt);
     // Restart from the current pose when interrupted; smoothstep gives both
     // ends a soft slope, with a fast launch and a longer cloth follow-through.
     if(dashing!==this.dashActive){this.dashActive=dashing;this.dashFrom=this.dashClothBlend;this.dashTransition=0;}
@@ -180,8 +188,22 @@ export class RabbitAnimation {
     this.tail.rotation.x=THREE.MathUtils.lerp(this.tail.rotation.x,Math.PI/2-DASH_PITCH-.33,rush);
     this.tail.rotation.y*=1-DASH_FLATTEN*rush;
     this.tail.rotation.z*=1-DASH_FLATTEN*rush;
+    this.hitClothBlend=THREE.MathUtils.smoothstep(this.hitAge,.025,.11)*(1-THREE.MathUtils.smootherstep(this.hitAge,.25,.46));
+    if(this.recoiling){
+      const attack=THREE.MathUtils.smoothstep(this.hitAge,0,.055),release=1-THREE.MathUtils.smootherstep(this.hitAge,.22,.46),hit=attack*release;
+      this.visual.rotation.x=THREE.MathUtils.lerp(this.visual.rotation.x,-.55,hit);
+      this.visual.rotation.z*=1-hit;
+      this.visual.scale.lerp(new THREE.Vector3(1.1,.86,1.06),hit);
+      if(this.head)this.head.rotation.x=THREE.MathUtils.lerp(this.head.rotation.x,.3,hit);
+      this.ears.forEach((ear,i)=>{ear.rotation.x=THREE.MathUtils.lerp(ear.rotation.x,.65,hit);ear.rotation.z=THREE.MathUtils.lerp(ear.rotation.z,(i?-.23:.23),hit);});
+      this.paws.forEach(paw=>{paw.position.z=THREE.MathUtils.lerp(paw.position.z,.26,hit);paw.rotation.x=THREE.MathUtils.lerp(paw.rotation.x,-.9,hit);});
+      this.arms.forEach((arm,i)=>arm.rotation.set(-.7*hit,0,(i?1:-1)*.5*hit));
+      this.tail.rotation.x=THREE.MathUtils.lerp(this.tail.rotation.x,-.08,hit);
+    }
     this.animateCloth(this.clothTime,this.clothWind);
   }
+  get recoiling(){return this.hitAge<.46;}
+  hit(){this.hitAge=0;this.jumpActive=false;this.dashActive=false;this.dashClothBlend=0;}
   jump(velocity=12,speed=0){this.jumpAge=0;this.jumpActive=true;this.launchVelocity=Math.max(1,velocity);this.launchSpeed=Math.abs(speed);this.jumpMoving=this.launchSpeed>.5;this.apexAge=-1;this.jumpBounce=0;}
   doubleJump(){this.jump(12,this.launchSpeed);}
   pose(step,ground,velocity){

@@ -20,7 +20,8 @@ export class PlatformerMotion {
   }
   tryJump(abilities,height,grounded,speedRatio=0){
     if(!this.jumpBuffer)return null;
-    const effectiveHeight=grounded||this.coyote>0&&height<=.001?0:Math.max(.01,height);
+    const dashTakeoff=abilities.phase?.groundedLaunch&&abilities.phase.age<=.05;
+    const effectiveHeight=grounded||dashTakeoff||this.coyote>0&&height<=.001?0:Math.max(.01,height);
     const jump=abilities.use(AbilityType.JUMP,{height:effectiveHeight});if(!jump)return null;
     this.jumpBuffer=0;this.coyote=0;this.cuttable=true;
     this.didDoubleJump=!!jump.airJump;
@@ -35,3 +36,4 @@ export class PlatformerMotion {
     return {height:next,velocity:velocity-gravity*dt};
   }
 }
+

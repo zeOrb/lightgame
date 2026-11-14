@@ -88,7 +88,7 @@ export class AtmosphericFocus {
       #include <colorspace_fragment>
       gl_FragColor.rgb=applySunsetLUT(gl_FragColor.rgb);`),depthTest:true,depthWrite:true,depthFunc:THREE.AlwaysDepth});
   }
-  render(renderer,scene,camera,focus,daylight,depthTexture,fallDarkness=0,arena=null){
+  render(renderer,scene,camera,focus,daylight,depthTexture,fallDarkness=0,arena=null,trail=null,impact=null){
     renderer.getDrawingBufferSize(this.size);
     if(this.target.width!==this.size.x||this.target.height!==this.size.y){this.target.setSize(this.size.x,this.size.y);this.graded.setSize(this.size.x,this.size.y);}
     const previous=renderer.getRenderTarget(),previousAutoClear=renderer.autoClear,previousLayers=camera.layers.mask,previousBackground=scene.background,u=this.material.uniforms;
@@ -97,12 +97,17 @@ export class AtmosphericFocus {
     if(!this.lightsReady){scene.traverse(object=>{if(object.isLight)object.layers.enable(2);});this.lightsReady=true;}
     camera.updateMatrixWorld();u.resolution.value.copy(this.size);u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.cameraWorld.value.copy(camera.matrixWorld);u.focusPoint.value.copy(focus);u.daylight.value=daylight;u.arenaMode.value=arena?1:0;u.arenaFloorY.value=arena?.y??0;u.arenaRadius.value=arena?.radius??0;
     try{
-      camera.layers.disable(2);renderer.setRenderTarget(this.target);renderer.clear();renderer.render(scene,camera);
+      camera.layers.disable(2);camera.layers.disable(3);renderer.setRenderTarget(this.target);renderer.clear();renderer.render(scene,camera);
       this.quad.material=this.material;renderer.setRenderTarget(this.graded);renderer.render(this.scene,this.camera);
       this.quad.material=this.antialias;renderer.setRenderTarget(previous);renderer.render(this.scene,this.camera);
       // Copy scene depth with the composite, then draw paper in its own colour
       // space after atmospheric grading, still occluded by solid architecture.
       renderer.autoClear=false;scene.background=null;camera.layers.set(2);renderer.render(scene,camera);
+      if((trail&&(trail.mesh.visible||trail.particles.length>0))||impact?.visible){
+        if(trail){trail.material.uniforms.background.value=this.graded.texture;
+        trail.material.uniforms.resolution.value.copy(this.size);}
+        camera.layers.set(3);renderer.render(scene,camera);
+      }
       // Apply the fall fade after every scene layer, including the ungraded
       // parchment/catcher pass. Background blur cannot wash it out.
       if(fallDarkness>0){
