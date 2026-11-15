@@ -1,0 +1,215 @@
+{
+  "root": {
+    "id": "treasurySource",
+    "name": "Сокровищница",
+    "description": "Открывает улучшения добычи камней.",
+    "cost": 1,
+    "requires": null,
+    "icon": "treasury",
+    "effects": {}
+  },
+  "branches": [
+    {
+      "id": "treasuryMultiplier",
+      "name": "Ценность осколков",
+      "nodes": [
+        {
+          "id": "shardMultiplier2",
+          "name": "Грани света 1",
+          "description": "Очки за драгоценные камни и осколки босса: ×2.",
+          "cost": 8,
+          "requires": "treasurySource",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 0
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 2
+            }
+          }
+        },
+        {
+          "id": "shardMultiplier4",
+          "name": "Грани света 2",
+          "description": "Очки за драгоценные камни и осколки босса: ×4.",
+          "cost": 24,
+          "requires": "shardMultiplier2",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 1
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 4
+            }
+          }
+        },
+        {
+          "id": "shardMultiplier8",
+          "name": "Грани света 3",
+          "description": "Очки за драгоценные камни и осколки босса: ×8.",
+          "cost": 64,
+          "requires": "shardMultiplier4",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 2
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 8
+            }
+          }
+        },
+        {
+          "id": "shardMultiplier16",
+          "name": "Грани света 4",
+          "description": "Очки за драгоценные камни и осколки босса: ×16.",
+          "cost": 160,
+          "requires": "shardMultiplier8",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 3
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 16
+            }
+          }
+        },
+        {
+          "id": "shardMultiplier32",
+          "name": "Грани света 5",
+          "description": "Очки за драгоценные камни и осколки босса: ×32.",
+          "cost": 384,
+          "requires": "shardMultiplier16",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 4
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 32
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "treasuryCount",
+      "name": "Россыпь",
+      "nodes": [
+        {
+          "id": "gemCount2",
+          "name": "Россыпь 2",
+          "description": "На тайле может появиться до 2 камней.",
+          "cost": 6,
+          "requires": "treasurySource",
+          "icon": "constellation",
+          "effects": {
+            "maxGemsPerTile": {
+              "set": 2
+            }
+          }
+        },
+        {
+          "id": "gemCount3",
+          "name": "Россыпь 3",
+          "description": "На тайле может появиться до 3 камней.",
+          "cost": 18,
+          "requires": "gemCount2",
+          "icon": "constellation",
+          "effects": {
+            "maxGemsPerTile": {
+              "set": 3
+            }
+          }
+        },
+        {
+          "id": "gemCount4",
+          "name": "Россыпь 4",
+          "description": "На тайле может появиться до 4 камней.",
+          "cost": 48,
+          "requires": "gemCount3",
+          "icon": "constellation",
+          "effects": {
+            "maxGemsPerTile": {
+              "set": 4
+            }
+          }
+        },
+        {
+          "id": "gemCount5",
+          "name": "Россыпь 5",
+          "description": "На тайле может появиться до 5 камней.",
+          "cost": 120,
+          "requires": "gemCount4",
+          "icon": "constellation",
+          "effects": {
+            "maxGemsPerTile": {
+              "set": 5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "treasuryTypes",
+      "name": "Драгоценные камни",
+      "nodes": [
+        {
+          "id": "unlockGememerald",
+          "name": "Изумруд",
+          "description": "Добавляет изумруд в пул камней.",
+          "cost": 8,
+          "requires": "treasurySource",
+          "icon": "shard-heal",
+          "effects": {
+            "gemPoolTier": {
+              "set": 2
+            }
+          }
+        },
+        {
+          "id": "unlockGemsapphire",
+          "name": "Сапфир",
+          "description": "Добавляет сапфир в пул камней.",
+          "cost": 24,
+          "requires": "unlockGememerald",
+          "icon": "shard-heal",
+          "effects": {
+            "gemPoolTier": {
+              "set": 3
+            }
+          }
+        },
+        {
+          "id": "unlockGemtopaz",
+          "name": "Топаз",
+          "description": "Добавляет топаз в пул камней.",
+          "cost": 64,
+          "requires": "unlockGemsapphire",
+          "icon": "shard-heal",
+          "effects": {
+            "gemPoolTier": {
+              "set": 4
+            }
+          }
+        },
+        {
+          "id": "unlockGemamethyst",
+          "name": "Аметист",
+          "description": "Добавляет аметист в пул камней.",
+          "cost": 160,
+          "requires": "unlockGemtopaz",
+          "icon": "shard-heal",
+          "effects": {
+            "gemPoolTier": {
+              "set": 5
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

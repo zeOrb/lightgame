@@ -6,7 +6,7 @@ import {StarParallax} from './star-parallax.js';
 import {SkillComets} from './skill-comets.js';
 export class SkillTree {
   constructor(onNext){
-    this.onNext=onNext;this.selected=null;this.hovered=null;this.navKeys=new Set();this.panTail=new PanTail();this.smoothZoom=new SmoothTreeZoom();this.dragging=false;
+    this.treeId='light';this.onNext=onNext;this.selected=null;this.hovered=null;this.navKeys=new Set();this.panTail=new PanTail();this.smoothZoom=new SmoothTreeZoom();this.dragging=false;
     this.element=document.createElement('section');this.element.id='skill-tree';this.element.hidden=true;this.element.setAttribute('role','dialog');this.element.setAttribute('aria-modal','true');this.element.setAttribute('aria-label','Древо солнечного света');
     this.element.innerHTML=`<header class="tree-header"><div><small id="tree-outcome"></small><h2>Древо света</h2></div><strong id="tree-points"></strong><button id="tree-next" class="primary">Следующий забег →</button></header><div class="tree-body"><div class="tree-scroll"><div class="tree-map"><div class="tree-root"><span>☀</span><small>ИСТОЧНИК</small></div></div></div><aside class="tree-detail"><small id="tree-branch"></small><h3 id="tree-name"></h3><p id="tree-description"></p><p id="tree-requirement"></p><span id="tree-buy" class="primary" role="status"></span><small>Улучшения вступят в силу в следующем забеге.<br>Неиспользованные очки сохраняются.</small></aside></div>`;
     document.body.append(this.element);this.map=this.element.querySelector('.tree-map');this.buttons=new Map();
@@ -28,6 +28,8 @@ export class SkillTree {
     this.comets=new SkillComets(this.viewport);
     this.sky=new StarParallax(this.viewport,createSkillStarfield());this.art.onFrame=dt=>{if(this.smoothZoom.step(this.camera,dt))this.applyCamera();if(this.rootRevealUntil&&this.art.time>this.rootRevealUntil){this.element.classList.remove('is-source-awakening');this.rootRevealUntil=0;}const moving=this.updateKeyboard(dt);if(!moving&&!this.dragging){const tail=this.panTail.step(dt);if(Math.abs(tail.x)+Math.abs(tail.y)>.001)this.panView(tail.x,tail.y);}this.sky.update(dt);this.comets.update(dt,this.sky.motion);};this.bindNavigation();
     const center=document.createElement('button');center.className='text-button';center.textContent='☀ К солнцу';center.onclick=()=>this.center();this.element.querySelector('.tree-header').insertBefore(center,this.element.querySelector('#tree-next'));
+    const tabs=document.createElement('nav');tabs.className='tree-tabs';tabs.setAttribute('aria-label','Древо навыков');
+    for(const [id,title] of [['light','Древо света'],['treasury','Сокровищница']]){const tab=document.createElement('button');tab.className='text-button';tab.textContent=title;tab.dataset.tree=id;tab.onclick=()=>{this.treeId=id;this.selected=this.hovered=null;this.art.rootId=id==='light'?'source':'treasurySource';this.element.querySelector('h2').textContent=title;this.element.classList.remove('is-source-awakening');this.render();this.center();};tabs.append(tab);}this.element.querySelector('.tree-header').after(tabs);
     this.element.querySelector('#tree-next').onclick=()=>{this.navKeys.clear();this.art.stop();this.onNext();};
   }
   buySkill(skill){
@@ -91,8 +93,9 @@ export class SkillTree {
     this.render();this.center();this.art.start();this.element.querySelector('#tree-next').focus();
   }
   render(){
+    for(const tab of this.element.querySelectorAll('[data-tree]'))tab.setAttribute('aria-pressed',String(tab.dataset.tree===this.treeId));
     this.element.querySelector('#tree-points').textContent='✦ '+progression.state.points+' очк.';
-    for(const skill of SKILLS){const owned=progression.state.owned.includes(skill.id),ready=progression.canBuy(skill.id),visible=isSkillVisible(progression.state,skill.id),preview=isSkillPreview(progression.state,skill.id),button=this.buttons.get(skill.id);button.hidden=!visible&&!preview;button.dataset.status=owned?'owned':preview?'preview':ready?'ready':'locked';button.setAttribute('aria-pressed',String(this.selected===skill.id));button.querySelector('small').hidden=!owned;button.querySelector('small').textContent=owned?'ИЗУЧЕНО':'';}
+    for(const skill of SKILLS){const owned=progression.state.owned.includes(skill.id),ready=progression.canBuy(skill.id),visible=isSkillVisible(progression.state,skill.id),preview=isSkillPreview(progression.state,skill.id),button=this.buttons.get(skill.id);button.hidden=skill.treeId!==this.treeId||(!visible&&!preview);button.dataset.status=owned?'owned':preview?'preview':ready?'ready':'locked';button.setAttribute('aria-pressed',String(this.selected===skill.id));button.querySelector('small').hidden=!owned||skill.id==='treasurySource';button.querySelector('small').textContent=owned?'ИЗУЧЕНО':'';}
     this.art.sync(SKILLS.map(skill=>{const button=this.buttons.get(skill.id);return {id:skill.id,status:button.hidden?'hidden':button.dataset.status,selected:this.selected===skill.id,unaffordable:!progression.state.owned.includes(skill.id)&&progression.state.points<skill.cost};}));
     this.renderDetail();
   }

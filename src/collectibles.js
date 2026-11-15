@@ -3,6 +3,7 @@ import config from './collectibles.json' with {type:'json'};
 import {createVisualRandom} from './visual-random.js';
 
 const random=createVisualRandom('gem-idle'),clock={value:0},assets=new Map();
+const gemAuraGeometry=new THREE.PlaneGeometry(1.05,1.05);
 const contactShadowGeometry=new THREE.PlaneGeometry(1,1);
 const contactShadowMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,depthTest:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,toneMapped:false,
   vertexShader:'varying vec2 shadowUV;void main(){shadowUV=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
@@ -41,6 +42,8 @@ function gemAssets(definition){
     shader.uniforms.gemCrown={value:height*.40};
     shader.vertexShader='varying vec3 vGemPosition;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvGemPosition=position;');
     shader.fragmentShader='uniform float gemTime,gemCrown;varying vec3 vGemPosition;\n'+shader.fragmentShader.replace('#include <opaque_fragment>',`
+      float tipGradient=smoothstep(-gemCrown*2.5,gemCrown*.40,vGemPosition.y);
+      outgoingLight*=mix(.30,1.,tipGradient);
       vec3 shineDirection=normalize(vec3(sin(gemTime*.43)*.65,.8,1.));
       float facetShine=pow(max(0.,dot(normal,shineDirection)),38.);
       outgoingLight+=vec3(1.,.97,.91)*facetShine*1.5;
@@ -49,8 +52,11 @@ function gemAssets(definition){
       #include <opaque_fragment>
     `);
   };
-  material.customProgramCacheKey=()=> 'collectible-faceted-gem-v3';
-  const result={geometry,material};assets.set(definition.id,result);return result;
+  material.customProgramCacheKey=()=> 'collectible-faceted-gem-v4';
+  const auraMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false,uniforms:{tint:{value:new THREE.Color(definition.textColor??definition.color)}},
+    vertexShader:`varying vec2 auraUV;void main(){auraUV=uv;vec4 center=modelViewMatrix*vec4(0.,0.,0.,1.);float scale=length(modelMatrix[0].xyz);center.xy+=position.xy*scale;gl_Position=projectionMatrix*center;}`,
+    fragmentShader:`varying vec2 auraUV;uniform vec3 tint;void main(){vec2 p=auraUV*2.-1.;float r=length(p);float alpha=exp(-r*r*4.5)*(1.-smoothstep(.45,1.,r))*.30;gl_FragColor=vec4(tint*1.2,alpha);}`});
+  const result={geometry,material,auraMaterial};assets.set(definition.id,result);return result;
 }
 
 // Interactive item contract: one collection, reset, reward data and cosmetic pose.
@@ -58,7 +64,8 @@ export class Pickable {
   constructor(definition,{s,lane,position}){
     this.type=config.type;this.definition=definition;this.s=s;this.lane=lane;this.taken=false;
     this.o=new THREE.Group();this.o.position.copy(position);this.baseY=position.y;
-    const {geometry,material}=gemAssets(definition);this.gem=new THREE.Mesh(geometry,material);this.o.add(this.gem);
+    const {geometry,material,auraMaterial}=gemAssets(definition);this.gem=new THREE.Mesh(geometry,material);this.o.add(this.gem);
+    this.aura=new THREE.Mesh(gemAuraGeometry,auraMaterial);this.aura.frustumCulled=false;this.aura.renderOrder=-1;this.gem.add(this.aura);
     this.shadow=new THREE.Mesh(contactShadowGeometry,contactShadowMaterial);this.shadow.rotation.x=-Math.PI/2;this.shadow.position.y=-.025;this.o.add(this.shadow);
     this.gleam=new THREE.Mesh(gleamGeometry,gleamMaterial);this.gleam.position.set(.05,definition.height*.40+.006,.04);this.gleam.rotation.x=-Math.PI/2;this.gem.add(this.gleam);
     this.phase=random()*Math.PI*2;this.speed=.32+random()*.14;

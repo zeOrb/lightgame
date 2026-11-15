@@ -1,4 +1,7 @@
 #skill-tree{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;overflow:hidden;background:#0a0b0e;color:#e7d9b9;font:11px/1.8 TowerPixel,monospace}
+#skill-tree .tree-tabs{display:flex;flex-shrink:0;justify-content:center;gap:28px;padding:4px 16px;background:#101115;border-bottom:1px solid #76633c66}
+#skill-tree .tree-tabs button{font:9px/1.6 TowerPixel,monospace;color:#a49b83;background:none;border:0;box-shadow:none;clip-path:none;padding:12px 8px;text-shadow:1px 1px #000}
+#skill-tree .tree-tabs button[aria-pressed=true]{color:#fff0b9;text-shadow:0 0 8px #d4ad6566,1px 1px #000}
 #skill-tree *,#skill-tree{scrollbar-width:none}#skill-tree::-webkit-scrollbar,#skill-tree *::-webkit-scrollbar{display:none}
 #skill-tree .tree-header{position:relative;inset:auto;display:flex;flex-shrink:0;align-items:center;gap:24px;justify-content:space-between;padding:22px 32px;border-bottom:3px solid #61553e;background:#171d21}
 .tree-header h2{font:22px/1.5 TowerPixel;margin:5px 0;color:#edcf91}.tree-header p,.tree-header small{font-size:8px;color:#b3aa92;margin:0}.tree-header strong{font-size:16px;color:#ffe5a1;white-space:nowrap}

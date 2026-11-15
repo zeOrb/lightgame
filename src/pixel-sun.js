@@ -38,7 +38,7 @@ export function sunPixels(rotation=0,size=1){
   return pixels;
 }
 export function createPixelSun(rotation=0,dormant=false){
-  const palette=dormant?['#00000000','#281317','#65252b','#ad3b35','#df6548','#ffad75','#85302e']:SUN_PALETTE;
+  const palette=dormant?['#00000000','#1f1115','#4d242a','#78353b','#a34c46','#c07a5e','#5f292f']:SUN_PALETTE;
   const canvas=document.createElement('canvas');canvas.width=canvas.height=SUN_SPRITE_GRID;
   const ctx=canvas.getContext('2d'),pixels=sunPixels(rotation,dormant?.55:1);
   // Quantised halo: whole golden pixel cells, never a blurred CSS shadow.
@@ -51,7 +51,7 @@ export function createPixelSun(rotation=0,dormant=false){
     }
     if(distance>3)continue;
     const shimmer=.82+.18*Math.sin(rotation*3+x*.6-y*.4);
-    ctx.fillStyle=`rgba(${dormant?'226,64,42':'255,195,67'},${[0,.4,.2,.08][distance]*shimmer})`;
+    ctx.fillStyle=`rgba(${dormant?'154,66,62':'255,195,67'},${[0,.4,.2,.08][distance]*shimmer})`;
     ctx.fillRect(x+4,y+4,1,1);
   }
   pixels.forEach((color,i)=>{if(color){

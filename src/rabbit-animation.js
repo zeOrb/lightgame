@@ -10,6 +10,7 @@ export class RabbitAnimation {
     this.reset();
   }
   reset(){
+    this.pickupAge=1;
     this.phase=0;this.blend=0;this.air=0;this.landing=0;this.lastVelocity=0;this.wasAirborne=false;this.fallTime=0;
     this.clothTime=0;this.clothWind=0;this.clothTurn=0;this.fallClothBlend=0;this.dashClothBlend=0;this.dashClothTime=0;
     this.dashActive=false;this.dashTransition=0;this.dashFrom=0;
@@ -246,8 +247,18 @@ export class RabbitAnimation {
       this.arms.forEach((arm,i)=>arm.rotation.set(-.7*hit,0,(i?1:-1)*.5*hit));
       this.tail.rotation.x=THREE.MathUtils.lerp(this.tail.rotation.x,-.08,hit);
     }
+    this.pickupAge=Math.min(1,this.pickupAge+dt);
+    if(this.pickupAge<.36&&!dashing&&!airborne&&!this.recoiling){
+      const t=this.pickupAge/.36;
+      const accent=t<.24?-.07*Math.sin(t/.24*Math.PI/2):.11*Math.sin((t-.24)/.76*Math.PI)*(1-t);
+      this.visual.scale.multiply(new THREE.Vector3(1/Math.sqrt(1+accent),1+accent,1/Math.sqrt(1+accent)));
+      if(this.head)this.head.rotation.x-=accent*.65;
+      this.ears.forEach(ear=>ear.rotation.x-=accent*1.8);
+      this.tail.rotation.x+=accent*.8;
+    }
     this.animateCloth(this.clothTime,this.clothWind);
   }
+  pickup(){this.pickupAge=0;}
   get recoiling(){return this.hitAge<.46;}
   hit(){this.hitAge=0;this.jumpActive=false;this.dashActive=false;this.dashClothBlend=0;}
   jump(velocity=12,speed=0){this.jumpAge=0;this.jumpActive=true;this.launchVelocity=Math.max(1,velocity);this.launchSpeed=Math.abs(speed);this.jumpMoving=this.launchSpeed>.5;this.apexAge=-1;this.jumpBounce=0;}

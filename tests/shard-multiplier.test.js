@@ -4,7 +4,7 @@ import {BASE_STATS,SKILLS,skillStats,SkillProgression} from '../src/progression.
 
 test('shard branch grants five absolute multipliers with a separate healing stat',()=>{
   assert.equal(BASE_STATS.shardPointsMultiplier,1);
-  const owned=['source','shard'];
+  const owned=['treasurySource'];
   const baseline=skillStats({owned});
   for(const value of [2,4,8,16,32]){
     const node=SKILLS.find(s=>s.id==='shardMultiplier'+value);

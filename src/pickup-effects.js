@@ -7,13 +7,15 @@ const COLLAPSE=.28,BURST=.56,CHARGE_MIN=.04,CHARGE_MAX=.24,ORB_SCALE=1.15,ORB_BR
 
 export class PickupEffects {
   constructor(scene,glowTexture,target=()=>new THREE.Vector3(),camera=null){
-    this.scene=scene;this.glowTexture=glowTexture;this.target=target;this.camera=camera;this.active=[];this.clock=0;this.nextArrival=0;this.nextHomeLaunch=0;
+    this.scene=scene;this.glowTexture=glowTexture;this.target=target;this.camera=camera;this.active=[];this.flashes=[];this.clock=0;this.nextArrival=0;this.nextHomeLaunch=0;
     this.orbGeometry=new THREE.SphereGeometry(.075,12,8);
   }
   collect(shard,onArrive=()=>{}){
     const tint=new THREE.Color(shard.userData.pickable?.color??'#ffe6a4'),origin=new THREE.Vector3();
     const gem=shard.children.find(child=>child.isMesh&&child!==shard.shadow);
     if(shard.userData.pickable&&gem)gem.getWorldPosition(origin);else shard.getWorldPosition(origin);
+    const flashGroup=new THREE.Group();flashGroup.position.copy(origin);flashGroup.scale.setScalar(.65);this.scene.add(flashGroup);
+    const flash=new OrbArrival(flashGroup,tint,random()*Math.PI*2);flash.update(0,this.camera);this.flashes.push({group:flashGroup,flash,age:0});
     const group=new THREE.Group();group.position.copy(origin);this.scene.add(group);
     const additive={transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false,toneMapped:false};
     const orb=new THREE.Mesh(this.orbGeometry,new THREE.MeshBasicMaterial({color:tint.clone().lerp(new THREE.Color('white'),.30),fog:false,toneMapped:false}));group.add(orb);
@@ -46,6 +48,7 @@ export class PickupEffects {
   }
   update(dt){
     this.clock+=dt;
+    for(let i=this.flashes.length-1;i>=0;i--){const f=this.flashes[i];f.age+=dt;f.flash.update(f.age*2.2,this.camera);if(f.age>.26){f.flash.dispose();f.group.removeFromParent();this.flashes.splice(i,1);}}
     for(let i=this.active.length-1;i>=0;i--){
       const e=this.active[i];e.age+=dt;
       const t=Math.min(1,e.age/COLLAPSE);e.shard.scale.setScalar(1-t*t*t);e.shard.visible=t<1;
@@ -88,5 +91,5 @@ export class PickupEffects {
     }
   }
   remove(e){e.trail.dispose();e.impact.dispose();e.group.removeFromParent();for(const object of [e.orb,e.aura])object.material.dispose();e.light.dispose();}
-  clear(){for(const e of this.active)this.remove(e);this.active.length=0;this.clock=0;this.nextArrival=0;this.nextHomeLaunch=0;}
+  clear(){for(const f of this.flashes){f.flash.dispose();f.group.removeFromParent();}this.flashes.length=0;for(const e of this.active)this.remove(e);this.active.length=0;this.clock=0;this.nextArrival=0;this.nextHomeLaunch=0;}
 }
