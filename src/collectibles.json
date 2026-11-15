@@ -1,0 +1,12 @@
+{
+  "type": "pickable",
+  "baseLight": 22,
+  "placement": {"maxPerShelf": 3, "spacing": 1.05},
+  "variants": [
+    {"id":"emerald","name":"Изумруд","color":"#38db72","textColor":"#83ffaf","light":12,"points":1,"sides":6,"width":0.31,"height":0.40},
+    {"id":"citrine","name":"Цитрин","color":"#ffd746","textColor":"#fff09a","light":18,"points":2,"sides":6,"width":0.32,"height":0.37},
+    {"id":"ruby","name":"Рубин","color":"#ed354e","textColor":"#ff8b99","light":26,"points":5,"sides":6,"width":0.35,"height":0.35},
+    {"id":"azure","name":"Лазурит","color":"#38bdff","textColor":"#8edfff","light":36,"points":10,"sides":5,"width":0.30,"height":0.44},
+    {"id":"amethyst","name":"Аметист","color":"#b76bfa","textColor":"#d8a4ff","light":50,"points":25,"sides":5,"width":0.32,"height":0.46}
+  ]
+}

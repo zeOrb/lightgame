@@ -1,3 +1,5 @@
+import {shadowSilhouette} from './shadow-silhouette.js';
+import {rebuildShadowCat} from './shadow-cat.js';
 import * as THREE from 'three';
 import { BeastVitralBurst } from './beast-vitral-burst.js';
 import { createVisualRandom } from './visual-random.js';
@@ -34,7 +36,7 @@ function ellipsoid(parent, material, position, scale) {
   const mesh=new THREE.Mesh(sphere,material);mesh.position.set(...position);mesh.scale.set(...scale);parent.add(mesh);return mesh;
 }
 export const BEAST_KINDS = ENEMY_CONFIG.enemies.filter(enemy=>enemy.profile==='animal').map(enemy=>enemy.model);
-export function createShadowBeast(kind = 'cat') {
+export function createShadowBeast(kind = 'cat',classic=false) {
   textures();
   const o=new THREE.Group();
   const eyeGlows=[];
@@ -82,6 +84,47 @@ export function createShadowBeast(kind = 'cat') {
   }else if(wolf){
     const brush=ellipsoid(tail,fur,[0,-.13,-.65],[.2,.23,.75]);brush.rotation.x=-.4;
   }else tail.add(new THREE.Mesh(new THREE.TubeGeometry(curve,24,.09,7,false),fur));
+  if(kind==='cat'&&!classic)rebuildShadowCat(o,head,legs,tail,fur,red,eyeCore,random);
+  let shadowIdle=null;
+  if(wolf){
+    // A single squat, craggy silhouette instead of the old canine anatomy.
+    o.traverse(child=>{if(child.isMesh)child.userData.oldWolf=true;});
+    const obsolete=[];o.traverse(child=>{if(child.userData.oldWolf&&!head.children.includes(child))obsolete.push(child);});
+    obsolete.forEach(child=>child.removeFromParent());
+    // Keep the shared eyes and their glow, discard the muzzle and ears.
+    [...head.children].forEach(child=>{if(child.isMesh&&child.material===fur)child.removeFromParent();});
+    legs.forEach(leg=>leg.removeFromParent());tail.removeFromParent();
+    const mass=new THREE.Group();o.add(mass);head.removeFromParent();mass.add(head);head.position.set(0,1.08,.41);
+    const shell=(mesh)=>{mesh.userData.shadowShell=true;mesh.userData.restMaterial=mesh.material;mass.add(mesh);return mesh;};
+    const body=shell(new THREE.Mesh(new THREE.IcosahedronGeometry(.78,3),fur));body.position.y=.91;
+    const lobes=shadowSilhouette(fur,random);for(const mesh of lobes)mass.add(mesh);
+    for(const child of head.children){
+      child.position.x*=1.45;
+      const side=Math.sign(child.position.x);
+      if(child.isMesh&&(child.material===red||child.material===eyeCore)){
+        const shape=new THREE.Shape();
+        shape.moveTo(side*.22,.13);
+        shape.bezierCurveTo(side*.13,.10,-side*.08,.015,-side*.17,-.10);
+        shape.bezierCurveTo(-side*.04,-.08,side*.12,-.17,side*.18,.015);
+        shape.quadraticCurveTo(side*.19,.08,side*.22,.13);
+        const core=child.material===eyeCore,scale=core?.62:1;
+        // Subdivide the filled shape before projecting it onto the spherical shell.
+        let geometry=new THREE.ShapeGeometry(shape,18);if(geometry.index)geometry=geometry.toNonIndexed();
+        let vertices=Array.from(geometry.attributes.position.array);geometry.dispose();
+        for(let level=0;level<3;level++){
+          const next=[];
+          for(let i=0;i<vertices.length;i+=9){const a=vertices.slice(i,i+3),b=vertices.slice(i+3,i+6),c=vertices.slice(i+6,i+9),ab=a.map((n,j)=>(n+b[j])*.5),bc=b.map((n,j)=>(n+c[j])*.5),ca=c.map((n,j)=>(n+a[j])*.5);next.push(...a,...ab,...ca,...ab,...b,...bc,...ca,...bc,...c,...ab,...bc,...ca);}
+          vertices=next;
+        }
+        child.scale.setScalar(1);child.rotation.set(0,0,0);child.position.y=.06;child.position.z=0;
+        const radius=core?.789:.785;
+        for(let i=0;i<vertices.length;i+=3){vertices[i]*=scale;vertices[i+1]*=scale;const x=vertices[i]+child.position.x,y=vertices[i+1]+child.position.y+head.position.y-.91;vertices[i+2]=Math.sqrt(Math.max(.01,radius*radius-x*x-y*y))-head.position.z;}
+        child.geometry=new THREE.BufferGeometry();child.geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));child.geometry.computeVertexNormals();
+      }else if(child.isSprite){const x=child.position.x,y=child.position.y+head.position.y-.91;child.position.z=Math.sqrt(.795**2-x*x-y*y)-head.position.z;child.scale.set(child.scale.x*.85,child.scale.y*.65,1);}
+    }
+    legs.length=0;for(let i=0;i<2;i++){const leg=new THREE.Group();o.add(leg);legs.push(leg);}
+    shadowIdle={mass,lobes,phase:random()*Math.PI*2};
+  }
   // Each emitter owns a fixed pool; no allocations or new materials per frame.
   const smoke=Array.from({length:18},(_,i)=>{
     const material=new THREE.SpriteMaterial({map:smokeTexture,color:'#000000',transparent:true,depthWrite:false,fog:false,opacity:0});
@@ -105,13 +148,14 @@ export function createShadowBeast(kind = 'cat') {
     shader.vertexShader='varying vec3 vBeastLocal;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvBeastLocal = (modelMatrix * vec4(position, 1.0)).xyz;');
     shader.fragmentShader='uniform float dissolveHeight;uniform float deathDirection;uniform vec3 deathColors[6];uniform vec3 deathCenter;\nvarying vec3 vBeastLocal;\n'+shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat grain = fract(sin(dot(floor(vBeastLocal.xz * 35.0), vec2(12.9898,78.233))) * 43758.5453);\nfloat dissolveDistance=deathDirection<0.0?length(vBeastLocal-deathCenter)-dissolveHeight:vBeastLocal.y-dissolveHeight; if(dissolveDistance < (grain-.5)*.22) discard;').replace('#include <opaque_fragment>','if(deathDirection<0.0){float edge=1.0-smoothstep(0.0,.5,abs(length(vBeastLocal-deathCenter)-dissolveHeight));int cell=int(mod(abs(floor(vBeastLocal.x*5.0)+floor(vBeastLocal.z*5.0)),6.0));outgoingLight=mix(outgoingLight,deathColors[cell]*3.5,edge);}\n#include <opaque_fragment>');
   };
-  return {o,paw,legs,tail,head,smoke,circles,eyeGlows,meshes,deathFur,dissolve,deathDirection,deathColors,deathCenter,vitralBurst,kind,stompTop:hare?1.03:wolf?1.15:1.02,dead:false,deathAge:0};
+  return {o,paw:wolf?legs[1]:paw,legs,tail,head,shadowIdle,smoke,circles,eyeGlows,meshes,deathFur,dissolve,deathDirection,deathColors,deathCenter,vitralBurst,kind,stompTop:hare?1.03:wolf?1.15:1.02,dead:false,deathAge:0};
 }
 
 export function createShadowReaper(){
   // Retain the shared eyes, smoke, damage and dissolve systems.
-  const beast=createShadowBeast('wolf'),{o,head}=beast;
-  for(const mesh of beast.meshes)if(mesh.material===fur)mesh.removeFromParent();
+  const beast=createShadowBeast('cat',true),{o,head}=beast;
+  for(const mesh of beast.meshes)if(mesh.material===fur||mesh.userData.shadowShell)mesh.removeFromParent();
+  beast.shadowIdle=null;
   for(const leg of beast.legs)leg.removeFromParent();beast.tail.removeFromParent();
   head.position.set(0,2.12,.05);
   ellipsoid(o,fur,[0,1.65,0],[.48,.65,.30]);
@@ -163,7 +207,7 @@ export function killShadowBeast(beast,palette=null){
     beast.deathColors.value.forEach((color,i)=>color.copy(palette[i%palette.length]));
     beast.smoke.forEach((mote,i)=>{mote.sprite.material.map=circleTexture;mote.sprite.material.color.copy(palette[i%palette.length]);mote.sprite.material.blending=THREE.AdditiveBlending;mote.sprite.material.needsUpdate=true;});
   }
-  for(const mesh of beast.meshes){if(mesh.material===fur)mesh.material=beast.deathFur;else mesh.visible=false;}
+  for(const mesh of beast.meshes){if(mesh.material===fur||mesh.userData.shadowShell)mesh.material=beast.deathFur;else mesh.visible=false;}
   // Capture columns at the kill position: the dissolve travels strictly upward.
   beast.deathMotes=beast.smoke.map((mote,i)=>({x:Math.sin(i*2.4)*(.25+i%3*.13),z:Math.cos(i*2.4)*(.3+i%4*.15)}));
 }
@@ -176,7 +220,8 @@ export function resetShadowBeast(beast){
   if(beast.cloak){beast.cloak.motion=0;beast.cloak.lastTime=null;beast.moveSpeed=0;beast.cloak.geometry.attributes.position.array.set(beast.cloak.rest);beast.cloak.geometry.attributes.position.needsUpdate=true;}
   for(const glow of beast.eyeGlows)glow.visible=true;
   for(const mote of beast.smoke){mote.sprite.material.map=smokeTexture;mote.sprite.material.color.set('#000000');mote.sprite.material.blending=THREE.NormalBlending;mote.sprite.material.opacity=0;mote.sprite.material.needsUpdate=true;}
-  for(const mesh of beast.meshes){if(mesh.material===beast.deathFur)mesh.material=fur;mesh.visible=true;}
+  for(const mesh of beast.meshes){if(mesh.material===beast.deathFur)mesh.material=mesh.userData.restMaterial??fur;mesh.visible=true;}
+  if(beast.shadowIdle){beast.shadowIdle.mass.scale.setScalar(1);beast.shadowIdle.mass.position.y=0;beast.shadowIdle.mass.rotation.set(0,0,0);}
 }
 export function animateBeastDeath(beast,dt){
   beast.deathAge+=dt;const t=beast.deathAge;
@@ -218,6 +263,16 @@ export function animateShadowBeast(beast,time,leap) {
     leg.rotation.x=Math.sin(time*2.7+beast.s+(i%2)*Math.PI)*.2-leap*.3;
   });
   beast.paw.rotation.x-=leap*.6;
+  if(beast.shadowIdle){
+    const {mass,lobes,phase}=beast.shadowIdle,t=time*1.65+phase;
+    const breath=Math.sin(t),follow=Math.sin(t-.45);
+    mass.scale.setScalar(1+breath*.018);
+    mass.position.y=breath*.045;mass.rotation.z=Math.sin(t*.5)*.022;
+    beast.head.rotation.set(0,0,0);
+    lobes.forEach((lobe,i)=>{lobe.rotation.z=Math.sin(t-.3-i*.23)*.018;lobe.rotation.y=Math.sin(t*.7-i*.3)*.022;});
+    // Feet stay planted; leap anticipation blends into the same pose.
+    beast.legs.forEach(leg=>{leg.rotation.x=-leap*.25;});
+  }
   for(const mote of beast.smoke){
     const t=(time/mote.life+mote.phase)%1;
     const radius=.25+t*.65,angle=mote.angle+t*.9;

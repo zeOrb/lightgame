@@ -5,6 +5,7 @@ import {createSunsetLUT,SUNSET_LUT_STYLE,SUNSET_LUT_GLSL} from './sunset-lut.js'
 // Gaussian gives soft transitions; disk and box remain available for art tuning.
 export const BLUR_VARIANTS=Object.freeze({gaussian:0,disk:1,box:2});
 export const FOCUS_STYLE=Object.freeze({blurPixels:5.2,blurVariant:'gaussian',backgroundDim:.78,backgroundSaturation:.68});
+export const SSAO_STYLE=Object.freeze({enabled:true,radius:1.15,strength:.85,bias:.06});
 export class AtmosphericFocus {
   constructor(){
     this.size=new THREE.Vector2();
@@ -16,9 +17,23 @@ export class AtmosphericFocus {
     this.material=new THREE.ShaderMaterial({depthTest:true,depthWrite:true,depthFunc:THREE.AlwaysDepth,uniforms:{
       sceneColor:{value:this.target.texture},sceneDepth:{value:null},resolution:{value:new THREE.Vector2(1,1)},inverseProjection:{value:new THREE.Matrix4()},cameraWorld:{value:new THREE.Matrix4()},focusPoint:{value:new THREE.Vector3()},daylight:{value:1},arenaMode:{value:0},arenaFloorY:{value:0},arenaRadius:{value:0},blurPixels:{value:FOCUS_STYLE.blurPixels},backgroundDim:{value:FOCUS_STYLE.backgroundDim},backgroundSaturation:{value:FOCUS_STYLE.backgroundSaturation},
       blurVariant:{value:BLUR_VARIANTS[FOCUS_STYLE.blurVariant]},
+      aoSettings:{value:new THREE.Vector4(SSAO_STYLE.enabled?1:0,SSAO_STYLE.radius,SSAO_STYLE.strength,SSAO_STYLE.bias)},projectionScale:{value:new THREE.Vector2()},
     },vertexShader:'varying vec2 screenUV;void main(){screenUV=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:`
       uniform sampler2D sceneColor,sceneDepth;uniform vec2 resolution;uniform mat4 inverseProjection,cameraWorld;
       uniform vec3 focusPoint;uniform float daylight,arenaMode,arenaFloorY,arenaRadius,blurPixels,backgroundDim,backgroundSaturation,blurVariant;varying vec2 screenUV;
+      uniform vec4 aoSettings;uniform vec2 projectionScale;
+      uniform sampler2D aoTexture;
+      float screenAO(vec3 center,float depth){
+        if(depth>.99999)return 1.;
+        float total=0.,sum=0.;
+        for(int y=-2;y<=2;y++)for(int x=-2;x<=2;x++){
+          vec2 offset=vec2(float(x),float(y))*2./resolution,uv=clamp(screenUV+offset,vec2(0.),vec2(1.));
+          vec2 sampleAO=texture2D(aoTexture,uv).rg;
+          float weight=exp(-float(x*x+y*y)*.3)*exp(-abs(sampleAO.g+center.z)*18.);
+          sum+=sampleAO.r*weight;total+=weight;
+        }
+        return total>.0001?sum/total:1.;
+      }
       vec3 gradeBackground(vec3 color,float floorDistance){
         float luma=dot(color,vec3(.2126,.7152,.0722));
         color=mix(vec3(luma),color,backgroundSaturation)*backgroundDim;
@@ -73,6 +88,7 @@ export class AtmosphericFocus {
           }
           color=(color+edgeColor)/(1.+edgeWeight);
         }
+        color*=screenAO(view.xyz,depth);
         // A restrained frame leaves the playable centre unobscured.
         vec2 q=screenUV*2.-1.;float edge=smoothstep(.45,1.35,length(q*vec2(.85,1.)));color*=1.-edge*.16*(1.-arenaPixel);
         gl_FragColor=vec4(color,1.);
@@ -80,6 +96,36 @@ export class AtmosphericFocus {
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`});
+    this.aoTarget=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,depthBuffer:false});
+    this.material.uniforms.aoTexture={value:this.aoTarget.texture};
+    this.aoMaterial=new THREE.ShaderMaterial({depthTest:false,depthWrite:false,uniforms:this.material.uniforms,vertexShader:this.material.vertexShader,fragmentShader:`uniform sampler2D sceneDepth;uniform mat4 inverseProjection;uniform vec2 resolution,projectionScale;uniform vec4 aoSettings;varying vec2 screenUV;
+      vec3 aoView(vec2 uv,float d){vec4 p=inverseProjection*vec4(uv*2.-1.,d*2.-1.,1.);return p.xyz/p.w;}
+      float screenAO(vec3 center,float depth){
+        if(aoSettings.x<.5||depth>.99999)return 1.;
+        vec2 texel=1./resolution;
+        vec3 left=center-aoView(screenUV-vec2(texel.x,0.),texture2D(sceneDepth,screenUV-vec2(texel.x,0.)).r);
+        vec3 right=aoView(screenUV+vec2(texel.x,0.),texture2D(sceneDepth,screenUV+vec2(texel.x,0.)).r)-center;
+        vec3 down=center-aoView(screenUV-vec2(0.,texel.y),texture2D(sceneDepth,screenUV-vec2(0.,texel.y)).r);
+        vec3 up=aoView(screenUV+vec2(0.,texel.y),texture2D(sceneDepth,screenUV+vec2(0.,texel.y)).r)-center;
+        vec3 normal=normalize(cross(dot(left,left)<dot(right,right)?left:right,dot(down,down)<dot(up,up)?down:up));
+        if(dot(normal,-center)<0.)normal=-normal;
+        vec2 footprint=min(vec2(.065),projectionScale*.5*aoSettings.y/max(.1,-center.z));
+        float sum=0.;
+        for(int i=0;i<24;i++){
+          float r=sqrt((float(i)+.5)/24.),angle=float(i)*2.39996323;
+          vec2 uv=screenUV+vec2(cos(angle),sin(angle))*r*footprint;
+          if(any(lessThan(uv,vec2(0.)))||any(greaterThan(uv,vec2(1.))))continue;
+          float sampleDepth=texture2D(sceneDepth,uv).r;if(sampleDepth>.99999)continue;
+          vec3 delta=aoView(uv,sampleDepth)-center;
+          float distanceToSample=length(delta);
+          float horizon=max(0.,dot(normal,delta)-aoSettings.w)/max(.01,distanceToSample);
+          float falloff=1.-smoothstep(aoSettings.y*.35,aoSettings.y*1.7,distanceToSample);
+          sum+=horizon*falloff;
+        }
+        return clamp(1.-sum/24.*aoSettings.z*2.2,.68,1.);
+      }
+
+void main(){float d=texture2D(sceneDepth,screenUV).r;vec3 p=aoView(screenUV,d);gl_FragColor=vec4(screenAO(p,d),-p.z,0.,1.);}`});
     this.scene=new THREE.Scene();this.camera=new THREE.Camera();
     this.quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),this.material);this.quad.frustumCulled=false;this.scene.add(this.quad);
     this.antialias=new THREE.ShaderMaterial({uniforms:{...THREE.UniformsUtils.clone(FXAAShader.uniforms),solidDepth:{value:null},sunsetLUT:{value:createSunsetLUT()},sunsetLUTStrength:{value:SUNSET_LUT_STYLE.strength}},vertexShader:FXAAShader.vertexShader,fragmentShader:SUNSET_LUT_GLSL+'\nuniform sampler2D solidDepth;\n'+FXAAShader.fragmentShader.replace('gl_FragColor = ApplyFXAA( tDiffuse, resolution.xy, vUv );',`gl_FragColor = ApplyFXAA( tDiffuse, resolution.xy, vUv );
@@ -90,14 +136,16 @@ export class AtmosphericFocus {
   }
   render(renderer,scene,camera,focus,daylight,depthTexture,fallDarkness=0,arena=null,trail=null,impact=null){
     renderer.getDrawingBufferSize(this.size);
-    if(this.target.width!==this.size.x||this.target.height!==this.size.y){this.target.setSize(this.size.x,this.size.y);this.graded.setSize(this.size.x,this.size.y);}
+    if(this.target.width!==this.size.x||this.target.height!==this.size.y){this.target.setSize(this.size.x,this.size.y);this.graded.setSize(this.size.x,this.size.y);this.aoTarget.setSize(Math.ceil(this.size.x/2),Math.ceil(this.size.y/2));}
     const previous=renderer.getRenderTarget(),previousAutoClear=renderer.autoClear,previousLayers=camera.layers.mask,previousBackground=scene.background,u=this.material.uniforms;
     u.sceneDepth.value=depthTexture;
+    u.projectionScale.value.set(camera.projectionMatrix.elements[0],camera.projectionMatrix.elements[5]);
     this.antialias.uniforms.tDiffuse.value=this.graded.texture;this.antialias.uniforms.solidDepth.value=depthTexture;this.antialias.uniforms.resolution.value.set(1/this.size.x,1/this.size.y);
     if(!this.lightsReady){scene.traverse(object=>{if(object.isLight)object.layers.enable(2);});this.lightsReady=true;}
     camera.updateMatrixWorld();u.resolution.value.copy(this.size);u.inverseProjection.value.copy(camera.projectionMatrixInverse);u.cameraWorld.value.copy(camera.matrixWorld);u.focusPoint.value.copy(focus);u.daylight.value=daylight;u.arenaMode.value=arena?1:0;u.arenaFloorY.value=arena?.y??0;u.arenaRadius.value=arena?.radius??0;
     try{
       camera.layers.disable(2);camera.layers.disable(3);renderer.setRenderTarget(this.target);renderer.clear();renderer.render(scene,camera);
+      this.quad.material=this.aoMaterial;renderer.setRenderTarget(this.aoTarget);renderer.render(this.scene,this.camera);
       this.quad.material=this.material;renderer.setRenderTarget(this.graded);renderer.render(this.scene,this.camera);
       this.quad.material=this.antialias;renderer.setRenderTarget(previous);renderer.render(this.scene,this.camera);
       // Copy scene depth with the composite, then draw paper in its own colour

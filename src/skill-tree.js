@@ -8,7 +8,7 @@ export class SkillTree {
   constructor(onNext){
     this.onNext=onNext;this.selected=null;this.hovered=null;this.navKeys=new Set();this.panTail=new PanTail();this.smoothZoom=new SmoothTreeZoom();this.dragging=false;
     this.element=document.createElement('section');this.element.id='skill-tree';this.element.hidden=true;this.element.setAttribute('role','dialog');this.element.setAttribute('aria-modal','true');this.element.setAttribute('aria-label','Древо солнечного света');
-    this.element.innerHTML=`<header class="tree-header"><div><small id="tree-outcome"></small><h2>Древо света</h2></div><strong id="tree-points"></strong><button id="tree-next" class="primary">Следующий забег →</button></header><div class="tree-body"><div class="tree-scroll"><div class="tree-map"><div class="tree-root"><span>☀</span><small>ИСТОЧНИК</small></div></div></div><aside class="tree-detail"><small id="tree-branch"></small><h3 id="tree-name"></h3><p id="tree-description"></p><p id="tree-requirement"></p><button id="tree-buy" class="primary"></button><small>Улучшения вступят в силу в следующем забеге.<br>Неиспользованные очки сохраняются.</small></aside></div>`;
+    this.element.innerHTML=`<header class="tree-header"><div><small id="tree-outcome"></small><h2>Древо света</h2></div><strong id="tree-points"></strong><button id="tree-next" class="primary">Следующий забег →</button></header><div class="tree-body"><div class="tree-scroll"><div class="tree-map"><div class="tree-root"><span>☀</span><small>ИСТОЧНИК</small></div></div></div><aside class="tree-detail"><small id="tree-branch"></small><h3 id="tree-name"></h3><p id="tree-description"></p><p id="tree-requirement"></p><span id="tree-buy" class="primary" role="status"></span><small>Улучшения вступят в силу в следующем забеге.<br>Неиспользованные очки сохраняются.</small></aside></div>`;
     document.body.append(this.element);this.map=this.element.querySelector('.tree-map');this.buttons=new Map();
     this.map.style.width=this.map.style.height=SKILL_MAP_SIZE+'px';
     const root=this.map.querySelector('.tree-root');root.style.left=root.style.top=SKILL_MAP_SIZE/2+'px';root.hidden=true;
@@ -17,8 +17,8 @@ export class SkillTree {
     for(const skill of SKILLS){
       const {x,y}=skillPosition(skill);
       const button=document.createElement('button');button.className='skill-node'+(skill.isRoot?' is-root':'');button.style.left=x/SKILL_MAP_SIZE*100+'%';button.style.top=y/SKILL_MAP_SIZE*100+'%';button.innerHTML='<span>✦</span><b></b><small hidden></small>';button.querySelector('b').textContent=skill.name;button.setAttribute('aria-label',skill.name);
-      button.onclick=()=>{this.art.pulse(skill.id);this.selected=skill.id;this.hovered=null;this.render();};
-      const peek=()=>{if(!this.selected&&!this.viewport.classList.contains('is-dragging')){this.hovered=skill.id;this.renderDetail();}};
+      button.onclick=()=>{this.art.pulse(skill.id);this.selected=null;this.hovered=skill.id;this.buySkill(skill);};
+      const peek=()=>{if(!this.viewport.classList.contains('is-dragging')){this.hovered=skill.id;this.renderDetail();}};
       const leave=()=>{if(this.hovered===skill.id){this.hovered=null;this.renderDetail();}};
       button.addEventListener('pointerenter',peek);button.addEventListener('pointerleave',leave);button.addEventListener('focus',peek);button.addEventListener('blur',leave);
       this.map.append(button);this.buttons.set(skill.id,button);
@@ -28,15 +28,14 @@ export class SkillTree {
     this.comets=new SkillComets(this.viewport);
     this.sky=new StarParallax(this.viewport,createSkillStarfield());this.art.onFrame=dt=>{if(this.smoothZoom.step(this.camera,dt))this.applyCamera();if(this.rootRevealUntil&&this.art.time>this.rootRevealUntil){this.element.classList.remove('is-source-awakening');this.rootRevealUntil=0;}const moving=this.updateKeyboard(dt);if(!moving&&!this.dragging){const tail=this.panTail.step(dt);if(Math.abs(tail.x)+Math.abs(tail.y)>.001)this.panView(tail.x,tail.y);}this.sky.update(dt);this.comets.update(dt,this.sky.motion);};this.bindNavigation();
     const center=document.createElement('button');center.className='text-button';center.textContent='☀ К солнцу';center.onclick=()=>this.center();this.element.querySelector('.tree-header').insertBefore(center,this.element.querySelector('#tree-next'));
-    this.element.querySelector('#tree-buy').onclick=()=>{
-      const selected=SKILLS.find(skill=>skill.id===this.selected);
-      if(!selected||!progression.buy(selected.id))return;
-      if(selected.isRoot){this.selected=null;this.hovered=null;this.rootRevealUntil=this.art.time+.9;this.element.classList.add('is-source-awakening');}
-      this.render();
-      const child=!selected.isRoot&&SKILLS.find(skill=>skill.requires===selected.id);
-      if(child){this.smoothZoom.clear();this.interruptCamera();const p=skillPosition(child);this.map.classList.add('is-guiding');this.camera.x=this.viewport.clientWidth/2-p.x*this.camera.zoom;this.camera.y=this.viewport.clientHeight/2-p.y*this.camera.zoom;this.applyCamera();}
-    };
     this.element.querySelector('#tree-next').onclick=()=>{this.navKeys.clear();this.art.stop();this.onNext();};
+  }
+  buySkill(skill){
+    if(!progression.buy(skill.id)){this.render();return;}
+    if(skill.isRoot){this.hovered=null;this.rootRevealUntil=this.art.time+.9;this.element.classList.add('is-source-awakening');}
+    this.render();
+    const child=!skill.isRoot&&SKILLS.find(node=>node.requires===skill.id);
+    if(child){this.smoothZoom.clear();this.interruptCamera();const p=skillPosition(child);this.map.classList.add('is-guiding');this.camera.x=this.viewport.clientWidth/2-p.x*this.camera.zoom;this.camera.y=this.viewport.clientHeight/2-p.y*this.camera.zoom;this.applyCamera();}
   }
   applyCamera(){this.map.style.transform=this.camera.transform();this.positionDetail();}
   panView(x,y){this.camera.pan(x,y);this.sky.drag(x,y);this.applyCamera();}
@@ -100,15 +99,15 @@ export class SkillTree {
   renderDetail(){
     const selected=SKILLS.find(s=>s.id===(this.selected??this.hovered)),buy=this.element.querySelector('#tree-buy');
     this.detail.classList.toggle('is-visible',!!selected);this.detail.classList.toggle('is-pinned',!!this.selected);this.detail.setAttribute('aria-hidden',String(!selected));
-    if(!selected){buy.disabled=true;return;}
-    const owned=progression.state.owned.includes(selected.id),canBuy=progression.canBuy(selected.id);
+    if(!selected)return;
+    const owned=progression.state.owned.includes(selected.id);
     this.element.querySelector('#tree-name').textContent=selected.name;this.element.querySelector('#tree-branch').textContent=selected.isRoot?'Источник':selected.branch+' · '+(selected.tier+1)+'/'+selected.tiers;this.element.querySelector('#tree-description').textContent=isSkillPreview(progression.state,selected.id)?'???':selected.description;
     const conditions=[];
     if(selected.requires&&!progression.state.owned.includes(selected.requires))conditions.push('Изучи «'+SKILLS.find(s=>s.id===selected.requires).name+'»');
     if(!owned&&progression.state.points<selected.cost)conditions.push('Нужно '+selected.cost+' очко · сейчас '+progression.state.points);
     this.element.querySelector('#tree-requirement').textContent='';
     buy.dataset.requirement=String(conditions.length>0);
-    buy.disabled=!this.selected||!canBuy;buy.textContent=owned?'✦ Изучено':conditions.length?conditions.join(' · '):this.selected?'✦ '+selected.cost+' · Изучить':'✦ '+selected.cost+' · Нажми на навык';
+    buy.textContent=owned?'✦ Изучено':conditions.length?conditions.join(' · '):'✦ '+selected.cost+' · Нажми на навык';
     this.positionDetail();
   }
 }

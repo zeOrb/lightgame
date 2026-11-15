@@ -21,6 +21,12 @@ body:not(.playing) #vignette{background:radial-gradient(ellipse at 50% 42%,rgba(
 @media(prefers-reduced-motion:reduce){#intro{animation:none}#intro button,#intro button::before,#intro button::after{transition:none}}
 
 /* Pause uses the same unframed silver typography as the title screen. */
+#world{filter:grayscale(0);transition:filter .18s ease-out}
+#world.is-paused{filter:grayscale(1);transition-duration:.5s}
+#hud{filter:grayscale(0) drop-shadow(3px 3px 0 #080c12);transition:filter .18s ease-out}
+#touch,body>footer,#toast,body>header{filter:grayscale(0);transition:filter .18s ease-out}
+body:has(#world.is-paused) #hud{filter:grayscale(1) drop-shadow(3px 3px 0 #080c12);transition-duration:.5s}
+body:has(#world.is-paused) :is(#touch,body>footer,#toast,body>header){filter:grayscale(1);transition-duration:.5s}
 #modal{z-index:40;background:radial-gradient(ellipse at 50% 45%,#0a0908a6,#030303eb);backdrop-filter:blur(3px)}
 #modal .modal-card{display:flex;flex-direction:column;align-items:center;width:min(600px,calc(100% - 48px));max-width:none;padding:24px 0;border:0;outline:0;background:none;box-shadow:none;filter:none;clip-path:none;text-align:center;animation:menu-appear .22s ease-out}
 #modal .modal-card::before,#modal .modal-card::after{content:none}

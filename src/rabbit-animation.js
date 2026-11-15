@@ -14,7 +14,8 @@ export class RabbitAnimation {
     this.clothTime=0;this.clothWind=0;this.clothTurn=0;this.fallClothBlend=0;this.dashClothBlend=0;this.dashClothTime=0;
     this.dashActive=false;this.dashTransition=0;this.dashFrom=0;
     this.jumpAge=1;this.jumpActive=false;this.launchVelocity=1;this.jumpRise=0;this.jumpMoving=false;this.launchSpeed=0;this.apexAge=-1;this.jumpBounce=0;
-    this.hitAge=1;this.hitClothBlend=0;
+    this.hitAge=1;this.hitClothBlend=0;this.runClothBlend=0;
+    this.idleTime=0;this.idleBlend=0;this.idleWeight=0;this.idleStretch=1;
     this.visual.position.set(0,0,0);this.visual.rotation.set(0,0,0);this.visual.scale.setScalar(1);
     this.tail.rotation.set(0,0,0);
     if(this.head){this.head.rotation.set(0,0,0);this.head.position.copy(this.headRest);}
@@ -22,6 +23,7 @@ export class RabbitAnimation {
     this.pose(0,0,0);
   }
   updateFall(dt){
+    this.idleBlend=0;this.idleWeight=0;
     if(this.head){this.head.rotation.x=THREE.MathUtils.damp(this.head.rotation.x,0,12,dt);this.head.position.lerp(this.headRest,1-Math.exp(-12*dt));}
     this.fallTime+=dt;
     this.clothTime+=dt;
@@ -57,6 +59,19 @@ export class RabbitAnimation {
         let normalX=x+wave*loose*wind*.065;
         let normalY=y+Math.sin(time*12+loose*4+phase)*loose*wind*.045+.09*loose*wind;
         let normalZ=z+loose*loose*wind*(-.38+wave*.12);
+        if(!falling&&this.idleWeight>.001){
+          const breath=Math.sin(this.idleTime*1.8-.5-loose*.7);
+          normalY+=breath*loose*loose*.007*this.idleWeight;
+          normalZ+=breath*loose*loose*.012*this.idleWeight;
+        }
+        if(!falling&&this.runClothBlend>.001){
+          const bend=loose*loose,ripple=Math.sin(time*7.5-loose*4.2+phase*.18);
+          // Both panels and their luminous hems share the travelling fold.
+          // Motion starts at zero at the collar and builds towards the tips.
+          normalX=THREE.MathUtils.lerp(normalX,x+Math.sin(time*3.8-loose*2)*bend*wind*.018-this.clothTurn*bend*.04,this.runClothBlend);
+          normalY=THREE.MathUtils.lerp(normalY,y+bend*wind*(.075+ripple*.022),this.runClothBlend);
+          normalZ=THREE.MathUtils.lerp(normalZ,z-bend*wind*(.25+ripple*.055),this.runClothBlend);
+        }
         if(!falling&&this.hitClothBlend>.001){
           const bend=loose*loose,blend=this.hitClothBlend;
           normalX=THREE.MathUtils.lerp(normalX,x+Math.sin(time*10-loose*3+phase)*loose*.025,blend);
@@ -92,6 +107,8 @@ export class RabbitAnimation {
     });
   }
   update(dt,{speed,height,velocity,turn=0,skidding=false,dashing=false}){
+    this.visual.scale.y/=this.idleStretch;this.idleStretch=1;
+    this.idleTime+=dt;
     this.hitAge=Math.min(1,this.hitAge+dt);
     // Restart from the current pose when interrupted; smoothstep gives both
     // ends a soft slope, with a fast launch and a longer cloth follow-through.
@@ -121,7 +138,7 @@ export class RabbitAnimation {
     this.landing=Math.max(0,this.landing-dt);
     this.blend=THREE.MathUtils.damp(this.blend,Math.min(1,speed/3.6),12,dt);
     this.air=THREE.MathUtils.damp(this.air,airborne?1:0,14,dt);
-    this.phase+=speed*dt*5.5;
+    this.phase+=Math.min(speed,5.5)*dt*4.5;
     const step=Math.sin(this.phase),hop=Math.max(0,step),ground=airborne?0:(1-this.air)*(1-rush);
     const diagonal=this.jumpActive&&airborne&&this.jumpMoving;
     // Stretch along a deliberate line of action, not a sideways running sway.
@@ -129,10 +146,11 @@ export class RabbitAnimation {
     const jumpLean=diagonal?(velocity>0
       ?THREE.MathUtils.clamp(Math.atan2(this.launchSpeed,this.launchVelocity),.35,.8)*this.jumpRise
       :-.22*THREE.MathUtils.smoothstep(-velocity/this.launchVelocity,0,1)*THREE.MathUtils.smoothstep(height,0,.45)):0;
-    this.visual.position.y=hop*.21*this.blend*ground;
-    this.visual.rotation.x=(skidding?-.28:.22)*this.blend*ground+jumpLean;
-    this.visual.rotation.z=(Math.sin(this.phase*.5)*.08*this.blend-THREE.MathUtils.clamp(turn,-1,1)*.13)*ground;
-    let squash=1+(hop*.19-Math.max(0,-step)*.15)*this.blend*ground-this.landing*1.05;
+    const strideBounce=(1-Math.cos(this.phase*2))*.5;
+    this.visual.position.y=(strideBounce*.11-.025)*this.blend*ground;
+    this.visual.rotation.x=(skidding?-.28:.34+Math.sin(this.phase*2-.4)*.055)*this.blend*ground+jumpLean;
+    this.visual.rotation.z=(Math.sin(this.phase)*.025*this.blend-THREE.MathUtils.clamp(turn,-1,1)*.09)*ground;
+    let squash=1+(.10*strideBounce-.07*(1-strideBounce))*this.blend*ground-this.landing*1.05;
     if(this.jumpActive&&velocity>0){
       // Hold the stretch through 3/4 of ascent, then release it at the apex.
       if(this.jumpAge<compressEnd)squash=THREE.MathUtils.lerp(1,.67,THREE.MathUtils.smootherstep(this.jumpAge,0,compressEnd));
@@ -144,7 +162,7 @@ export class RabbitAnimation {
     else if(this.jumpActive&&airborne)squash=1+this.jumpBounce;
     const y=airborne||this.jumpActive?squash:THREE.MathUtils.damp(this.visual.scale.y,squash,18,dt),width=1/Math.sqrt(y);
     this.visual.scale.set(width,y,width);
-    this.visual.position.x=0;this.visual.position.z=0;
+    this.visual.position.x=0;this.visual.position.z=(.055+Math.sin(this.phase*2-.3)*.015)*this.blend*ground;
     this.pose(skidding?step*.3:step,ground,velocity);
     if(diagonal){
       this.paws.forEach(paw=>{paw.rotation.x=-.3*this.jumpRise;paw.position.z=.12-.06*this.jumpRise;});
@@ -159,7 +177,9 @@ export class RabbitAnimation {
     this.visual.scale.set(THREE.MathUtils.lerp(this.visual.scale.x,1,rush),THREE.MathUtils.lerp(this.visual.scale.y,1,rush),THREE.MathUtils.lerp(this.visual.scale.z,1,rush));
     if(this.head){
       this.head.rotation.x=THREE.MathUtils.lerp(-jumpLean-.2*this.jumpRise-this.jumpBounce,-(DASH_PITCH+.16),rush);
+      this.head.rotation.x-=this.visual.rotation.x*.65*this.blend*ground;
       this.head.position.copy(this.headRest);
+      this.head.position.y-=this.visual.position.y*.35*ground;
       this.head.position.z+=.10*DASH_FLATTEN*rush;
     }
     this.ears.forEach((ear,i)=>{
@@ -181,13 +201,39 @@ export class RabbitAnimation {
     this.clothTime+=dt*(.7+movement*.4);
     this.clothWind=THREE.MathUtils.damp(this.clothWind,wind,wind>this.clothWind?6:3,dt);
     this.clothTurn=THREE.MathUtils.damp(this.clothTurn,THREE.MathUtils.clamp(turn,-1,1)*movement,6,dt);
-    this.tail.rotation.set(-this.clothWind*.22+Math.sin(this.clothTime*4)*this.clothWind*.06,-this.clothTurn*.18,Math.sin(this.clothTime*3)*this.clothWind*.035+Math.sin(this.dashClothTime*11)*this.dashClothBlend*.07);
+    this.runClothBlend=THREE.MathUtils.damp(this.runClothBlend,ground*this.blend*(this.recoiling?0:1),8,dt);
+    this.tail.rotation.set(-this.clothWind*.12+Math.sin(this.clothTime*4)*this.clothWind*.025,-this.clothTurn*.12,Math.sin(this.clothTime*3)*this.clothWind*.018+Math.sin(this.dashClothTime*11)*this.dashClothBlend*.07);
     if(diagonal)this.tail.rotation.x-=.12*this.jumpRise;
     // Cancel the panel's rest tilt during the burst so its long edge follows
     // the horizontal travel line; leave a little roll and flutter in the cloth.
     this.tail.rotation.x=THREE.MathUtils.lerp(this.tail.rotation.x,Math.PI/2-DASH_PITCH-.33,rush);
     this.tail.rotation.y*=1-DASH_FLATTEN*rush;
     this.tail.rotation.z*=1-DASH_FLATTEN*rush;
+    const resting=!airborne&&!this.jumpActive&&!dashing&&!this.recoiling&&speed<.18&&this.landing<=0;
+    this.idleBlend=THREE.MathUtils.damp(this.idleBlend,resting?1:0,resting?3.5:12,dt);
+    const idle=this.idleBlend*ground*(1-this.blend)*(this.recoiling?0:1);
+    this.idleWeight=idle;
+    const breath=Math.sin(this.idleTime*1.8),follow=Math.sin(this.idleTime*1.8-.45);
+    const stretch=1+breath*.013*idle;
+    this.idleStretch=stretch;
+    this.visual.scale.multiply(new THREE.Vector3(1/Math.sqrt(stretch),stretch,1/Math.sqrt(stretch)));
+    this.visual.rotation.x+=follow*.012*idle;
+    if(this.head){
+      this.head.rotation.x+=Math.sin(this.idleTime*1.8-.65)*.018*idle;
+      this.head.rotation.y=Math.sin(this.idleTime*.43)*.025*idle;
+      this.head.position.y+=follow*.003*idle;
+    }
+    this.ears.forEach((ear,i)=>{
+      const u=((this.idleTime-i*.20)%7.3+7.3)%7.3;
+      const flick=u>.0&&u<.55?Math.sin(u/.55*Math.PI)**2:0;
+      ear.rotation.x+=(Math.sin(this.idleTime*1.8-.9-i*.13)*.035+flick*.065)*idle;
+      ear.rotation.z+=(i?1:-1)*follow*.013*idle;
+    });
+    this.arms.forEach(arm=>{arm.rotation.x+=follow*.022*idle;});
+    this.paws.forEach(paw=>{
+      const planted=(.065-this.visual.position.y+Math.sin(this.visual.rotation.x)*paw.position.z*this.visual.scale.z)/Math.max(.5,Math.cos(this.visual.rotation.x)*this.visual.scale.y);
+      paw.position.y=THREE.MathUtils.lerp(paw.position.y,planted,idle);
+    });
     this.hitClothBlend=THREE.MathUtils.smoothstep(this.hitAge,.025,.11)*(1-THREE.MathUtils.smootherstep(this.hitAge,.25,.46));
     if(this.recoiling){
       const attack=THREE.MathUtils.smoothstep(this.hitAge,0,.055),release=1-THREE.MathUtils.smootherstep(this.hitAge,.22,.46),hit=attack*release;
@@ -208,15 +254,21 @@ export class RabbitAnimation {
   doubleJump(){this.jump(12,this.launchSpeed);}
   pose(step,ground,velocity){
     this.ears.forEach((ear,i)=>{
-      ear.rotation.x=(-.24+Math.sin(this.phase-.7+i*.25)*.23)*this.blend*ground-(this.jumpMoving?.5:.35)*this.jumpRise-this.jumpBounce*2;
-      ear.rotation.z=(i===0?.165:-.165)+Math.sin(this.phase*.5+i)*.12*this.blend*ground;
+      ear.rotation.x=(-.52+Math.sin(this.phase*2-1.2+i*.12)*.12)*this.blend*ground-(this.jumpMoving?.5:.35)*this.jumpRise-this.jumpBounce*2;
+      ear.rotation.z=(i===0?.165:-.165)+Math.sin(this.phase-.5+i*.15)*.035*this.blend*ground;
     });
     this.paws.forEach((paw,i)=>{
-      const stride=step*(i===0?1:-1)*this.blend*ground;
-      paw.position.y=.065+Math.max(0,stride)*.075;paw.position.z=.12+stride*.095;
-      paw.rotation.set(stride*.7-.60*this.air,0,this.air?(i?1:-1)*this.air*.13:0);
+      const cycle=((this.phase/(Math.PI*2)+i*.5)%1+1)%1,stance=cycle<.6;
+      const u=stance?cycle/.6:(cycle-.6)/.4;
+      const swing=u*u*(3-2*u),stride=stance?THREE.MathUtils.lerp(.15,-.15,u):THREE.MathUtils.lerp(-.15,.15,swing);
+      const lift=stance?0:Math.sin(Math.PI*u)**2*.13,weight=this.blend*ground;
+      paw.position.z=.12+stride*weight;
+      const plantY=(.065+lift*weight-this.visual.position.y+Math.sin(this.visual.rotation.x)*paw.position.z*this.visual.scale.z)/Math.max(.5,Math.cos(this.visual.rotation.x)*this.visual.scale.y);
+      paw.position.y=THREE.MathUtils.lerp(.065,plantY,weight);
+      const toe=stance?-.1*Math.sin(Math.PI*u):.28*Math.sin(Math.PI*u);
+      paw.rotation.set(toe*weight-.60*this.air,0,this.air?(i?1:-1)*this.air*.13:0);
     });
     this.tail.rotation.x=Math.sin(this.phase-.5)*.18*this.blend;
-    this.arms.forEach((arm,i)=>{const side=i?1:-1;arm.rotation.set(Math.sin(this.phase+i*Math.PI)*.5*this.blend*ground-.65*this.air,0,side*(.12+this.air*.45));});
+    this.arms.forEach((arm,i)=>{const side=i?1:-1;arm.rotation.set(Math.sin(this.phase+i*Math.PI+.3)*.26*this.blend*ground-.65*this.air,0,side*(.12+this.air*.45));});
   }
 }

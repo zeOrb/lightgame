@@ -32,7 +32,7 @@ export function fellIntoGap(s, height, velocity) {
   return isGap(s) && height<=0 && velocity<=0;
 }
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-export const SHADOW_LIGHT_THRESHOLD=20;
+export const SHADOW_LIGHT_THRESHOLD=Math.max(.01,Math.min(100,RUN_UPGRADES.shadowLightThreshold??30));
 export function hpBrightness(hp){
   const t=clamp(hp/SHADOW_LIGHT_THRESHOLD,0,1);
   return t*t*(3-2*t);
@@ -66,3 +66,4 @@ export function route(s, lane = 0) {
   const radius = ROUTE_RADIUS + lane;
   return { x: Math.cos(theta) * radius, y: TOWER_TOP - s * .5, z: Math.sin(theta) * radius, theta };
 }
+

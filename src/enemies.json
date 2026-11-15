@@ -58,21 +58,23 @@
   },
   "enemies": [
     {
+      "id": "wolf",
+      "name": "Тень",
+      "model": "wolf",
+      "profile": "animal",
+      "stats": {
+        "stompTop": 1.69,
+        "collider": {"type": "sphere", "radius": 0.78, "centerY": 0.91}
+      }
+    },
+    {
       "id": "cat",
       "name": "Теневая кошка",
       "model": "cat",
       "profile": "animal",
       "stats": {
-        "stompTop": 1.02
-      }
-    },
-    {
-      "id": "wolf",
-      "name": "Теневой волк",
-      "model": "wolf",
-      "profile": "animal",
-      "stats": {
-        "stompTop": 1.15
+        "stompTop": 1.72,
+        "collider": {"type": "sphere", "radius": 0.86, "centerY": 0.86}
       }
     },
     {
@@ -106,10 +108,7 @@
     "everySections": 28,
     "offset": 16,
     "cycle": [
-      "cat",
-      "wolf",
-      "fox",
-      "hare"
+      "wolf"
     ]
   },
   "arenas": {

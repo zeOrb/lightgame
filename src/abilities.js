@@ -51,9 +51,9 @@ export function applySpiralPhase(s,lane,distance){
   return {s:s+distance/unitsPerSection,lane};
 }
 // Sweep the entire dash segment, so a fast frame cannot skip an enemy.
-export function phaseHitsTarget(from,to,target){
-  const ax=(from.x-target.x)/1.05,ay=(from.y-target.y)/1.05,az=(from.z-target.z)/1.05;
-  const dx=(to.x-from.x)/1.05,dy=(to.y-from.y)/1.05,dz=(to.z-from.z)/1.05;
+export function phaseHitsTarget(from,to,target,radius=1.05){
+  const ax=(from.x-target.x)/radius,ay=(from.y-target.y)/radius,az=(from.z-target.z)/radius;
+  const dx=(to.x-from.x)/radius,dy=(to.y-from.y)/radius,dz=(to.z-from.z)/radius;
   const length=dx*dx+dy*dy+dz*dz;
   const t=length>1e-10?Math.max(0,Math.min(1,-(ax*dx+ay*dy+az*dz)/length)):0;
   return (ax+dx*t)**2+(ay+dy*t)**2+(az+dz*t)**2<=1;

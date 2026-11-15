@@ -3,6 +3,7 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {applyTowerDepth} from './tower-depth.js';
 import {createVisualRandom} from './visual-random.js';
 import {FLOOR_COUNT,TOWER_TOP} from './game.js';
+import {lanternSurfaces,lanternGlow} from './lantern-surfaces.js';
 
 const palette=['#74523f','#52605c','#564c65','#77464a','#8a7250','#435367','#65513e','#48544a'];
 export function libraryLayout(){
@@ -118,15 +119,18 @@ export function createAncientLibrary(scene){
   }
   const archMesh=new THREE.Mesh(mergeGeometries(arches,false),brass);group.add(archMesh);arches.forEach(g=>g.dispose());
   // Warm lanterns are emissive geometry, without adding dozens of scene lights.
-  const lanternMaterial=new THREE.MeshBasicMaterial({color:'#ffcf84',toneMapped:false});
+  const {glass:lanternMaterial,metal:lanternMetal}=lanternSurfaces();
   const lanterns=[],cages=[];
   for(const cabinet of layout.cases.filter(c=>c.level%4===0)){
     orient(cabinet.angle,cabinet.base);
     piece(cages,0,5.7,-1,.06,.7,.06);piece(cages,0,5.35,-1,.54,.07,.54);piece(cages,0,4.74,-1,.54,.09,.54);
     for(const x of [-.23,.23])for(const z of [-1.23,-.77])piece(cages,x,5.05,z,.035,.6,.035);
     piece(lanterns,0,5.05,-1,.35,.5,.35);
+    for(const y of [4.8,5.29])piece(cages,0,y,-1,.48,.025,.48);
+    piece(cages,0,5.43,-1,.38,.08,.38);piece(cages,0,5.5,-1,.2,.06,.2);
+    const halo=lanternGlow(cabinet.base+5.05,1.7);halo.position.set(0,5.05,-1).applyMatrix4(parent.matrix);group.add(halo);
   }
-  for(const [list,mat] of [[lanterns,lanternMaterial],[cages,brass]]){const batch=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),mat,list.length);list.forEach((m,i)=>batch.setMatrixAt(i,m));batch.instanceMatrix.needsUpdate=true;group.add(batch);}
+  for(const [list,mat] of [[lanterns,lanternMaterial],[cages,lanternMetal]]){const batch=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),mat,list.length);list.forEach((m,i)=>batch.setMatrixAt(i,m));batch.instanceMatrix.needsUpdate=true;group.add(batch);}
   group.userData.bookCount=layout.books.length;group.userData.caseCount=layout.cases.length;
   return group;
 }

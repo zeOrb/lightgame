@@ -1,0 +1,12 @@
+/* Keep the gameplay HUD to light and the current-run points counter. */
+body.playing :is(body>header,footer,#touch,#toast),
+body.playing #hud :is(.eyebrow,#light-value,#effect,#floor,.progress-track){display:none!important}
+body.playing #hud{inset:42px auto auto 36px;width:min(320px,calc(100vw - 72px));display:flex;flex-direction:column;align-items:stretch;gap:6px}
+body.playing #hud .light-stat,body.playing #hud .objective{display:block;position:relative;inset:auto;width:100%;min-width:0;padding:0;margin:0}
+body.playing #hud .light-track{grid-area:auto;width:100%;min-width:0;max-width:100%;height:18px;margin:0}
+body.playing #hud .light-track::after{width:auto;min-width:0;max-width:none;inset:calc(-1 * var(--frame-height)) calc(-1 * var(--frame-overhang));background-size:100% 100%}
+body.playing #hud #shards{justify-content:flex-start;text-align:left;width:max-content;min-width:72px;height:24px;padding-right:8px;isolation:isolate;translate:2px -2px}
+body.playing #shards .shard-counter-total{text-align:left}
+body.playing #shards .shard-counter-gains{left:30px;right:auto}
+body.playing #shards .shard-counter-gain{left:0;right:auto;text-align:left}
+@media(max-width:760px){body.playing #hud{inset:36px auto auto 28px;width:min(300px,calc(100vw - 56px))}body.playing #shards .shard-counter-gains{left:23px}}

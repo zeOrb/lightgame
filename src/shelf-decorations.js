@@ -4,6 +4,7 @@ import {spineAtlas} from './ancient-library.js';
 import {applyTowerDepth} from './tower-depth.js';
 import {createVisualRandom} from './visual-random.js';
 import {SHELF_OUTER_RADIUS} from './game.js';
+import {lanternSurfaces,lanternGlow} from './lantern-surfaces.js';
 
 export function createShelfDecorations(){
   const mat=(color,extra={})=>applyTowerDepth(new THREE.MeshStandardMaterial({color,roughness:.85,...extra}));
@@ -30,13 +31,17 @@ export function createShelfDecorations(){
         piece(new THREE.CylinderGeometry(.092,.092,.035,10),binding,0,.087,z,Math.PI/2);
       }
     }else{
+      const {metal:brass,glass}=lanternSurfaces();
       box(.37,.06,.37,brass,0,.03,0);box(.27,.42,.27,glass,0,.29,0);
       for(const x of [-.16,.16])for(const z of [-.16,.16])box(.025,.5,.025,brass,x,.31,z);
       box(.4,.065,.4,brass,0,.59,0);piece(new THREE.ConeGeometry(.24,.16,4),brass,0,.7,0);
       piece(new THREE.TorusGeometry(.1,.018,4,12),brass,0,.88,0);
+      for(const y of [.09,.51])box(.34,.025,.34,brass,0,y,0);
+      for(const x of [-.12,.12])for(const z of [-.18,.18])piece(new THREE.SphereGeometry(.025,6,4),brass,x,.59,z);
     }
     for(const [material,parts] of bins){group.add(new THREE.Mesh(mergeGeometries(parts,false),material));parts.forEach(g=>g.dispose());}
     group.updateMatrixWorld(true);const bounds=new THREE.Box3();for(const child of group.children){child.geometry.computeBoundingBox();bounds.union(child.geometry.boundingBox.clone().applyMatrix4(group.matrix));}group.position.y+=-.012-bounds.min.y;
+    if(kind===2){const halo=lanternGlow(parent.getWorldPosition(new THREE.Vector3()).y,1.1);halo.position.set(0,.3,0);group.add(halo);}
     return group;
   };
 }

@@ -63,3 +63,5 @@
 #skill-tree .tree-detail #tree-buy{background:#fff5dc;color:#91502b;box-shadow:inset 0 -3px #e1cea2,3px 3px #10180e}
 #skill-tree .tree-detail #tree-buy:not(:disabled):hover{background:#fffbed;color:#754021}
 #skill-tree .tree-detail #tree-buy[data-requirement=true]{white-space:normal;width:calc(100% - 42px);font-size:8px;line-height:1.7}
+#skill-tree .tree-detail,#skill-tree .tree-detail.is-visible{pointer-events:none}
+#skill-tree .tree-detail #tree-buy{cursor:default}

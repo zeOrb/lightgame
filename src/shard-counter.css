@@ -1,0 +1,23 @@
+#hud #shards{--counter-color:#fff0be;position:relative;display:flex;justify-content:flex-end;align-items:center;gap:8px;height:28px;margin:0;color:#fff0be;font:12px/1 TowerPixel,monospace;text-shadow:2px 2px #100e0d;overflow:visible}
+#shards .shard-counter-icon{width:22px;height:26px;filter:brightness(calc(1 + var(--pickup-pulse,0)*.7)) drop-shadow(0 0 calc(4px + var(--pickup-pulse,0)*6px) var(--counter-color,#fff4c9));image-rendering:pixelated}
+#shards .shard-counter-total{display:inline-block;min-width:24px;text-align:center;transform-origin:center;color:color-mix(in srgb,var(--counter-color,#fff0be),white 25%);text-shadow:2px 2px #100e0d,0 0 calc(var(--pickup-pulse,0)*9px) var(--counter-color,#fff0be)}
+#shards .shard-counter-icon,#shards .shard-counter-total{transform:scale(calc(1 + var(--pickup-pulse,0)*.13));transform-origin:center}
+#shards .shard-counter-icon,#shards .shard-counter-total{position:relative;z-index:2}
+#hud #shards::before{content:'';position:absolute;left:-14px;top:-16px;width:calc(100% + 40px);height:54px;background:url('./shard-counter-flourish.svg') center/100% 100% no-repeat;pointer-events:none;image-rendering:pixelated;z-index:1}
+#hud #shards::after{content:'';position:absolute;left:-3px;top:-29px;width:62px;height:55px;clip-path:polygon(16% 0,27% 0,100% 100%,0 100%);background:linear-gradient(155deg,#fff5cb66,#ffe69d22 46%,#ffdc7914 75%,transparent);filter:drop-shadow(0 0 5px #ffdd8944);pointer-events:none;z-index:0;opacity:calc(.65 + var(--pickup-pulse,0)*.35)}
+#shards .shard-counter-gains{position:absolute;inset:0 0 0 auto;width:58px;pointer-events:none}
+#shards .shard-counter-gain{position:absolute;right:0;top:5px;min-width:34px;color:var(--gain-color,#fff7d7);font:11px/1.4 TowerPixel,monospace;text-align:center;text-shadow:1px 2px #16100b,0 0 6px var(--gain-color,#ffe29b);opacity:0;will-change:transform,opacity}
+@media(max-width:760px){#hud #shards{font-size:10px;gap:5px}#shards .shard-counter-icon{width:18px;height:22px}#shards .shard-counter-gain{font-size:9px}}
+
+
+
+
+
+#shards .shard-counter-icon .gem-body{fill:var(--counter-color,#e3c97b)}
+#shards .shard-counter-icon .gem-shade{fill:color-mix(in srgb,var(--counter-color,#d9b65f),#302a26 40%)}
+#shards .shard-counter-icon .gem-mid{fill:color-mix(in srgb,var(--counter-color,#d9b65f),white 12%)}
+#shards .shard-counter-icon .gem-light{fill:color-mix(in srgb,var(--counter-color,#fff0ba),white 65%)}
+#shards .shard-counter-icon .gem-top{fill:color-mix(in srgb,var(--counter-color,#efdaa0),white 35%)}
+#shards .shard-counter-icon .gem-core{fill:color-mix(in srgb,var(--counter-color,#f4dfa2),white 45%)}
+#shards .shard-counter-icon .gem-seams{stroke:color-mix(in srgb,var(--counter-color,#fff3bc),white 65%)}
+#shards .shard-counter-icon .gem-glint{fill:#fffbed}

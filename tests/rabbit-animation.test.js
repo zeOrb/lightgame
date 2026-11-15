@@ -90,7 +90,7 @@ test('dash lays the torso forward while head looks slightly up and ears trail be
   assert.ok(gaze.z>.95&&gaze.y>.05&&gaze.y<.3,'head faces forward and a little upward');
   for(const ear of traveler.ears)assert.ok(axis(ear,new THREE.Vector3(0,1,0)).z<-.9,'ears stream backwards');
   for(let i=0;i<30;i++)frame(false);
-  assert.equal(Math.abs(traveler.head.rotation.x),0);
+  assert.ok(Math.abs(traveler.head.rotation.x)<.28,'head returns to the running counter-lean');
   animation.reset();assert.equal(visual.rotation.x,0);assert.equal(traveler.head.rotation.x,0);
 });
 
@@ -151,12 +151,44 @@ test('walking animation moves only the visual model and settles after stopping',
   const ears=[new THREE.Object3D(),new THREE.Object3D()],paws=[new THREE.Object3D(),new THREE.Object3D()],tail=new THREE.Object3D();
   const animation=new RabbitAnimation(visual,ears,paws,tail);let peak=0;
   for(let i=0;i<60;i++){animation.update(1/60,{speed:3.8,height:0,velocity:0});peak=Math.max(peak,visual.position.y);}
-  assert.ok(peak>.1);assert.deepEqual(root.position.toArray(),[12,99,.4]);
+  assert.ok(peak>.04&&peak<.1,'run has a small weighted bounce');assert.deepEqual(root.position.toArray(),[12,99,.4]);
   for(let i=0;i<120;i++)animation.update(1/60,{speed:0,height:0,velocity:0});
-  assert.ok(visual.position.y<.001);assert.ok(Math.abs(visual.scale.y-1)<.001);
+  assert.ok(visual.position.y<.001);assert.ok(Math.abs(visual.scale.y/animation.idleStretch-1)<.001);
   animation.update(.1,{speed:3,height:2,velocity:-3});animation.update(.1,{speed:0,height:0,velocity:0});
   assert.ok(visual.scale.y<1,'landing has a small squash');
   animation.reset();assert.deepEqual(visual.scale.toArray(),[1,1,1]);assert.deepEqual(visual.position.toArray(),[0,0,0]);
+});
+test('idle breath stays subtle, plants paws, blends out and resets at different frame rates',()=>{
+  for(const fps of [30,60,144]){
+    const root=new THREE.Group(),visual=new THREE.Group(),material=new THREE.MeshStandardMaterial();root.add(visual);
+    const t=createRabbitTraveler(visual,material,material,material),a=new RabbitAnimation(visual,t.ears,t.paws,t.coat,t.arms,t.head);
+    let low=1,high=1;const point=new THREE.Vector3();
+    for(let i=0;i<fps*5;i++){
+      a.update(1/fps,{speed:0,height:0,velocity:0});low=Math.min(low,visual.scale.y);high=Math.max(high,visual.scale.y);
+      visual.updateMatrixWorld(true);
+      if(i>fps)for(const paw of t.paws){point.copy(paw.position).applyMatrix4(visual.matrixWorld);assert.ok(Math.abs(point.y-.065)<.002);}
+    }
+    assert.ok(high-low>.02&&high-low<.03);assert.equal(root.position.length(),0);
+    a.update(1/fps,{speed:5,height:1,velocity:3,dashing:true});assert.equal(a.idleWeight,0);
+    a.reset();assert.equal(a.idleBlend,0);assert.equal(a.idleTime,0);assert.deepEqual(visual.scale.toArray(),[1,1,1]);
+  }
+});
+test('running paws keep their support height and lift cleanly on the return stroke',()=>{
+  const visual=new THREE.Group(),material=new THREE.MeshStandardMaterial(),t=createRabbitTraveler(visual,material,material,material);
+  const a=new RabbitAnimation(visual,t.ears,t.paws,t.coat,t.arms,t.head);
+  const point=new THREE.Vector3();let supported=0,lifted=0;
+  for(let i=0;i<180;i++){
+    a.update(1/60,{speed:3.8,height:0,velocity:0});visual.updateMatrixWorld(true);
+    if(i<60)continue;
+    t.paws.forEach((paw,index)=>{
+      const cycle=((a.phase/(2*Math.PI)+index*.5)%1+1)%1;
+      paw.getWorldPosition(point);
+      if(cycle<.6){assert.ok(Math.abs(point.y-.065)<.006,'support paw compensates the torso bounce');supported++;}
+      else if(cycle>.7&&cycle<.9){assert.ok(point.y>.1,'swing paw clears the ground');lifted++;}
+      assert.ok(Math.abs(paw.rotation.x)<.3,'foot does not windmill around its sole');
+    });
+  }
+  assert.ok(supported>0&&lifted>0);
 });
 test('fall animation turns upside down, kicks both paws and resets without moving physics',()=>{
   const root=new THREE.Group(),visual=new THREE.Group();root.add(visual);root.position.set(7,55,3);

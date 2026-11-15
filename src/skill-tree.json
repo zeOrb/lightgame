@@ -10,6 +10,7 @@
   },
   "baseStats": {
     "maxHP": 100,
+    "shadowLightThreshold": 30,
     "drainScale": 1,
     "damageScale": 1,
     "speed": 1,
@@ -32,7 +33,8 @@
     "extraFloors": 0,
     "glintSpacing": 5,
     "lastLight": false,
-    "rayJumpHeal": 0
+    "rayJumpHeal": 0,
+    "shardPointsMultiplier": 1
   },
   "branches": [
     {
@@ -216,7 +218,7 @@
         {
           "id": "shard",
           "name": "Полные осколки",
-          "description": "Осколок лечит на 12 HP больше и по-прежнему даёт 1 очко.",
+          "description": "Осколки восстанавливают на 12 HP больше.",
           "cost": 4,
           "requires": "source",
           "icon": "shard-heal",
@@ -237,6 +239,9 @@
             "magnet": {
               "set": 1.05
             }
+          },
+          "layout": {
+            "angleOffset": -0.26
           }
         },
         {
@@ -250,6 +255,9 @@
             "regen": {
               "multiply": 1.3
             }
+          },
+          "layout": {
+            "angleOffset": -0.26
           }
         },
         {
@@ -262,6 +270,94 @@
           "effects": {
             "flare": {
               "set": true
+            }
+          },
+          "layout": {
+            "angleOffset": -0.26
+          }
+        },
+        {
+          "id": "shardMultiplier2",
+          "name": "Грани света 1",
+          "description": "Очки за драгоценные камни и осколки босса: ×2.",
+          "cost": 8,
+          "requires": "shard",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 1,
+            "angleOffset": 0.26
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 2
+            }
+          }
+        },
+        {
+          "id": "shardMultiplier4",
+          "name": "Грани света 2",
+          "description": "Очки за драгоценные камни и осколки босса: ×4.",
+          "cost": 24,
+          "requires": "shardMultiplier2",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 2,
+            "angleOffset": 0.26
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 4
+            }
+          }
+        },
+        {
+          "id": "shardMultiplier8",
+          "name": "Грани света 3",
+          "description": "Очки за драгоценные камни и осколки босса: ×8.",
+          "cost": 64,
+          "requires": "shardMultiplier4",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 3,
+            "angleOffset": 0.26
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 8
+            }
+          }
+        },
+        {
+          "id": "shardMultiplier16",
+          "name": "Грани света 4",
+          "description": "Очки за драгоценные камни и осколки босса: ×16.",
+          "cost": 160,
+          "requires": "shardMultiplier8",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 4,
+            "angleOffset": 0.26
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 16
+            }
+          }
+        },
+        {
+          "id": "shardMultiplier32",
+          "name": "Грани света 5",
+          "description": "Очки за драгоценные камни и осколки босса: ×32.",
+          "cost": 384,
+          "requires": "shardMultiplier16",
+          "icon": "shard-heal",
+          "layout": {
+            "tier": 5,
+            "angleOffset": 0.26
+          },
+          "effects": {
+            "shardPointsMultiplier": {
+              "set": 32
             }
           }
         }
@@ -431,5 +527,3 @@
     }
   ]
 }
-
-

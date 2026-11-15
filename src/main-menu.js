@@ -1,4 +1,6 @@
+import {initializeBestiary} from './bestiary.js';
 export function initializeMainMenu(){
+  initializeBestiary();
   const menu=document.getElementById('intro');
   document.addEventListener('keydown',event=>{
     const modal=document.getElementById('modal');

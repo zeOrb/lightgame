@@ -8,11 +8,11 @@ export function applyTowerDepth(material){
       #endif
       towerWorldHeight=(modelMatrix*towerWorld).y;`);
     shader.fragmentShader='varying float towerWorldHeight;\n'+shader.fragmentShader.replace('#include <fog_fragment>',`#include <fog_fragment>
-      float towerDepth=max((1.0-smoothstep(20.0,104.0,towerWorldHeight))*.85,smoothstep(9.0,34.0,cameraPosition.y-towerWorldHeight)*.94);
+      float towerDepth=max((1.0-smoothstep(20.0,104.0,towerWorldHeight))*.70,smoothstep(9.0,34.0,cameraPosition.y-towerWorldHeight)*.86);
       float towerLuma=dot(gl_FragColor.rgb,vec3(.2126,.7152,.0722));
-      vec3 towerNavy=vec3(.012,.027,.065)+vec3(.035,.09,.21)*towerLuma;
+      vec3 towerNavy=vec3(.016,.024,.040)+vec3(.05,.075,.12)*towerLuma;
       gl_FragColor.rgb=mix(gl_FragColor.rgb,towerNavy,towerDepth)*(1.0-towerDepth*.18);`);
   };
-  material.customProgramCacheKey=()=> 'tower-height-blue-v1';
+  material.customProgramCacheKey=()=> 'tower-height-muted-blue-v2';
   return material;
 }

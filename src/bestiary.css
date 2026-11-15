@@ -1,0 +1,22 @@
+#bestiary{position:fixed;inset:0;z-index:100;background:#0c0c10;color:#e7d9b9;isolation:isolate;font:10px/1.8 TowerPixel,monospace}
+#bestiary[hidden]{display:none}
+#bestiary header{position:absolute;inset:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 32px;z-index:2;border-bottom:3px solid #61553e;background:#171d21}
+#bestiary h1{font:22px/1.5 TowerPixel,monospace;letter-spacing:0;margin:5px 0;color:#edcf91;text-shadow:2px 2px #10161a}
+#bestiary header button{background:#36352b;border:2px solid #c9ac70;border-radius:0;box-shadow:inset 0 0 0 3px #191e20,3px 3px #0c1216;filter:none;color:#f4dfac;font:10px/1.8 TowerPixel,monospace;padding:14px 20px;cursor:pointer;text-shadow:2px 2px #171b1d;clip-path:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px),0 4px,4px 4px)}
+#bestiary header button:hover{background:#5a5136;color:#fff0c2}
+#bestiary .bestiary-stage{width:100%;height:100%;cursor:grab;touch-action:none}
+#bestiary .bestiary-stage:active{cursor:grabbing}
+#bestiary canvas{display:block}
+#bestiary .bestiary-name{position:absolute;bottom:7%;left:0;right:0;text-align:center;pointer-events:none;font:14px/1.8 TowerPixel,monospace;letter-spacing:0;color:#edcf91;text-shadow:2px 2px #10161a}
+body.bestiary-open>footer,body.bestiary-open #touch{visibility:hidden}
+#bestiary .bestiary-stats{position:absolute;right:24px;top:150px;width:min(380px,38vw);max-height:calc(100% - 250px);padding:36px 22px 22px;margin:0;border:0;background:none;color:#eeefda;font:9px/1.85 TowerPixel,monospace;filter:drop-shadow(4px 6px 0 #0008);isolation:isolate}
+#bestiary .bestiary-stats[hidden]{display:none}
+#bestiary .bestiary-stats::before,#bestiary .bestiary-stats::after{content:'';position:absolute;inset:0;z-index:-2;background:#cdb36d;clip-path:polygon(6px 0,calc(100% - 6px) 0,calc(100% - 6px) 5px,100% 5px,100% calc(100% - 5px),calc(100% - 6px) calc(100% - 5px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 5px),0 calc(100% - 5px),0 5px,6px 5px)}
+#bestiary .bestiary-stats::after{inset:3px;z-index:-1;background:#352a21}
+#bestiary .bestiary-stats h2{position:absolute;left:50%;top:-19px;transform:translateX(-50%);width:max-content;max-width:calc(100% - 30px);padding:10px 14px;border:3px solid #c2a15c;background:#fff5dc;box-shadow:inset 0 0 0 2px #e1cea2,2px 2px #11180e;color:#70502d;font:10px/1.6 TowerPixel,monospace;text-align:center;text-shadow:1px 1px #fffbed;margin:0}
+#bestiary .bestiary-stats p{color:#d7ac80;font-size:8px;line-height:1.8;margin:0 0 14px;text-align:center}
+#bestiary .bestiary-stats dl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px 14px;margin:0;max-height:calc(100dvh - 380px);overflow:auto;scrollbar-width:none;text-shadow:2px 2px #1b1410}
+#bestiary .bestiary-stats dl::-webkit-scrollbar{display:none}
+#bestiary .bestiary-stats dd{margin:0;text-align:right;color:#ffe5a1}
+#bestiary .bestiary-stats dt{overflow-wrap:anywhere}
+@media(max-width:600px){#bestiary header{padding:14px 16px;flex-wrap:wrap;gap:10px}#bestiary h1{font-size:17px}#bestiary header button{font-size:8px;padding:10px}#bestiary .bestiary-name{font-size:11px;bottom:4%}#bestiary .bestiary-stats{right:12px;top:auto;bottom:90px;width:calc(100% - 24px);max-height:38dvh;font-size:8px;padding:32px 18px 16px}#bestiary .bestiary-stats dl{max-height:22dvh}#bestiary .bestiary-stats h2{font-size:9px}}

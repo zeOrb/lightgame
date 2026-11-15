@@ -1,100 +1,92 @@
+import {OrbArrival} from './orb-arrival.js';
 import * as THREE from 'three';
-import { createVisualRandom } from './visual-random.js';
-const random=createVisualRandom('pickup-sparks');
-
-const COLLAPSE = .58;
-const BURST = .95;
+import {createVisualRandom} from './visual-random.js';
+import {OrbTrail} from './orb-trail.js';
+const random=createVisualRandom('pickup-orbs');
+const COLLAPSE=.28,BURST=.56,CHARGE_MIN=.04,CHARGE_MAX=.24,ORB_SCALE=1.15,ORB_BRIGHTNESS=1.15;
 
 export class PickupEffects {
-  constructor(scene, glowTexture) {
-    this.scene = scene;
-    this.glowTexture = glowTexture;
-    this.active = [];
-    this.sparkGeometry = new THREE.OctahedronGeometry(.085);
-    this.ringGeometry = new THREE.TorusGeometry(1, .018, 5, 64);
-    this.dummy = new THREE.Object3D();
+  constructor(scene,glowTexture,target=()=>new THREE.Vector3(),camera=null){
+    this.scene=scene;this.glowTexture=glowTexture;this.target=target;this.camera=camera;this.active=[];this.clock=0;this.nextArrival=0;this.nextHomeLaunch=0;
+    this.orbGeometry=new THREE.SphereGeometry(.075,12,8);
   }
-
-  collect(shard) {
-    const group = new THREE.Group();
-    group.position.copy(shard.position);
-    this.scene.add(group);
-    const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending };
-    const aura = new THREE.Sprite(new THREE.SpriteMaterial({ ...additive, map: this.glowTexture, color: '#ffe6a4' }));
-    group.add(aura);
-    const ringMaterial = new THREE.MeshBasicMaterial({ ...additive, color: '#ffdb7a', opacity: 0 });
-    const ring = new THREE.Mesh(this.ringGeometry, ringMaterial);
-    ring.rotation.x = -Math.PI / 2;
-    group.add(ring);
-    const sparksMaterial = new THREE.MeshBasicMaterial({ ...additive, color: '#ffe9aa', opacity: 0 });
-    const sparks = new THREE.InstancedMesh(this.sparkGeometry, sparksMaterial, 28);
-    sparks.frustumCulled = false;
-    group.add(sparks);
-    const rays = Array.from({ length: 28 }, (_, i) => {
-      const angle = random()*Math.PI*2;
-      const y = .15 + random()*.85;
-      const radius = Math.sqrt(1-y*y);
-      const direction = new THREE.Vector3(Math.cos(angle)*radius, y, Math.sin(angle)*radius);
-      sparks.setColorAt(i, new THREE.Color(i % 3 ? '#ffd475' : '#fffbed'));
-      return { direction, speed: 1.2 + random()*1.52, size: .55 + random()*.75, spin: angle };
-    });
-    const light = new THREE.PointLight('#ffd47d', 0, 7, 2);
-    group.add(light);
-    this.active.push({ shard, group, aura, ring, sparks, light, rays, age: 0, rotation: shard.rotation.clone() });
+  collect(shard,onArrive=()=>{}){
+    const tint=new THREE.Color(shard.userData.pickable?.color??'#ffe6a4'),origin=new THREE.Vector3();
+    const gem=shard.children.find(child=>child.isMesh&&child!==shard.shadow);
+    if(shard.userData.pickable&&gem)gem.getWorldPosition(origin);else shard.getWorldPosition(origin);
+    const group=new THREE.Group();group.position.copy(origin);this.scene.add(group);
+    const additive={transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false,toneMapped:false};
+    const orb=new THREE.Mesh(this.orbGeometry,new THREE.MeshBasicMaterial({color:tint.clone().lerp(new THREE.Color('white'),.30),fog:false,toneMapped:false}));group.add(orb);
+    const aura=new THREE.Sprite(new THREE.SpriteMaterial({...additive,map:this.glowTexture,color:tint}));aura.scale.setScalar(.42);group.add(aura);
+    const impact=new OrbArrival(group,tint,random()*Math.PI*2);
+    const light=new THREE.PointLight(tint,1.3,2.5,2);group.add(light);
+    const dir=new THREE.Vector3(1,0,0);
+    if(this.camera){this.camera.updateMatrixWorld();dir.setFromMatrixColumn(this.camera.matrixWorld,0);dir.y=0;dir.normalize();}
+    dir.multiplyScalar(random()<.5?-1:1);
+    const reach=1.0+random()*.5;
+    const end=origin.clone().addScaledVector(dir,reach*.65);end.y+=.45+random()*1.45;
+    const c1=origin.clone().addScaledVector(dir,reach);c1.y+=.06;
+    const c2=origin.clone().addScaledVector(dir,reach*1.25);c2.y=end.y-.25;
+    const outward=new THREE.CubicBezierCurve3(origin,c1,c2,end);
+    const home=new THREE.CubicBezierCurve3(end.clone(),end.clone().addScaledVector(dir,-.35).add(new THREE.Vector3(0,.65,0)),end.clone(),end.clone());
+    home.arcLengthDivisions=40;
+    group.traverse(object=>object.layers.set(2));
+    const baseOrb=orb.material.color.clone().multiplyScalar(ORB_BRIGHTNESS),baseAura=aura.material.color.clone().multiplyScalar(ORB_BRIGHTNESS);
+    const trail=new OrbTrail(this.scene,tint);
+    const outDuration=.42+random()*.12,baseHomeDuration=.48+random()*.15;
+    const minimumHold=CHARGE_MIN+random()*(CHARGE_MAX-CHARGE_MIN);
+    const homeLaunch=Math.max(this.clock+COLLAPSE+outDuration+minimumHold,this.nextHomeLaunch);
+    this.nextHomeLaunch=homeLaunch+.12+random()*.08;
+    const chargeDuration=homeLaunch-this.clock-COLLAPSE-outDuration;
+    const earliest=this.clock+COLLAPSE+outDuration+chargeDuration+baseHomeDuration;
+    const arrival=Math.max(earliest,this.nextArrival);
+    this.nextArrival=arrival+.035+random()*.0225;
+    const homeDuration=baseHomeDuration+arrival-earliest;
+    this.active.push({shard,group,orb,aura,impact,light,trail,outward,home,dir,baseOrb,baseAura,onArrive,age:0,outDuration,homeDuration,chargeDuration,arch:.95+random()*.35,curveSide:random()<.5?-1:1,delta:new THREE.Vector3(),curveOffset:new THREE.Vector3(),arrived:false,arrivalAge:0,point:new THREE.Vector3(),rotation:shard.rotation.clone()});
   }
-
-  update(dt) {
-    for (let i = this.active.length - 1; i >= 0; i--) {
-      const effect = this.active[i];
-      const { shard, aura, ring, sparks, light, rays } = effect;
-      effect.age += dt;
-      const t = Math.min(1, effect.age / COLLAPSE);
-      // Cubic ease-in: scale starts with zero velocity, then collapses rapidly.
-      shard.scale.setScalar(Math.max(0, 1 - t*t*t));
-      shard.rotation.set(effect.rotation.x + t*t*.6, effect.rotation.y + t*t*2.4, effect.rotation.z + t*t*.9);
-      const burstTime = effect.age - COLLAPSE;
-      const u = Math.max(0, Math.min(1, burstTime / BURST));
-      shard.visible = t < 1;
-      if (burstTime < 0) {
-        aura.scale.setScalar(.6 + t*t*.8);
-        aura.material.opacity = .2 + t*t*.6;
-        light.intensity = t*t*9;
-      } else {
-        const spread = 1 - Math.pow(1-u, 3);
-        aura.scale.setScalar(1.4 + spread*3.1);
-        aura.material.opacity = Math.pow(1-u, 3) * .95;
-        light.intensity = 65 * Math.pow(1-u, 3);
-        ring.scale.setScalar(.15 + spread*2.1);
-        ring.material.opacity = Math.pow(1-u, 2) * .8;
-        sparks.material.opacity = Math.pow(1-u, 1.5);
-        rays.forEach((ray, index) => {
-          this.dummy.position.copy(ray.direction).multiplyScalar(ray.speed*spread);
-          this.dummy.position.y -= u*u*.8;
-          this.dummy.rotation.set(ray.spin+u*3, u*4, ray.spin+u*2);
-          const size=ray.size*Math.pow(1-u, .65);
-          this.dummy.scale.set(size*.55, size*(1.4+Math.sin(u*12+index)*.3), size*.55);
-          this.dummy.updateMatrix();
-          sparks.setMatrixAt(index, this.dummy.matrix);
-        });
-        sparks.instanceMatrix.needsUpdate = true;
+  update(dt){
+    this.clock+=dt;
+    for(let i=this.active.length-1;i>=0;i--){
+      const e=this.active[i];e.age+=dt;
+      const t=Math.min(1,e.age/COLLAPSE);e.shard.scale.setScalar(1-t*t*t);e.shard.visible=t<1;
+      e.shard.rotation.set(e.rotation.x+t*t*.25,e.rotation.y+t*t*.8,e.rotation.z);
+      const flight=e.age-COLLAPSE;
+      if(!e.arrived){
+        e.orb.material.color.copy(e.baseOrb);e.aura.material.color.copy(e.baseAura);
+        e.orb.scale.setScalar(ORB_SCALE);e.aura.scale.setScalar(.42*ORB_SCALE);e.aura.material.opacity=.8;e.light.intensity=1.3*ORB_BRIGHTNESS;
+        if(flight<0){e.orb.scale.setScalar(Math.max(.01,t*t)*ORB_SCALE);e.aura.material.opacity=t*.6;}
+        else if(flight<e.outDuration){const u=flight/e.outDuration;e.outward.getPoint(1-(1-u)**2,e.point);e.group.position.copy(e.point);}
+        else if(flight<e.outDuration+e.chargeDuration){
+          const u=(flight-e.outDuration)/e.chargeDuration,pulse=Math.sin(u*Math.PI)**2;
+          e.group.position.copy(e.outward.v3);
+          e.orb.scale.setScalar(ORB_SCALE*(1+.25*pulse));e.aura.scale.setScalar(.42*ORB_SCALE*(1+.25*pulse));
+          e.orb.material.color.multiplyScalar(1+pulse*3);e.aura.material.color.multiplyScalar(1+pulse*4);
+          e.aura.material.opacity=.8+pulse*.2;e.light.intensity=1.3*ORB_BRIGHTNESS*(1+pulse*7);
+        }
+        else{
+          const u=Math.min(1,(flight-e.outDuration-e.chargeDuration)/e.homeDuration),destination=this.target(e.point);
+          e.home.v3.copy(destination);
+          e.delta.subVectors(destination,e.home.v0);
+          const distance=e.delta.length(),lift=Math.max(e.arch,distance*.38);
+          e.curveOffset.set(-e.delta.z,0,e.delta.x).normalize().multiplyScalar(Math.min(.65,distance*.22)*e.curveSide);
+          e.home.v1.copy(e.home.v0).addScaledVector(e.delta,.20).add(e.curveOffset);e.home.v1.y+=lift;
+          e.home.v2.copy(e.home.v0).addScaledVector(e.delta,.72).addScaledVector(e.curveOffset,.75);e.home.v2.y+=lift*.95;
+          e.home.updateArcLengths();
+          // Arc-length sampling makes cubic ease-in a real speed ramp,
+          // independent of uneven spacing along the Bezier control points.
+          e.home.getPointAt(u*u*u,e.point);e.group.position.copy(e.point);
+          if(u>=1){e.arrived=true;e.orb.visible=false;e.aura.visible=false;e.impact.update(0,this.camera);e.onArrive();e.onArrive=null;}
+        }
+      }else{
+        e.arrivalAge+=dt;this.target(e.group.position);
+        const u=Math.min(1,e.arrivalAge/BURST);
+        e.impact.update(e.arrivalAge,this.camera);
+        e.light.intensity=12*(1-u)**3;
+        if(u>=1){this.remove(e);this.active.splice(i,1);continue;}
       }
-      if (effect.age >= COLLAPSE + BURST) {
-        this.remove(effect);
-        this.active.splice(i, 1);
-      }
+      e.trail.update(e.group.position,dt,!e.arrived&&flight>=0&&(flight<e.outDuration||flight>=e.outDuration+e.chargeDuration));
     }
   }
-
-  remove(effect) {
-    effect.group.removeFromParent();
-    effect.aura.material.dispose();
-    effect.ring.material.dispose();
-    effect.sparks.material.dispose();
-    effect.sparks.dispose();
-  }
-
-  clear() {
-    for (const effect of this.active) this.remove(effect);
-    this.active.length = 0;
-  }
+  remove(e){e.trail.dispose();e.impact.dispose();e.group.removeFromParent();for(const object of [e.orb,e.aura])object.material.dispose();e.light.dispose();}
+  clear(){for(const e of this.active)this.remove(e);this.active.length=0;this.clock=0;this.nextArrival=0;this.nextHomeLaunch=0;}
 }
