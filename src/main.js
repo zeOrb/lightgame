@@ -1,3 +1,4 @@
+import {warmupFirstActions} from './first-action-warmup.js';
 import {SecretLevels} from './secret-levels.js';
 import {ShardCounter} from './shard-counter.js';
 import './gameplay-hud.css';
@@ -30,7 +31,7 @@ import {FrameClock} from './frame-clock.js';
 import {fadeToNextRun,revealNextRun} from './run-transition.js';
 import { createVisualRandom } from './visual-random.js';
 import { END, FLOOR_COUNT, TOWER_TOP, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, floorAt, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, MOVEMENT_LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
-import { cameraPose, smoothCameraAnchor } from './camera.js';
+import { cameraPose, smoothCameraAnchor, railCameraHeight } from './camera.js';
 import { PickupEffects } from './pickup-effects.js';
 import { ShadowEffects } from './shadow-effects.js';
 import { animateShadowBeast, resetShadowBeast, animateBeastDeath } from './shadow-beast.js';
@@ -232,7 +233,7 @@ const catcherAura=new CatcherAura(catcher,glowTexture);
 const floorGates=new FloorGates(scene,glowTexture,glassGlowPalette);
 const arenas=new FloorArenas(scene,stairMaterials,glassGlowPalette);
 const secretLevels=new SecretLevels(scene,stairMaterials);
-for(const r of secretLevels.routes)r.steps.forEach((step,i)=>{step.userData.s=r.s+i*.5;step.userData.secretStep=true;walkableFloors.push(step);});
+for(const r of secretLevels.routes){r.road.mesh.userData.s=r.s+3;r.road.mesh.userData.routeSpan=4;walkableFloors.push(r.road.mesh);}
 const arenaForward=new THREE.Vector3(),arenaFacing={x:0,z:1};
 let arenaCameraReturn=0;
 const pickupEffects=new PickupEffects(scene,glowTexture,out=>{rabbit.getWorldPosition(out);out.y+=.45;return out;},camera);
@@ -316,7 +317,7 @@ function beginRabbitFall(outward,message,launched=true){
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
   abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent='Падение';
 }
-function reset(){shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints)g.reset();for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function reset(){shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints)g.reset();for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
 function start({boss=false}={}){frameClock.reset();skillTree.element.hidden=true;reset();if(boss&&arenas.arenas.length){const a=arenas.arenas[0];s=a.s;arenas.enter(a.s-.01,a.s,route(a.s));}state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';$('world').classList.add('is-paused');keys.clear();showModal('','Пауза','','Продолжить');$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('world').classList.remove('is-paused');$('modal').hidden=true;}}
@@ -498,8 +499,8 @@ function update(dt){
   if(dash||abilities.gravityDt<dt){height=Math.max(0,height+beforeMove.y-afterMove.y);velocity=0;}
   height+=abilities.consumePhaseRise();
   const jump=motion.jumpStep(height,velocity,abilities.gravityDt,keys.has('Space'));height=jump.height;velocity=jump.velocity;
-  if(grounded&&surface&&velocity<=0)height=groundOffset;
-  const secret=secretLevels.land(previousFoot-.12,afterMove.y+height,velocity,afterMove,beforeMove);
+  if(grounded&&surface&&velocity<=0){height=groundOffset;velocity=0;}
+  const secret=grounded&&surface?null:secretLevels.land(previousFoot-.12,afterMove.y+height,velocity,afterMove,beforeMove);
   if(secret){height=secret.y-afterMove.y;velocity=0;abilities.land();}
   const secretRoom=secretLevels.enterPortal(afterMove,afterMove.y+height,s);
   if(secretRoom){arenas.active=secretRoom;arenas.player=new THREE.Vector3(afterMove.x,afterMove.y+height,afterMove.z);height=velocity=0;motion.reset();return;}
@@ -581,6 +582,7 @@ function update(dt){
 }
 const frameClock=new FrameClock();
 let visualTime=0,viewAnchor=0,smoothAnchor=0,anchorVelocity=0;
+let cameraLift=0,cameraLiftVelocity=0,cameraGroundLift=0;
 let previousSunLight=100,sunMotion=0,sunOrbit=0,sunWasRegenerating=false;
 const sunParticleColors=['#ff95db','#ad98ff','#7de4ff','#9affca','#fff09a'];
 const sunDisc=document.createElement('span');sunDisc.className='sun-disc';$('light-sun').prepend(sunDisc);
@@ -702,7 +704,7 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
     // Allow that small height difference, but exclude overhead secret platforms.
     shadowRayOrigin.set(p.x,footY+.35,p.z);
     shadowRaycaster.set(shadowRayOrigin,shadowRayDown);shadowRaycaster.far=18;
-    const nearbyFloors=walkableFloors.filter(floor=>floor.visible&&Math.abs(floor.userData.s-s)<1.2);
+    const nearbyFloors=walkableFloors.filter(floor=>floor.visible&&Math.abs(floor.userData.s-s)<(floor.userData.routeSpan??1.2));
     for(const floor of nearbyFloors)floor.updateWorldMatrix(true,false);
     shadowSurface=shadowRaycaster.intersectObjects(nearbyFloors,false).find(hit=>hit.point.y<=footY+(hit.object.userData.secretStep?.035:.35))??null;
   }
@@ -762,10 +764,11 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
     const pose=cameraPose(smoothAnchor,camera.aspect);
     desired.set(pose.position.x,pose.position.y,pose.position.z);
     const nextTarget=new THREE.Vector3(pose.target.x,pose.target.y,pose.target.z);
-    if(arenas.active?.secret&&['ascent','dropping'].includes(arenas.active.stage)){
-      const base=route(s,lane),offset=new THREE.Vector3(arenas.player.x-base.x,arenas.player.y-base.y,arenas.player.z-base.z);
-      desired.add(offset);nextTarget.add(offset);
-    }
+    const follow=railCameraHeight(height,secretFootSurface?secretFootSurface.y-p.y:null,cameraGroundLift);
+    cameraGroundLift=follow.groundLift;
+    const lift=smoothCameraAnchor(cameraLift,cameraLiftVelocity,follow.target,dt,9);
+    cameraLift=lift.value;cameraLiftVelocity=lift.velocity;
+    desired.y+=cameraLift;nextTarget.y+=cameraLift;
     if(arenaCameraReturn>0){arenaCameraReturn=Math.max(0,arenaCameraReturn-dt);camera.position.lerp(desired,1-Math.exp(-dt*7));target.lerp(nextTarget,1-Math.exp(-dt*7));}
     else{camera.position.copy(desired);target.copy(nextTarget);}
     cameraNeedsReset=false;
@@ -794,6 +797,11 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
 }
 $('flare-hint').hidden=!RUN_UPGRADES.flare;$('flare-touch').hidden=!RUN_UPGRADES.flare;
 camera.position.set(3,TOWER_TOP+4,16);
+phaseTrail.update(.016,new THREE.Vector3(0,.5,0),true,camera);
+phaseTrail.update(.016,new THREE.Vector3(.4,.5,0),true,camera);
+landingEffects.land(new THREE.Vector3(),1);landingEffects.update(.08);
+await warmupFirstActions(renderer,scene,camera,[phaseTrail.mesh,phaseTrail.halo,phaseTrail.sparks,landingEffects.group,vitralGlow.group]);
+phaseTrail.reset();landingEffects.reset();
 const runURL=new URL(location.href);
 if(runURL.searchParams.has('sunny-reset')){runURL.searchParams.delete('sunny-reset');history.replaceState(history.state,'',runURL.href);}
 if(runURL.searchParams.has('sunny-run')){

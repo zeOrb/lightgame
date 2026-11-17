@@ -1,3 +1,4 @@
+import {SecretRoad} from './secret-road.js';
 import * as THREE from 'three';
 import {route,FLOOR_COUNT,END,ROUTE_ANGLE} from './game.js';
 import {createVisualRandom} from './visual-random.js';
@@ -17,7 +18,7 @@ export class SecretLevels {
         const t=i/12,base=route(s+i*.5);
         points.push(new THREE.Vector3(base.x,p.y+.9+SECRET_LIFT+t*6,base.z));
       }
-      const steps=points.map((point,i)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(3,.18,1.85),wood);mesh.position.copy(point);mesh.position.y-=.09;mesh.rotation.y=-p.theta-i*.5*ROUTE_ANGLE;mesh.visible=false;group.add(mesh);return mesh;});
+      const road=new SecretRoad(points,wood,this.random()*20);group.add(road.mesh);
       const portal=this.portal();portal.position.copy(points[12]).add(new THREE.Vector3(0,1.3,0));portal.rotation.y=-p.theta;portal.visible=false;group.add(portal);
       const room=new THREE.Group();room.position.y=p.y+9+SECRET_LIFT;room.visible=false;scene.add(room);
       const floorMesh=new THREE.Mesh(new THREE.CylinderGeometry(8,8,.35,64),wood);floorMesh.position.y=-.19;room.add(floorMesh);
@@ -29,7 +30,7 @@ export class SecretLevels {
         const material=new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(i/5,.45,.75),toneMapped:false});
         const star=new THREE.Mesh(new THREE.OctahedronGeometry(.27),material);star.position.set(Math.cos(angle)*radius,.75,Math.sin(angle)*radius);room.add(star);stars.push(star);
       }
-      this.routes.push({s,p,group,points,steps,portal,room,exit,stars,order:[],reveal:0,used:false});
+      this.routes.push({s,p,group,points,road,portal,room,exit,stars,order:[],reveal:0,used:false});
     }
     this.reset();
   }
@@ -38,24 +39,19 @@ export class SecretLevels {
     g.add(new THREE.Mesh(new THREE.TorusGeometry(1,.065,8,48),m));
     const inner=new THREE.Mesh(new THREE.CircleGeometry(.94,48),new THREE.MeshBasicMaterial({color:0x7061a8,transparent:true,opacity:.32,side:THREE.DoubleSide,depthWrite:false,toneMapped:false}));g.add(inner);return g;
   }
-  reset(){this.active=null;for(const r of this.routes){r.used=false;r.completed=false;r.dropCooldown=0;r.reveal=0;r.room.visible=false;r.portal.visible=false;r.steps.forEach(m=>m.visible=false);r.stars.forEach(m=>m.visible=true);}}
+  reset(){this.active=null;for(const r of this.routes){r.used=false;r.completed=false;r.dropCooldown=0;r.reveal=0;r.room.visible=false;r.portal.visible=false;r.road.reveal(0);r.road.grass.windTime.value=0;r.stars.forEach(m=>m.visible=true);}}
   reveal(s,dt,time){
     for(const r of this.routes){
       r.dropCooldown=Math.max(0,(r.dropCooldown??0)-dt);
       if(!r.used&&Math.abs(s-r.s)<3)r.reveal=Math.min(1,r.reveal+dt/.8);
-      r.steps.forEach((m,i)=>{m.visible=r.reveal>i/14;const t=THREE.MathUtils.smoothstep(r.reveal-i/14,0,.14);m.scale.set(t,Math.max(.01,t),t);});
+      r.road.reveal(r.reveal);r.road.grass.update(dt);
       r.portal.visible=(!r.used||this.active===r&&r.stage==='ascent')&&r.reveal>.95;r.portal.rotation.z=Math.sin(time*.5)*.07;
     }
   }
-  contains(r,i,p){const v=r.points[i],a=r.steps[i].rotation.y,c=Math.cos(a),sn=Math.sin(a),dx=p.x-v.x,dz=p.z-v.z;return Math.abs(c*dx-sn*dz)<=1.68&&Math.abs(sn*dx+c*dz)<=1.105;}
-  support(p,foot,stepUp=0){let hit=null;for(const r of this.routes){if(r.dropCooldown>0)continue;for(let i=0;i<r.points.length;i++){const y=r.points[i].y;if(r.steps[i].visible&&this.contains(r,i,p)&&y<=foot+stepUp+.025&&y>=foot-.08&&(!hit||y>hit.y))hit={route:r,index:i,y};}}return hit;}
+  support(p,foot,stepUp=0){let hit=null;for(const r of this.routes){if(r.dropCooldown>0)continue;const y=r.road.heightAt(p);if(y!==null&&y<=foot+stepUp+.025&&y>=foot-.08&&(!hit||y>hit.y))hit={route:r,y};}return hit;}
   land(previousFoot,foot,velocity,p,before=p){
     if(velocity>0)return null;let hit=null;
-    for(const r of this.routes){if(r.dropCooldown>0)continue;for(let i=0;i<r.points.length;i++){
-      const y=r.points[i].y;if(!r.steps[i].visible||previousFoot<y-.00001||foot>y+.00001)continue;
-      const t=THREE.MathUtils.clamp((previousFoot-y)/Math.max(.00001,previousFoot-foot),0,1),cross={x:THREE.MathUtils.lerp(before.x,p.x,t),z:THREE.MathUtils.lerp(before.z,p.z,t)};
-      if(this.contains(r,i,cross)&&(!hit||y>hit.y))hit={route:r,index:i,y};
-    }}return hit;
+    for(const r of this.routes){if(r.dropCooldown>0)continue;const y=r.road.landing(previousFoot,foot,p,before);if(y!==null&&(!hit||y>hit.y))hit={route:r,y};}return hit;
   }
   drop(surface){surface.route.dropCooldown=.4;}
   enterPortal(p,foot,s){

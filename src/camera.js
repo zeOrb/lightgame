@@ -1,8 +1,7 @@
 import { route } from './game.js';
 
 // Critically damped motion keeps velocity continuous when a new arc is selected.
-export function smoothCameraAnchor(value, velocity, target, dt) {
-  const response = 7;
+export function smoothCameraAnchor(value, velocity, target, dt, response = 7) {
   const offset = value - target;
   const carry = velocity + response * offset;
   const decay = Math.exp(-response * dt);
@@ -24,4 +23,10 @@ export function cameraPose(anchor, aspect) {
       z: target.z + (Math.sin(a) * 2 - target.z) * zoom,
     },
   };
+}
+
+// Follow raised terrain fully, while leaving a small dead zone for jump arcs.
+export function railCameraHeight(height, surfaceLift, previousGroundLift){
+  const groundLift=surfaceLift!==null?Math.max(0,surfaceLift):Math.max(0,Math.min(previousGroundLift,height));
+  return {groundLift,target:groundLift+Math.max(0,height-groundLift-1)*.6};
 }

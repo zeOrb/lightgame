@@ -15,10 +15,12 @@ export class VitralGlow {
       glow.position.copy(direction).multiplyScalar(.36);glow.scale.setScalar(1.1);this.group.add(glow);this.rays.push({ray,glow});
     }
     this.lights=[new THREE.PointLight('#ff609e',0,3.5,2),new THREE.PointLight('#50bfff',0,3.5,2)];
-    for(const light of this.lights)this.group.add(light);
+    // Keep the light count stable: hiding their VFX group used to recompile
+    // every lit material on the first activation. Zero intensity is enough.
+    for(const light of this.lights){light.position.y=.43;parent.add(light);}
     this.reset();
   }
-  reset(){this.remaining=0;this.strength=0;this.group.visible=false;}
+  reset(){this.remaining=0;this.strength=0;this.group.visible=false;for(const light of this.lights)light.intensity=0;}
   update(dt,zone,brightness,time){
     if(zone){this.remaining=zone.lightStrength??1;this.palette=zone.palette;}else this.remaining=Math.max(0,this.remaining-dt);
     this.strength=this.remaining*this.remaining*(3-2*this.remaining);
