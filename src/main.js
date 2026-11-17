@@ -829,11 +829,12 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
 }
 $('flare-hint').hidden=!RUN_UPGRADES.flare;$('flare-touch').hidden=!RUN_UPGRADES.flare;
 camera.position.set(3,TOWER_TOP+4,16);
-phaseTrail.update(.016,new THREE.Vector3(0,.5,0),true,camera);
-phaseTrail.update(.016,new THREE.Vector3(.4,.5,0),true,camera);
+phaseTrail.update(.016,new THREE.Vector3(0,.5,0),true,camera,phaseTrail.color,true);
+phaseTrail.update(.016,new THREE.Vector3(.4,.5,0),true,camera,phaseTrail.color,true);
 landingEffects.land(new THREE.Vector3(),1);landingEffects.update(.08);
-await warmupFirstActions(renderer,scene,camera,[phaseTrail.mesh,phaseTrail.halo,phaseTrail.sparks,landingEffects.group,vitralGlow.group]);
-phaseTrail.reset();landingEffects.reset();
+const pickupWarmupRoots=pickupEffects.prepareWarmup(glints[0]?.o);
+await warmupFirstActions(renderer,scene,camera,[phaseTrail.mesh,phaseTrail.halo,phaseTrail.sparks,landingEffects.group,vitralGlow.group,...pickupWarmupRoots]);
+phaseTrail.reset();landingEffects.reset();pickupEffects.clear();
 const runURL=new URL(location.href);
 if(runURL.searchParams.has('sunny-reset')){runURL.searchParams.delete('sunny-reset');history.replaceState(history.state,'',runURL.href);}
 if(runURL.searchParams.has('sunny-run')){

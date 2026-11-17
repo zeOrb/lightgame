@@ -14,10 +14,15 @@ export async function warmupFirstActions(renderer,scene,camera,roots){
     scene.background=null;camera.layers.set(0);warmCamera.layers.set(0);renderer.setRenderTarget(target);
     for(const root of roots)await renderer.compileAsync(root,warmCamera,scene);
     renderer.clear();renderer.render(scene,warmCamera);
-    // The ribbon is composited directly to the sRGB screen with no scene lights.
-    renderer.setRenderTarget(screenTarget);camera.layers.set(3);warmCamera.layers.set(3);
-    for(const root of roots)if(root.layers.test(warmCamera.layers))await renderer.compileAsync(root,warmCamera,scene);
-    renderer.clear();renderer.render(scene,warmCamera);
+    // Precompile overlay effects on their actual render layers: pickup bursts
+    // use layer 2 and the dash ribbons use layer 3.
+    for(const layer of [2,3]){
+      renderer.setRenderTarget(screenTarget);camera.layers.set(layer);warmCamera.layers.set(layer);
+      // A root group can be on layer 0 while its effect meshes are on layers
+      // 2/3, so let Three.js filter the descendants instead of filtering roots.
+      for(const root of roots)await renderer.compileAsync(root,warmCamera,scene);
+      renderer.clear();renderer.render(scene,warmCamera);
+    }
   }finally{
     for(const [object,visible] of saved)object.visible=visible;
     for(const [object,value] of culled)object.frustumCulled=value;

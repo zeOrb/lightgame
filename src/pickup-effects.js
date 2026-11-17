@@ -21,7 +21,8 @@ export class PickupEffects {
     const orb=new THREE.Mesh(this.orbGeometry,new THREE.MeshBasicMaterial({color:tint.clone().lerp(new THREE.Color('white'),.30),fog:false,toneMapped:false}));group.add(orb);
     const aura=new THREE.Sprite(new THREE.SpriteMaterial({...additive,map:this.glowTexture,color:tint}));aura.scale.setScalar(.42);group.add(aura);
     const impact=new OrbArrival(group,tint,random()*Math.PI*2);
-    const light=new THREE.PointLight(tint,1.3,2.5,2);group.add(light);
+    // The additive aura sprite provides the pickup glow without a per-shard
+    // point light that changes scene material variants.
     const dir=new THREE.Vector3(1,0,0);
     if(this.camera){this.camera.updateMatrixWorld();dir.setFromMatrixColumn(this.camera.matrixWorld,0);dir.y=0;dir.normalize();}
     dir.multiplyScalar(random()<.5?-1:1);
@@ -44,7 +45,17 @@ export class PickupEffects {
     const arrival=Math.max(earliest,this.nextArrival);
     this.nextArrival=arrival+.035+random()*.0225;
     const homeDuration=baseHomeDuration+arrival-earliest;
-    this.active.push({shard,group,orb,aura,impact,light,trail,outward,home,dir,baseOrb,baseAura,onArrive,age:0,outDuration,homeDuration,chargeDuration,arch:.95+random()*.35,curveSide:random()<.5?-1:1,delta:new THREE.Vector3(),curveOffset:new THREE.Vector3(),arrived:false,arrivalAge:0,point:new THREE.Vector3(),rotation:shard.rotation.clone()});
+    this.active.push({shard,group,orb,aura,impact,trail,outward,home,dir,baseOrb,baseAura,onArrive,age:0,outDuration,homeDuration,chargeDuration,arch:.95+random()*.35,curveSide:random()<.5?-1:1,delta:new THREE.Vector3(),curveOffset:new THREE.Vector3(),arrived:false,arrivalAge:0,point:new THREE.Vector3(),rotation:shard.rotation.clone()});
+  }
+  prepareWarmup(shard){
+    if(!shard){
+      shard={userData:{pickable:{color:'#74dcff'}},shadow:null,rotation:new THREE.Euler(),children:[{isMesh:true,getWorldPosition(out){return out.set(0,0,0);}}]};
+    }
+    this.collect(shard,()=>{});
+    const effect=this.active[this.active.length-1];
+    effect.impact.update(0,this.camera);
+    effect.trail.update(effect.group.position,1/60,true);
+    return [effect.group,effect.trail.mesh,...this.flashes.map(f=>f.group)];
   }
   update(dt){
     this.clock+=dt;
@@ -56,7 +67,7 @@ export class PickupEffects {
       const flight=e.age-COLLAPSE;
       if(!e.arrived){
         e.orb.material.color.copy(e.baseOrb);e.aura.material.color.copy(e.baseAura);
-        e.orb.scale.setScalar(ORB_SCALE);e.aura.scale.setScalar(.42*ORB_SCALE);e.aura.material.opacity=.8;e.light.intensity=1.3*ORB_BRIGHTNESS;
+        e.orb.scale.setScalar(ORB_SCALE);e.aura.scale.setScalar(.42*ORB_SCALE);e.aura.material.opacity=.8;
         if(flight<0){e.orb.scale.setScalar(Math.max(.01,t*t)*ORB_SCALE);e.aura.material.opacity=t*.6;}
         else if(flight<e.outDuration){const u=flight/e.outDuration;e.outward.getPoint(1-(1-u)**2,e.point);e.group.position.copy(e.point);}
         else if(flight<e.outDuration+e.chargeDuration){
@@ -64,7 +75,7 @@ export class PickupEffects {
           e.group.position.copy(e.outward.v3);
           e.orb.scale.setScalar(ORB_SCALE*(1+.25*pulse));e.aura.scale.setScalar(.42*ORB_SCALE*(1+.25*pulse));
           e.orb.material.color.multiplyScalar(1+pulse*3);e.aura.material.color.multiplyScalar(1+pulse*4);
-          e.aura.material.opacity=.8+pulse*.2;e.light.intensity=1.3*ORB_BRIGHTNESS*(1+pulse*7);
+          e.aura.material.opacity=.8+pulse*.2;
         }
         else{
           const u=Math.min(1,(flight-e.outDuration-e.chargeDuration)/e.homeDuration),destination=this.target(e.point);
@@ -84,12 +95,11 @@ export class PickupEffects {
         e.arrivalAge+=dt;this.target(e.group.position);
         const u=Math.min(1,e.arrivalAge/BURST);
         e.impact.update(e.arrivalAge,this.camera);
-        e.light.intensity=12*(1-u)**3;
         if(u>=1){this.remove(e);this.active.splice(i,1);continue;}
       }
       e.trail.update(e.group.position,dt,!e.arrived&&flight>=0&&(flight<e.outDuration||flight>=e.outDuration+e.chargeDuration));
     }
   }
-  remove(e){e.trail.dispose();e.impact.dispose();e.group.removeFromParent();for(const object of [e.orb,e.aura])object.material.dispose();e.light.dispose();}
+  remove(e){e.trail.dispose();e.impact.dispose();e.group.removeFromParent();for(const object of [e.orb,e.aura])object.material.dispose();}
   clear(){for(const f of this.flashes){f.flash.dispose();f.group.removeFromParent();}this.flashes.length=0;for(const e of this.active)this.remove(e);this.active.length=0;this.clock=0;this.nextArrival=0;this.nextHomeLaunch=0;}
 }
