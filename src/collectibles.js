@@ -75,7 +75,7 @@ export class Pickable {
     this.update(0);
   }
   collect(){if(this.taken)return false;this.taken=true;return true;}
-  reset(){this.taken=false;this.o.visible=true;this.o.scale.setScalar(1);this.o.rotation.set(0,0,0);this.o.position.y=this.baseY;this.update(0);}
+  reset(){this.drop=null;this.taken=false;this.o.visible=true;this.o.scale.setScalar(1);this.o.rotation.set(0,0,0);this.o.position.y=this.baseY;this.update(0);}
   lightValue(shardHeal){return this.definition.light*shardHeal/config.baseLight;}
   update(time){
     clock.value=time;if(this.taken)return;
@@ -107,7 +107,8 @@ export class Pickable {
     this.shadow.position.z=this.gem.position.z;
     this.shadow.rotation.set(-Math.PI/2,0,-yaw);
     this.shadow.scale.set(this.definition.width*3.4,this.definition.width*2.7,1);
-    this.o.position.y=this.baseY;
+    if(this.drop){const elapsed=Math.max(0,time-this.drop.start),y=this.drop.fromY+this.drop.velocity*elapsed-2.45*elapsed*elapsed;this.o.position.x=this.drop.originX+this.drop.drift*elapsed;if(y<=this.baseY){this.o.position.y=this.baseY;this.o.position.x=this.drop.originX+this.drop.drift*Math.sqrt(this.drop.velocity/2.45);this.drop=null;}else this.o.position.y=y; }
+    else this.o.position.y=this.baseY;
   }
 }
 

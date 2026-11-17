@@ -3,6 +3,7 @@ import {SecretLevels} from './secret-levels.js';
 import {ShardCounter} from './shard-counter.js';
 import './gameplay-hud.css';
 import {createGemPickable,COLLECTIBLES} from './collectibles.js';
+import INTERACTABLES from './interactables.json' with {type:'json'};
 import {LanternLighting} from './lantern-surfaces.js';
 import {playVitralAbsorb} from './vitral-absorb-audio.js';
 import {RabbitShadowForm} from './rabbit-shadow-form.js';
@@ -145,7 +146,7 @@ for(let i=0;i<7;i++) {
 }
 catcher.traverse(object=>object.layers.set(2));
 const lipGeo = new THREE.CylinderGeometry(SHELF_OUTER_RADIUS+.05,SHELF_OUTER_RADIUS+.05,.1,12,1,true,Math.PI/2-SHELF_HALF_ANGLE,SHELF_HALF_ANGLE*2);
-const hazards=[], glints=[], bottles=[], beasts=[], books=[];
+const hazards=[], glints=[], bottles=[], beasts=[], books=[], chests=[];
 const reservedThreatShelves=new Set(Array.from({length:END},(_,s)=>s).filter(s=>(s>4&&s%RUN_UPGRADES.glintSpacing===0)||(s>6&&s%11===0)||!!spiralEnemyAt(s,0)||(s>20&&s%29===23)||(s>10&&s%27===13)));
 for(let section=0;section<=END;section++)if(section%14>=11)reservedThreatShelves.add(section);
 const threats=createThreats(gaps,END,reservedThreatShelves);
@@ -188,6 +189,14 @@ for(let s=0;s<=END+1;s++) {
     const lane=0,p=route(s,lane);
     const o=mesh(new THREE.PlaneGeometry(3,3),shadowMat,p.x,p.y+.06,p.z);o.rotation.x=-Math.PI/2;
     hazards.push({s,lane,o});
+  }
+  if(s>8 && s%23===9 && !isGap(s) && !reservedThreatShelves.has(s)) {
+    const p=route(s,0),o=new THREE.Group(),{width:w,height:h,depth:d}=INTERACTABLES.chest.model;o.position.set(p.x,p.y+.04,p.z);o.rotation.y=-p.theta;scene.add(o);
+    const chestWood=mat('#68452f',{roughness:.82}),chestTrim=mat('#b58a4e',{metalness:.28,roughness:.48});
+    box(w*.93,h*.52,chestTrim?d*.91:d*.91,chestWood,0,h*.275,0,o);box(w,.09*h/.8,d,chestTrim,0,.04*h/.8,0,o);
+    const lid=box(w*.98,h*.275,d*.97,chestWood,0,h*.6625,-.015*d/.66,o);lid.rotation.x=-.08;
+    box(w*.14,h*.2375,.035*d/.68,chestTrim,0,h*.375,d*.493,o);box(w*.0875,h*.125,.04*d/.68,edgeMat,0,h*.3875,d*.53,o);
+    chests.push({s,lane:0,o,lid,broken:false,top:p.y+INTERACTABLES.chest.collision.topOffset,radius:INTERACTABLES.chest.collision.radius});
   }
   if(s>10 && s%27===13 && s%14<11) {
     const lane=0,p=route(s,lane);const o=new THREE.Group();o.position.set(p.x,p.y+.55,p.z);scene.add(o);
@@ -317,10 +326,16 @@ function beginRabbitFall(outward,message,launched=true){
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
   abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent='Падение';
 }
-function reset(){shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints)g.reset();for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function reset(){shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
 function start({boss=false}={}){frameClock.reset();skillTree.element.hidden=true;reset();if(boss&&arenas.arenas.length){const a=arenas.arenas[0];s=a.s;arenas.enter(a.s-.01,a.s,route(a.s));}state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';$('world').classList.add('is-paused');keys.clear();showModal('','Пауза','','Продолжить');$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('world').classList.remove('is-paused');$('modal').hidden=true;}}
+function breakChest(c){
+  if(c.broken)return false;c.broken=true;c.o.visible=false;const [min,max]=INTERACTABLES.chest.rewardRange,count=min+Math.floor(gemLayoutRandom()*(max-min+1));
+  const pool=Math.max(1,Math.min(RUN_UPGRADES.gemPoolTier,COLLECTIBLES.variants.length));
+  for(let i=0;i<count;i++){const itemS=c.s+(i-(count-1)/2)*.13,p=route(itemS,0),gem=createGemPickable(Math.floor(gemLayoutRandom()*pool),{s:itemS,lane:0,position:new THREE.Vector3(p.x,p.y+.035,p.z)});scene.add(gem.o);gem.drop={start:visualTime,originX:p.x,fromY:p.y+.035,velocity:2.2+gemLayoutRandom()*1.5,drift:(gemLayoutRandom()-.5)*1.5};gem.o.position.y+=.5;glints.push(gem);}
+  tone(260,.16);return true;
+}
 function finish(won){if(state==='won'||state==='lost')return;if(won)progression.award(VICTORY_BONUS);state=won?'won':'lost';keys.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;tone(won?1046:164,won?1.8:.6);skillTree.open(won,collected,won?VICTORY_BONUS:0);}
 $('debug-boss').onclick=()=>start({boss:true});
 $('start').onclick=()=>start();$('restart').onclick=start;$('resume').onclick=()=>state==='paused'?pause():start();
@@ -469,6 +484,13 @@ function update(dt){
     const travel=motion.railStep(forward*direction,(slow>0?.65:1.6)*RUN_UPGRADES.speed,height>.025,dt);
     s=Math.min(END,s+travel*dt);if(!passenger&&height<=.001)lane=THREE.MathUtils.damp(lane,0,12,dt);
   }
+  const shadowDash=light/RUN_UPGRADES.maxHP*100<=SHADOW_LIGHT_THRESHOLD;
+  for(const c of chests){if(c.broken)continue;const radius=c.radius/(15*Math.PI/14),side=Math.sign(beforeMoveS-c.s)||-railFacing,crossed=(s-c.s)*side<radius&&(beforeMoveS-c.s)*side>=-radius,aligned=Math.abs(lane-c.lane)<c.radius;
+    if(!crossed||!aligned||height>c.top-route(s,lane).y)continue;
+    if(dash&&!shadowDash){breakChest(c);continue;}
+    if(!dash&&(velocity>0||motion.jumpBuffer>0))continue;
+    s=c.s+side*radius;motion.rail=0;
+  }
   const enteredArena=arenas.enter(beforeMoveS,s,route(beforeMoveS,lane));
   if(enteredArena){motion.reset();s=enteredArena.s;lane=0;height=velocity=0;abilities.phase=null;phasingFrame=true;phaseTrail.reset();floorGates.arriveAt(enteredArena.s);phaseQueued=jumpQueued=false;beastKnockback.reset();rabbitState.setVitral(null);currentVitralZone=null;shadowEffects.setDamage(false);updateHUD();return;}
   if(!knocked&&!dash&&height<.4&&velocity<=0)for(const beast of beasts){
@@ -520,6 +542,16 @@ function update(dt){
   let inShadow=false;
   for(const h of hazards){const p=route(h.s,h.lane),player=route(s,lane);if(Math.hypot(player.x-p.x,player.z-p.z)<1.12&&Math.abs(player.y+height-p.y)<.8&&height<.8)inShadow=true;}
   if(!phasingFrame&&abilities.gravityDelay<=0&&!hasShelfSupport(threats,s,lane)&&height===0&&velocity<=0&&motion.coyote<=0){beginRabbitFall(lane>2.5,'Под лапами больше нет полки…',false);return;}
+  for(const c of chests){
+    if(c.broken)continue;
+    const chestFoot=route(s,lane).y+height+.12;
+    const crossedLid=velocity<=0&&previousFoot>=c.top&&chestFoot<=c.top;
+    const overlapsChest=Math.abs(s-c.s)<c.radius/(15*Math.PI/14)+.12&&Math.abs(lane-c.lane)<c.radius;
+    if(crossedLid&&overlapsChest){
+      breakChest(c);
+      height=Math.max(height,.08);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;abilities.resetAirJump();break;
+    }
+  }
   for(const g of glints)if(!g.taken&&g.s>Math.min(beforeMoveS,s)-RUN_UPGRADES.magnet&&g.s<Math.max(beforeMoveS,s)+RUN_UPGRADES.magnet&&Math.abs(lane-g.lane)<1.15&&height<1.8){if(!g.collect())continue;rabbitAnimation.pickup();const amount=g.lightValue(RUN_UPGRADES.shardHeal);pickupEffects.collect(g.o,()=>{if(state!=='playing'&&state!=='won')return;healFromShard(amount);collected++;const previousPoints=progression.state.points;progression.award(g.definition.points*RUN_UPGRADES.shardPointsMultiplier);shardCounter.add(progression.state.points-previousPoints,g.definition.textColor);tone(800+collected%4*90);updateHUD(0);});}
   for(const b of bottles){b.cooldown=Math.max(0,b.cooldown-dt);if(!phasingFrame&&Math.abs(s-b.s)<.65&&Math.abs(lane-b.lane)<.7&&height<1&&b.cooldown===0){b.cooldown=7;if(b.s%2){invert=2.5*RUN_UPGRADES.potionScale;toast('Преломление! Управление отражено на 2,5 секунды');}else{slow=3*RUN_UPGRADES.potionScale;toast('Густой свет · замедление на 3 секунды');}tone(270,.2);}}
   for(const b of beasts){

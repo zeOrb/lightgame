@@ -1,0 +1,16 @@
+{
+  "chest": {
+    "type": "breakable",
+    "rewardRange": [3, 6],
+    "jumpBreak": true,
+    "model": {
+      "width": 1.1,
+      "height": 0.8,
+      "depth": 0.85
+    },
+    "collision": {
+      "radius": 0.85,
+      "topOffset": 0.68
+    }
+  }
+}
