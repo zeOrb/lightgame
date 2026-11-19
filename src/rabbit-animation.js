@@ -10,7 +10,7 @@ export class RabbitAnimation {
     this.reset();
   }
   reset(){
-    this.pickupAge=1;
+    this.pickupAge=1;this.slipAge=1;this.slipWeight=0;
     this.phase=0;this.blend=0;this.air=0;this.landing=0;this.lastVelocity=0;this.wasAirborne=false;this.fallTime=0;
     this.clothTime=0;this.clothWind=0;this.clothTurn=0;this.fallClothBlend=0;this.dashClothBlend=0;this.dashClothTime=0;
     this.dashActive=false;this.dashTransition=0;this.dashFrom=0;
@@ -24,6 +24,7 @@ export class RabbitAnimation {
     this.pose(0,0,0);
   }
   updateFall(dt){
+    this.slipAge=1;this.slipWeight=0;
     this.idleBlend=0;this.idleWeight=0;
     if(this.head){this.head.rotation.x=THREE.MathUtils.damp(this.head.rotation.x,0,12,dt);this.head.position.lerp(this.headRest,1-Math.exp(-12*dt));}
     this.fallTime+=dt;
@@ -78,6 +79,10 @@ export class RabbitAnimation {
           normalX=THREE.MathUtils.lerp(normalX,x+Math.sin(time*10-loose*3+phase)*loose*.025,blend);
           normalY=THREE.MathUtils.lerp(normalY,y+bend*.38,blend);
           normalZ=THREE.MathUtils.lerp(normalZ,z-loose*.2-Math.sin(loose*Math.PI)*.08,blend);
+        }
+        if(!falling&&this.slipWeight>.001){
+          normalY-=loose*loose*.13*this.slipWeight;
+          normalZ-=loose*loose*.045*this.slipWeight;
         }
         if(!falling&&this.dashClothBlend>.001){
           const rush=this.dashClothBlend,clock=this.dashClothTime;
@@ -256,8 +261,26 @@ export class RabbitAnimation {
       this.ears.forEach(ear=>ear.rotation.x-=accent*1.8);
       this.tail.rotation.x+=accent*.8;
     }
+    this.slipAge=Math.min(1,this.slipAge+dt);
+    const slipAttack=THREE.MathUtils.smootherstep(this.slipAge,0,.07);
+    const slipRelease=1-THREE.MathUtils.smootherstep(this.slipAge,.18,.48);
+    const slip=slipAttack*slipRelease*(1-rush)*(this.recoiling||dashing?0:1);
+    this.slipWeight=slip;
+    if(slip>0){
+      const length=1.19,width=1/Math.sqrt(length);
+      this.visual.scale.lerp(new THREE.Vector3(width,length,width),slip);
+      this.visual.rotation.x*=1-slip;this.visual.rotation.z*=1-slip;
+      this.visual.position.z*=1-slip;
+      if(this.head)this.head.rotation.x=THREE.MathUtils.lerp(this.head.rotation.x,-.13,slip);
+      const follow=THREE.MathUtils.smootherstep(this.slipAge,.025,.12)*slipRelease*(1-rush);
+      this.ears.forEach(ear=>ear.rotation.x=THREE.MathUtils.lerp(ear.rotation.x,-.43,follow));
+      this.paws.forEach(paw=>{paw.position.y=THREE.MathUtils.lerp(paw.position.y,-.055,slip);paw.position.z=THREE.MathUtils.lerp(paw.position.z,.06,slip);paw.rotation.x=THREE.MathUtils.lerp(paw.rotation.x,-.28,slip);});
+      this.arms.forEach((arm,i)=>{arm.rotation.x=THREE.MathUtils.lerp(arm.rotation.x,-.24,slip);arm.rotation.z=THREE.MathUtils.lerp(arm.rotation.z,(i?1:-1)*.14,slip);});
+      this.tail.rotation.x-=.16*follow;
+    }
     this.animateCloth(this.clothTime,this.clothWind);
   }
+  slipThrough(){this.slipAge=0;}
   pickup(){this.pickupAge=0;}
   get recoiling(){return this.hitAge<.46;}
   hit(){this.hitAge=0;this.jumpActive=false;this.dashActive=false;this.dashClothBlend=0;}

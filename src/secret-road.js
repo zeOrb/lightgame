@@ -1,3 +1,4 @@
+import {applySecretTransition} from './secret-transition.js';
 import {SecretVines} from './secret-vines.js';
 import {createVisualRandom} from './random-manager.js';
 import {SecretGrass} from './secret-grass.js';
@@ -52,7 +53,9 @@ export function roadMaterial(source,repeat,{arena=false}={}){
       diffuseColor.rgb=mix(diffuseColor.rgb,soil,soilMask);
     `);
   };
-  material.customProgramCacheKey=()=> 'secret-road-turf-soil-v4-'+arena;return material;
+  const turfCompile=material.onBeforeCompile;
+  material.onBeforeCompile=shader=>{turfCompile(shader);applySecretTransition(shader);};
+  material.customProgramCacheKey=()=> 'secret-road-turf-soil-pass-v5-'+arena;return material;
 }
 
 // A closed ribbon: the upper surface follows the route's height exactly;
