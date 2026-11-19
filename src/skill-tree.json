@@ -16,6 +16,7 @@
     "speed": 1,
     "jump": 1,
     "doubleJump": false,
+    "secretRoadSlip": false,
     "potionScale": 1,
     "phaseCooldown": 1,
     "phaseDistance": 1,
@@ -124,6 +125,19 @@
           "effects": {
             "jump": {
               "multiply": 1.15
+            }
+          }
+        },
+        {
+          "id": "secretSlip",
+          "name": "Сквозь траву",
+          "description": "Позволяет проходить сквозь секретные травяные дороги снизу и выпрыгивать на них.",
+          "cost": 12,
+          "requires": "jump",
+          "icon": "grass-slip",
+          "effects": {
+            "secretRoadSlip": {
+              "set": true
             }
           }
         },

@@ -92,7 +92,7 @@ export class VineLeafParticles {
     for(const p of this.particles){
       if(!p.active)continue;p.age+=dt;
       if(p.age>=p.life){p.active=false;continue;}
-      p.position.addScaledVector(p.velocity,dt);p.velocity.multiplyScalar(Math.exp(-dt*1.3));p.velocity.y-=dt*.9;
+      p.position.addScaledVector(p.velocity,dt);p.velocity.multiplyScalar(Math.exp(-dt*(p.drag??1.3)));p.velocity.y-=dt*(p.gravity??.9);
       p.rotation.x+=p.spin.x*dt;p.rotation.y+=p.spin.y*dt;p.rotation.z+=p.spin.z*dt;
       this.dummy.position.copy(p.position);this.dummy.rotation.set(Math.sin(p.rotation.x)*.45,Math.sin(p.rotation.y)*.55,p.rotation.z);if(this.camera){this.tumble.copy(this.dummy.quaternion);this.dummy.quaternion.copy(this.camera.quaternion).multiply(this.tumble);}this.dummy.scale.set(p.size*p.width,p.size*p.length,p.size);this.dummy.updateMatrix();this.mesh.setMatrixAt(count,this.dummy.matrix);this.mesh.setColorAt(count,p.color);
       this.alpha.setX(count,THREE.MathUtils.smoothstep(p.age,0,.06)*(1-THREE.MathUtils.smoothstep(p.age/p.life,.2,1)));count++;

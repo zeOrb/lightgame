@@ -6,11 +6,17 @@ export class RabbitAnimation {
   constructor(visual,ears,paws,tail,arms=[],head=null){
     this.visual=visual;this.ears=ears;this.paws=paws;this.tail=tail;this.arms=arms;this.head=head;
     this.headRest=head?.position.clone();
+    this.earBends=ears.flatMap(ear=>ear.children.filter(mesh=>mesh.isMesh).map(mesh=>{
+      mesh.geometry=mesh.geometry.clone();mesh.geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);mesh.frustumCulled=false;
+      return {mesh,rest:new Float32Array(mesh.geometry.attributes.position.array),angle:0};
+    }));
     this.cloth=[];tail.traverse(mesh=>{if(mesh.userData.cloth){const position=mesh.geometry.attributes.position;position.setUsage(THREE.DynamicDrawUsage);mesh.frustumCulled=false;this.cloth.push({mesh,rest:new Float32Array(position.array),kind:mesh.userData.cloth});}});
     this.reset();
   }
   reset(){
     this.pickupAge=1;this.slipAge=1;this.slipWeight=0;
+    this.earContactAge=1;
+    for(const bend of this.earBends){bend.angle=0;bend.mesh.geometry.attributes.position.array.set(bend.rest);bend.mesh.geometry.attributes.position.needsUpdate=true;bend.mesh.geometry.computeVertexNormals();}
     this.phase=0;this.blend=0;this.air=0;this.landing=0;this.lastVelocity=0;this.wasAirborne=false;this.fallTime=0;
     this.clothTime=0;this.clothWind=0;this.clothTurn=0;this.fallClothBlend=0;this.dashClothBlend=0;this.dashClothTime=0;
     this.dashActive=false;this.dashTransition=0;this.dashFrom=0;
@@ -49,6 +55,7 @@ export class RabbitAnimation {
     this.tail.quaternion.slerp(new THREE.Quaternion().setFromEuler(coatPose),1-Math.exp(-dt*8));
     this.clothWind=THREE.MathUtils.damp(this.clothWind,flutter,6,dt);
     this.animateCloth(this.clothTime,this.clothWind,true);
+    this.bendEarsToCeiling(dt,null);
   }
   animateCloth(time,wind,falling=false){
     this.cloth.forEach(({mesh,rest,kind},index)=>{
@@ -112,7 +119,7 @@ export class RabbitAnimation {
       position.needsUpdate=true;mesh.geometry.computeVertexNormals();
     });
   }
-  update(dt,{speed,height,velocity,turn=0,skidding=false,dashing=false}){
+  update(dt,{speed,height,velocity,turn=0,skidding=false,dashing=false,ceiling=null}){
     this.visual.scale.y/=this.idleStretch;this.idleStretch=1;
     this.idleTime+=dt;
     this.hitAge=Math.min(1,this.hitAge+dt);
@@ -278,8 +285,38 @@ export class RabbitAnimation {
       this.arms.forEach((arm,i)=>{arm.rotation.x=THREE.MathUtils.lerp(arm.rotation.x,-.24,slip);arm.rotation.z=THREE.MathUtils.lerp(arm.rotation.z,(i?1:-1)*.14,slip);});
       this.tail.rotation.x-=.16*follow;
     }
+    this.bendEarsToCeiling(dt,ceiling);
     this.animateCloth(this.clothTime,this.clothWind);
   }
+  bendEarsToCeiling(dt,ceiling){
+    this.earContactAge=Math.min(1,this.earContactAge+dt);
+    const contact=1.65*(1-THREE.MathUtils.smootherstep(this.earContactAge,.1,.35));
+    this.visual.updateWorldMatrix(true,true);
+    const point=new THREE.Vector3(),inverse=new THREE.Matrix4();
+    for(const bend of this.earBends){
+      if(ceiling===null&&bend.angle===0&&contact===0)continue;
+      const {mesh,rest}=bend,position=mesh.geometry.attributes.position;
+      let top=-Infinity;
+      for(let i=0;i<position.count;i++){point.fromArray(rest,i*3).applyMatrix4(mesh.matrixWorld);top=Math.max(top,point.y);}
+      const target=Math.max(contact,ceiling===null?0:2.65*THREE.MathUtils.smoothstep(top-ceiling,-.22,.3));
+      bend.angle=THREE.MathUtils.damp(bend.angle,target,target>bend.angle?18:8,dt);
+      if(ceiling===null&&bend.angle<.0001)bend.angle=0;
+      inverse.copy(mesh.matrixWorld).invert();
+      for(let i=0;i<position.count;i++){
+        const x=rest[i*3],y=rest[i*3+1],z=rest[i*3+2];
+        const along=y*mesh.scale.y+mesh.position.y;
+        const t=Math.max(0,along)/.47,angle=bend.angle*t;
+        const curve=angle>.00001?Math.sin(angle)/angle:1;
+        const curl=angle>.00001?(1-Math.cos(angle))/angle:0;
+        point.set(x,(along*curve-mesh.position.y)/mesh.scale.y,z-along*curl/mesh.scale.z);
+        // Final ceiling limit covers a fast frame; roots remain fixed below it.
+        if(ceiling!==null){point.applyMatrix4(mesh.matrixWorld);point.y=Math.min(point.y,ceiling-.025);point.applyMatrix4(inverse);}
+        position.setXYZ(i,point.x,point.y,point.z);
+      }
+      position.needsUpdate=true;mesh.geometry.computeVertexNormals();
+    }
+  }
+  ceilingBump(){this.earContactAge=0;}
   slipThrough(){this.slipAge=0;}
   pickup(){this.pickupAge=0;}
   get recoiling(){return this.hitAge<.46;}

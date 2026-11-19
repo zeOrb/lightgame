@@ -63,7 +63,7 @@ export function roadMaterial(source,repeat,{arena=false}={}){
 // only its horizontal centre and width receive a small organic variation.
 export class SecretRoad {
   constructor(points,material,seed=0){
-    this.segments=96;this.revealed=0;this.triangles=[];
+    this.segments=96;this.revealed=0;this.triangles=[];this.undersideTriangles=[];
     const profile=[[-.90,0],[.90,0],[1.055,-.10],[1.02,-.32],[.76,-.56],[-.72,-.60],[-1.01,-.35],[-1.055,-.10]];
     this.rowStride=profile.length*2;this.indicesPerSegment=profile.length*6;this.capIndexCount=(profile.length-2)*6;this.topTrianglesPerSegment=6;
     const curve=new THREE.CatmullRomCurve3(points),length=curve.getLength(),positions=[],uv=[],indices=[],colours=[],depths=[];
@@ -117,6 +117,7 @@ export class SecretRoad {
     this.mesh=new THREE.Mesh(geometry,roadMaterial(material,total/3));this.mesh.visible=false;this.mesh.userData.secretStep=true;
     const vector=i=>new THREE.Vector3().fromArray(positions,i*3);
     for(let i=0;i<this.segments;i++){const a=i*this.rowStride,b=(i+1)*this.rowStride;for(const edge of [0,1,7]){const j=edge*2;this.triangles.push([vector(a+j),vector(b+j),vector(a+j+1)],[vector(a+j+1),vector(b+j),vector(b+j+1)]);}}
+    for(let i=0;i<this.segments;i++){const a=i*this.rowStride,b=(i+1)*this.rowStride;for(let edge=1;edge<profile.length;edge++){const j=edge*2;this.undersideTriangles.push([vector(a+j),vector(b+j),vector(a+j+1)],[vector(a+j+1),vector(b+j),vector(b+j+1)]);}}
     this.grass=new SecretGrass(this,seed,total/3);
     const vineRandom=createVisualRandom('road-vine-anchors-'+seed),anchors=[];
     for(let row=3;row<this.segments-2;row+=3)for(const side of [0,1]){
@@ -135,6 +136,20 @@ export class SecretRoad {
     this.ray=new THREE.Ray();this.result=new THREE.Vector3();this.from=new THREE.Vector3();this.direction=new THREE.Vector3();
   }
   reveal(amount){this.revealed=Math.min(this.segments,Math.floor(amount*this.segments));this.mesh.visible=this.revealed>0;this.grass.reveal(this.revealed);this.vines.reveal(this.revealed);this.mesh.geometry.setDrawRange(0,this.revealed*this.indicesPerSegment+(amount>=1?this.capIndexCount:0));}
+  undersideAt(p,radius=0){
+    this.mesh.updateWorldMatrix(true,false);let ceiling=null;
+    const offsets=radius>0?[[0,0],[radius,0],[-radius,0],[0,radius],[0,-radius],[radius*.707,radius*.707],[-radius*.707,radius*.707],[radius*.707,-radius*.707],[-radius*.707,-radius*.707]]:[[0,0]];
+    for(const [x,z] of offsets){
+      this.from.set(p.x+x,p.y,p.z+z);this.mesh.worldToLocal(this.from);
+      const bounds=this.mesh.geometry.boundingSphere;
+      this.ray.origin.set(this.from.x,bounds.center.y-bounds.radius-1,this.from.z);this.ray.direction.set(0,1,0);
+      for(let i=0;i<this.revealed*14;i++)if(this.ray.intersectTriangle(...this.undersideTriangles[i],false,this.result)){
+        const y=this.mesh.localToWorld(this.result).y;
+        if(ceiling===null||y<ceiling)ceiling=y;
+      }
+    }
+    return ceiling;
+  }
   heightAt(p){
     this.mesh.updateWorldMatrix(true,false);this.from.copy(p);this.mesh.worldToLocal(this.from);
     this.ray.origin.set(this.from.x,this.mesh.geometry.boundingSphere.center.y+this.mesh.geometry.boundingSphere.radius+1,this.from.z);this.ray.direction.set(0,-1,0);
