@@ -40,6 +40,13 @@ export class RabbitState {
   updateFall(dt){
     const f=this.fall;if(!f||f.done)return f;
     f.time+=dt;
+    if(f.recoverable&&!f.landed){
+      const gravity=f.vy<0?28:20;
+      f.x+=f.vx*dt;f.z+=f.vz*dt;f.y+=f.vy*dt-.5*gravity*dt*dt;f.vy=Math.max(-42,f.vy-gravity*dt);
+      f.radius=Math.hypot(f.x,f.z);f.angle=Math.atan2(f.z,f.x);f.dissolve=0;
+      if(f.y<=.35){f.y=.35;f.landed=true;f.recoverable=false;f.dissolve=1;}
+      return f;
+    }
     if(!f.landed){
       f.radius+=f.radialSpeed*dt;
       if(f.radius>18){f.radius=18;f.radialSpeed=-17;f.vy=-1;f.wallHit=true;}

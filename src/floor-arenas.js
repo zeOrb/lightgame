@@ -368,7 +368,7 @@ export class FloorArenas extends ArenaRun {
     if(returnT<1)return {returning:returnT>0};
     this.remnants.push(collapse);a.collapse=null;
     this.setCombatLook(a,false);
-    this.scene.remove(a.group);disposeGroupResources(a.group,[this.wood,this.edge,this.fightBase,this.fightEdge,this.fightWood]);a.group.visible=false;
+    a.group.removeFromParent();disposeGroupResources(a.group,[this.wood,this.edge,this.fightBase,this.fightEdge,this.fightWood]);a.group.visible=false;
     for(const b of a.enemies){b.o.visible=false;this.scene.remove(b.o);}
     for(const other of this.arenas)other.group.visible=true;
     const returnedS=a.returnS;this.active=null;return {returnedS};
@@ -386,7 +386,7 @@ export class FloorArenas extends ArenaRun {
     if(!a.enemies.length){
       for(let i=0;i<1;i++){
         const id=ENEMY_CONFIG.arenas.bossCycle[a.index%ENEMY_CONFIG.arenas.bossCycle.length];
-        const b=createEnemy(id,{floorIndex:a.index,s:a.s}),boss=b.boss;
+        const b=createEnemy(a.bossId??id,{floorIndex:a.index,s:a.s}),boss=b.boss;
         b.phase=this.random()*Math.PI*2;
         if(boss){
           const crown=new THREE.Group();crown.position.set(0,b.stats.crownHeight,0);b.o.add(crown);
@@ -395,7 +395,7 @@ export class FloorArenas extends ArenaRun {
         }
         const offset=Math.PI,spawnRadius=ARENA_RADIUS-ENEMY_CONFIG.arenas.spawnInset;
         b.home={x:Math.cos(a.theta+offset)*spawnRadius,z:Math.sin(a.theta+offset)*spawnRadius};
-        b.o.position.set(b.home.x,a.y,b.home.z);b.o.visible=false;this.scene.add(b.o);a.enemies.push(b);
+        b.o.position.set(b.home.x,a.y,b.home.z);b.o.visible=false;this.scene.add(b.o);this.scene.userData.tower?.worldDriven(b.o,a.index);a.enemies.push(b);
       }
     }
     for(const b of a.enemies){resetShadowBeast(b);b.hp=b.maxHP;b.hurt=0;b.revealAge=0;b.o.position.set(b.home.x,a.y-b.stats.spawnDepth,b.home.z);b.o.visible=false;if(b.crown)for(const gem of b.crown.children)gem.material.color.set('#ff264d');}

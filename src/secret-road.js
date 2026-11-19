@@ -130,12 +130,15 @@ export class SecretRoad {
   }
   reveal(amount){this.revealed=Math.min(this.segments,Math.floor(amount*this.segments));this.mesh.visible=this.revealed>0;this.grass.reveal(this.revealed);this.vines.reveal(this.revealed);this.mesh.geometry.setDrawRange(0,this.revealed*this.indicesPerSegment+(amount>=1?this.capIndexCount:0));}
   heightAt(p){
-    this.ray.origin.set(p.x,this.mesh.geometry.boundingSphere.center.y+this.mesh.geometry.boundingSphere.radius+1,p.z);this.ray.direction.set(0,-1,0);
+    this.mesh.updateWorldMatrix(true,false);this.from.copy(p);this.mesh.worldToLocal(this.from);
+    this.ray.origin.set(this.from.x,this.mesh.geometry.boundingSphere.center.y+this.mesh.geometry.boundingSphere.radius+1,this.from.z);this.ray.direction.set(0,-1,0);
     for(let i=0;i<this.revealed*this.topTrianglesPerSegment;i++){const tri=this.triangles[i];if(this.ray.intersectTriangle(...tri,false,this.result))return this.result.y;}
     return null;
   }
   landing(beforeY,afterY,p,before){
-    this.from.set(before.x,beforeY,before.z);this.direction.set(p.x-before.x,afterY-beforeY,p.z-before.z);const length=this.direction.length();if(length<1e-8)return null;
+    this.mesh.updateWorldMatrix(true,false);
+    this.from.set(before.x,beforeY,before.z);this.mesh.worldToLocal(this.from);
+    this.direction.set(p.x,afterY,p.z);this.mesh.worldToLocal(this.direction);this.direction.sub(this.from);const length=this.direction.length();if(length<1e-8)return null;
     this.ray.set(this.from,this.direction.divideScalar(length));let nearest=Infinity,y=null;
     for(let i=0;i<this.revealed*this.topTrianglesPerSegment;i++){if(this.ray.intersectTriangle(...this.triangles[i],true,this.result)){const d=this.result.distanceTo(this.from);if(d<=length+1e-5&&d<nearest){nearest=d;y=this.result.y;}}}return y;
   }

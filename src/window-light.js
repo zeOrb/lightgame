@@ -32,6 +32,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       const angle=Math.atan2(origin.z,origin.x);
       let floor=null;
       for(const candidate of floors){
+        if(window?.userData.targetSection!==undefined&&candidate.userData.s!==window.userData.targetSection)continue;
         if(reservedShelves.has(candidate.userData.s))continue;
         const delta=Math.atan2(Math.sin(candidate.userData.theta-angle),Math.cos(candidate.userData.theta-angle));
         if(Math.abs(delta)<SHELF_HALF_ANGLE&&candidate.userData.y<origin.y-1&&(!floor||candidate.userData.y>floor.userData.y))floor=candidate;
@@ -94,7 +95,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       const floorGeometry=new THREE.BufferGeometry();floorGeometry.setAttribute('position',new THREE.Float32BufferAttribute(endCorners.flatMap(p=>[p.x,p.y,p.z]),3));floorGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(beam.sourceUV,2));floorGeometry.setIndex([0,1,2,0,2,3]);
       const floorMaterial=new THREE.ShaderMaterial({
         uniforms:{beamColor:{value:beam.color},glassMap:{value:pane.material.map??null},hasGlassMap:{value:!!pane.material.map},strength:{value:.8},clock:{value:0},floorAngle:{value:data.floor.userData.theta},floorBounds:{value:new THREE.Vector3(shelfInnerRadius(data.floor.userData.s)+.012,SHELF_OUTER_RADIUS-.012,SHELF_HALF_ANGLE-.001)},projectionDepth:{value:null},depthResolution:{value:new THREE.Vector2(1,1)},depthRange:{value:new THREE.Vector2(.1,240)},depthEnabled:{value:false}},
-        vertexShader:'varying vec2 tileUV; varying vec3 tileWorld; void main(){tileUV=uv;tileWorld=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+        vertexShader:'varying vec2 tileUV; varying vec3 tileWorld; void main(){tileUV=uv;tileWorld=(modelMatrix*vec4(position,1.0)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
         fragmentShader:`uniform vec3 beamColor;uniform sampler2D glassMap;uniform bool hasGlassMap;uniform float strength;uniform float clock;uniform float floorAngle;uniform vec3 floorBounds;uniform sampler2D projectionDepth;uniform vec2 depthResolution;uniform vec2 depthRange;uniform bool depthEnabled;varying vec2 tileUV;varying vec3 tileWorld;
           void main(){float r=length(tileWorld.xz);float angle=atan(tileWorld.z,tileWorld.x)-floorAngle;angle=atan(sin(angle),cos(angle));if(r<floorBounds.x||r>floorBounds.y||abs(angle)>floorBounds.z)discard;
           float surfaceMask=1.0;
@@ -118,6 +119,15 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
     }
   }
   return {group,zones,
+    rotate(deltaForFloor){
+      const axis=new THREE.Vector3(0,1,0);
+      for(const data of windows.values()){
+        const delta=deltaForFloor(data.window?.userData.floorIndex??0);if(!delta)continue;
+        data.patch.rotation.y+=delta;for(const beam of data.beams)beam.rotation.y+=delta;
+        if(data.zone){data.zone.center.applyAxisAngle(axis,delta);data.zone.radial.applyAxisAngle(axis,delta);data.zone.tangent.applyAxisAngle(axis,delta);}
+        data.patch.traverse(object=>{const angle=object.material?.uniforms?.floorAngle;if(angle)angle.value-=delta;});
+      }
+    },
     extinguish(zone){
       const data=[...windows.values()].find(item=>item.zone===zone);if(!data||data.extinguished)return;
       data.extinguished=true;data.fadeAge=0;zone.extinguished=true;zone.lightStrength=1;
@@ -147,6 +157,6 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
         data.patch.visible=fade<1;data.beams.forEach(beam=>beam.visible=fade<1);
         for(const {pane,original} of data.replaced){pane.material.color.copy(original.color).lerp(new THREE.Color('#302a26'),fade);if(pane.material.emissive){pane.material.emissive.copy(original.emissive);pane.material.emissiveIntensity=original.emissiveIntensity*(1-fade);}}
       }
-      for(const material of materials){material.uniforms.strength.value=material.userData.baseOpacity*daylight*(material.userData.windowData.zone?.lightStrength??1)*(floorMaterials.includes(material)&&material.userData.windowData.floor?.parent.visible===false?0:1);if(material.uniforms.clock)material.uniforms.clock.value=time;}
+      for(const material of materials){material.uniforms.strength.value=material.userData.baseOpacity*daylight*(material.userData.windowData.zone?.lightStrength??1)*(floorMaterials.includes(material)&&material.userData.windowData.floor?.parent?.visible===false?0:1);if(material.uniforms.clock)material.uniforms.clock.value=time;}
     }};
 }

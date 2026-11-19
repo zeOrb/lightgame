@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "baseFloors": 10,
+  "seed": "sunny-layout-v1",
+  "tower": {
+    "rotationYDegrees": 0,
+    "rotationSpeedDegrees": 0,
+    "rotationCameraFollow": true
+  },
+  "defaults": {
+    "steps": {
+      "mode": "generated",
+      "count": 14,
+      "holes": {
+        "count": [
+          0,
+          1
+        ],
+        "safeStart": 3,
+        "safeEnd": 3
+      },
+      "styles": [
+        "carved"
+      ],
+      "decorations": true
+    },
+    "windows": {
+      "mode": "generated",
+      "count": 3,
+      "width": 2.3,
+      "height": 5.8,
+      "columns": 1,
+      "rows": 4,
+      "heightAboveShelf": 4
+    },
+    "loot": {
+      "mode": "generated",
+      "count": [
+        2,
+        3
+      ],
+      "gemsPerTile": null,
+      "pool": null
+    },
+    "enemies": {
+      "mode": "generated",
+      "count": [
+        0,
+        1
+      ],
+      "pool": [
+        "wolf"
+      ]
+    },
+    "shadows": {
+      "mode": "generated",
+      "count": 1
+    },
+    "chests": {
+      "mode": "generated",
+      "count": [
+        0,
+        1
+      ]
+    },
+    "bottles": {
+      "mode": "generated",
+      "count": 0
+    },
+    "books": {
+      "mode": "generated",
+      "count": 0
+    },
+    "springboards": {
+      "mode": "generated",
+      "count": 0
+    },
+    "threats": {
+      "mode": "generated",
+      "count": 1,
+      "pool": [
+        "moving-platform",
+        "pendulum",
+        "ink-wave",
+        "thorns"
+      ]
+    },
+    "secret": {
+      "enabled": false
+    },
+    "arena": {
+      "enabled": false,
+      "boss": "reaper"
+    },
+    "lighting": {
+      "daylight": null
+    }
+  },
+  "floors": [
+    {
+      "id": "arrival",
+      "name": "Верхний ярус",
+      "rotationYDegrees": 0,
+      "enemies": {
+        "count": 0
+      },
+      "threats": {
+        "count": 0
+      },
+      "shadows": {
+        "count": 0
+      },
+      "secret": {
+        "enabled": true
+      },
+      "windows": {
+        "width": 3.7,
+        "height": 11,
+        "columns": 3,
+        "rows": 6,
+        "heightAboveShelf": 6
+      },
+      "rotationSpeedDegrees": 0
+    },
+    {
+      "id": "stacks-02",
+      "bottles": {
+        "mode": "explicit",
+        "items": [
+          {
+            "offset": 9
+          }
+        ]
+      },
+      "rotationSpeedDegrees": 30
+    },
+    {
+      "id": "stacks-03",
+      "springboards": {
+        "mode": "explicit",
+        "items": [
+          {
+            "offset": 7
+          }
+        ]
+      },
+      "rotationSpeedDegrees": 0
+    },
+    {
+      "id": "garden-04",
+      "secret": {
+        "enabled": true
+      },
+      "rotationSpeedDegrees": 0
+    },
+    {
+      "id": "stacks-05",
+      "rotationSpeedDegrees": 0
+    },
+    {
+      "id": "stacks-06",
+      "rotationSpeedDegrees": 0
+    },
+    {
+      "id": "garden-07",
+      "secret": {
+        "enabled": true
+      },
+      "rotationSpeedDegrees": 0
+    },
+    {
+      "id": "stacks-08",
+      "rotationSpeedDegrees": 0
+    },
+    {
+      "id": "stacks-09",
+      "rotationSpeedDegrees": 0
+    },
+    {
+      "id": "guardian-10",
+      "arena": {
+        "enabled": true,
+        "boss": "reaper"
+      },
+      "rotationSpeedDegrees": 0
+    }
+  ],
+  "extraFloor": {
+    "arena": {
+      "every": 10
+    },
+    "secret": {
+      "every": 3
+    }
+  }
+}

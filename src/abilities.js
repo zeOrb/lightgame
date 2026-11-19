@@ -1,4 +1,4 @@
-import {ROUTE_RADIUS,JUMP_SPEED,ROUTE_ANGLE} from './game.js';
+import {route,ROUTE_RADIUS,JUMP_SPEED,ROUTE_ANGLE} from './game.js';
 export const AbilityType=Object.freeze({JUMP:'jump',PHASING:'phasing',FLARE:'flare'});
 export const AbilityInfo=Object.freeze({jump:{key:'Space',cooldown:.12},phasing:{key:'Shift',cooldown:1,duration:.18*1.33,distanceScale:.75*1.33,arenaDistance:4*1.33},flare:{key:'E',cooldown:8}});
 export class Abilities {
@@ -41,7 +41,7 @@ export class Abilities {
   }
 }
 export function applyPhaseDelta(s,lane,delta){
-  const angle=s*ROUTE_ANGLE,radius=ROUTE_RADIUS+lane;
+  const angle=route(s).theta,radius=ROUTE_RADIUS+lane;
   const x=Math.cos(angle)*radius+delta.x,z=Math.sin(angle)*radius+delta.z;
   const turn=Math.atan2(Math.cos(angle)*z-Math.sin(angle)*x,Math.cos(angle)*x+Math.sin(angle)*z);
   return {s:s+turn/ROUTE_ANGLE,lane:Math.hypot(x,z)-ROUTE_RADIUS};

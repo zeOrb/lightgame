@@ -1,3 +1,4 @@
+import {FLOORS} from './floor-config.js';
 import {SecretRoad} from './secret-road.js';
 import * as THREE from 'three';
 import {route,FLOOR_COUNT,END} from './game.js';
@@ -12,9 +13,9 @@ export class SecretLevels {
   constructor(scene,materials){
     this.random=createVisualRandom('secret-constellations');this.routes=[];this.active=null;
     const wood=materials.carved;
-    for(let floor=0;floor<FLOOR_COUNT-1;floor++){
-      if(floor%3!==0)continue;
-      const s=5+floor*14,p=route(s),group=new THREE.Group();scene.add(group);
+    for(const floor of FLOORS){
+      if(!floor.secret.enabled)continue;
+      const s=floor.start+(floor.secret.offset??Math.min(5,floor.count-3)),p=route(s),group=new THREE.Group();scene.add(group);
       const points=[];
       for(let i=0;i<=12;i++){
         const t=i/12,base=route(s+i*.5);
@@ -56,8 +57,8 @@ export class SecretLevels {
   }
   drop(surface){surface.route.dropCooldown=.4;}
   enterPortal(p,foot,s){
-    const r=this.routes.find(r=>!r.completed&&r.portal.visible&&Math.hypot(p.x-r.points[12].x,p.z-r.points[12].z)<.75&&Math.abs(foot-r.points[12].y)<.5);if(!r)return null;
-    r.used=true;r.returnS=s;r.age=0;r.stage='portal';r.secret=true;r.theta=r.p.theta;r.enemies=[];r.from=new THREE.Vector3(p.x,foot,p.z);r.y=r.room.position.y;r.room.visible=true;
+    const r=this.routes.find(r=>{if(r.completed||!r.portal.visible)return false;const endpoint=r.group.localToWorld(r.points[12].clone());return Math.hypot(p.x-endpoint.x,p.z-endpoint.z)<.75&&Math.abs(foot-endpoint.y)<.5;});if(!r)return null;
+    r.used=true;r.returnS=s;r.age=0;r.stage='portal';r.secret=true;r.theta=route(r.s).theta;r.enemies=[];r.from=new THREE.Vector3(p.x,foot,p.z);r.y=r.room.getWorldPosition(new THREE.Vector3()).y;r.room.visible=true;
     r.order=[0,1,2,3,4];for(let i=4;i>0;i--){const j=Math.floor(this.random()*(i+1));[r.order[i],r.order[j]]=[r.order[j],r.order[i]];}r.next=0;this.active=r;return r;
   }
   update(dt,time,player,movement,dash,speed=4.8){
@@ -71,8 +72,8 @@ export class SecretLevels {
       clampArena(player,ARENA_RADIUS-.45);player.y=r.y;
       r.stars.forEach((star,i)=>{star.rotation.y=time*1.3;star.position.y=.75+Math.sin(time*2+i)*.12;star.scale.setScalar(i===r.order[r.next]?1.6+Math.sin(time*5)*.13:.6);star.material.color.setHSL(i/5,.45,i===r.order[r.next]?.8:.22);});
       const target=r.stars[r.order[r.next]];
-      if(target&&Math.hypot(player.x-target.position.x,player.z-target.position.z)<.85){target.visible=false;r.next++;if(r.next===5){r.stage='cleared';r.exit.visible=true;return {secretReward:true};}return {note:true};}
-      if(r.stage==='cleared'&&Math.hypot(player.x,player.z-9.2)<1){r.stage='return';r.age=0;r.from=player.clone();}
+      if(target&&Math.hypot(player.x-r.room.localToWorld(target.position.clone()).x,player.z-r.room.localToWorld(target.position.clone()).z)<.85){target.visible=false;r.next++;if(r.next===5){r.stage='cleared';r.exit.visible=true;return {secretReward:true};}return {note:true};}
+      if(r.stage==='cleared'&&player.distanceTo(r.room.localToWorld(new THREE.Vector3(0,0,9.2)))<1){r.stage='return';r.age=0;r.from=player.clone();}
     }else if(r.stage==='return'){
       const t=Math.min(1,r.age/.45),e=t*t*(3-2*t),p=route(r.returnS);player.copy(r.from).lerp(new THREE.Vector3(p.x,p.y,p.z),e);r.y=player.y;
       if(t===1){r.room.visible=false;r.completed=true;this.active=null;return {returnedS:r.returnS};}

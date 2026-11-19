@@ -32,20 +32,23 @@ export class UnderShelfRelics {
     const geometries=[plank,new THREE.CylinderGeometry(.5,.5,1,5),new THREE.TorusGeometry(1,.12,4,12)];
     this.parts.forEach((parts,kind)=>{
       if(!parts.length)return;
+      const grouped=new Map();for(const part of parts){const id=part.group.userData.floorIndex??0;if(!grouped.has(id))grouped.set(id,[]);grouped.get(id).push(part);}
+      for(const [floorIndex,parts] of grouped){
       const material=applyTowerDepth(new THREE.MeshStandardMaterial({color:kind===0?'#735039':'#665343',roughness:kind===0?.98:.86,metalness:kind===0?0:.5}));
-      const batch=new THREE.InstancedMesh(geometries[kind],material,parts.length);batch.name='under-shelf-relics-'+kind;batch.frustumCulled=false;
+      const batch=new THREE.InstancedMesh(geometries[kind],material,parts.length);batch.name='under-shelf-relics-'+kind;batch.userData.floorIndex=floorIndex;batch.frustumCulled=false;
       parts.forEach((part,index)=>{part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);batch.setMatrixAt(index,this.matrix);batch.setColorAt(index,part.color);this.dynamic.push({...part,batch,index,visible:true});});
       batch.instanceMatrix.needsUpdate=true;this.scene.add(batch);
+      }
     });
     this.parts=null;
   }
-  updateDynamic(){
+  updateDynamic(force=false){
     const batches=new Set();
     for(const part of this.dynamic){
       const visible=part.group.visible;
-      if(visible===part.visible&&(!part.moving||!visible))continue;
+      if(!force&&visible===part.visible&&(!part.moving||!visible))continue;
       part.visible=visible;
-      if(visible){part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);}
+      if(visible){part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);part.batch.parent.updateWorldMatrix(true,false);this.matrix.premultiply(new THREE.Matrix4().copy(part.batch.parent.matrixWorld).invert());}
       else this.matrix.makeScale(0,0,0);
       part.batch.setMatrixAt(part.index,this.matrix);batches.add(part.batch);
     }

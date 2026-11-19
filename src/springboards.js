@@ -1,3 +1,4 @@
+import {FLOORS} from './floor-config.js';
 import * as THREE from 'three';
 import {route,END,isGap} from './game.js';
 export function bounceVelocity(held,jumpScale=1){return (held?11.6:7)*jumpScale;}
@@ -6,8 +7,8 @@ export class Springboards {
     this.items=[];
     const bronze=new THREE.MeshStandardMaterial({color:'#71614b',roughness:.9});
     const light=new THREE.MeshBasicMaterial({color:'#d8f5ee',fog:false,toneMapped:false});
-    for(let target=7;target<END-3;target+=28){
-      const s=[target,target+1,target-1].find(n=>!isGap(n)&&n%14<11&&threats.every(t=>Math.abs(t.s-n)>1.8));
+    for(const item of FLOORS.flatMap(f=>f.placements.springboards)){
+      const s=item.s;
       if(s===undefined)continue;
       const p=route(s),group=new THREE.Group();group.position.set(p.x,p.y+.025,p.z);scene.add(group);
       const ring=new THREE.Mesh(new THREE.TorusGeometry(.46,.045,5,24),bronze);ring.rotation.x=-Math.PI/2;group.add(ring);

@@ -1,4 +1,4 @@
-import {ROUTE_RADIUS, END, GAP_HALF_WIDTH, ROUTE_ANGLE, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius, clamp } from './game.js';
+import {route,ROUTE_RADIUS, END, GAP_HALF_WIDTH, ROUTE_ANGLE, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius, clamp } from './game.js';
 
 export const ThreatType=Object.freeze({HOLE:'hole',MOVING_PLATFORM:'moving-platform',PENDULUM:'pendulum',INK_WAVE:'ink-wave',THORNS:'thorns'});
 export const ThreatInfo=Object.freeze({
@@ -76,9 +76,9 @@ export function platformPassenger(threats,s,lane,height,jumping=false){
   return threats.find(t=>t.type===ThreatType.MOVING_PLATFORM&&Math.abs(s-t.s)<1.2&&movingPlatformSupports(t,s,lane))??null;
 }
 export function carryPlatformPassenger(platform,s,lane,previousOffset){
-  const angle=s*ROUTE_ANGLE,radius=ROUTE_RADIUS+lane,delta=platform.offset-previousOffset;
-  const x=Math.cos(angle)*radius+Math.cos(platform.s*ROUTE_ANGLE)*delta;
-  const z=Math.sin(angle)*radius+Math.sin(platform.s*ROUTE_ANGLE)*delta;
+  const angle=route(s).theta,radius=ROUTE_RADIUS+lane,delta=platform.offset-previousOffset;
+  const x=Math.cos(angle)*radius+Math.cos(route(platform.s).theta)*delta;
+  const z=Math.sin(angle)*radius+Math.sin(route(platform.s).theta)*delta;
   const turn=Math.atan2(Math.cos(angle)*z-Math.sin(angle)*x,Math.cos(angle)*x+Math.sin(angle)*z);
   return {s:s+turn/ROUTE_ANGLE,lane:Math.hypot(x,z)-ROUTE_RADIUS};
 }
@@ -97,7 +97,7 @@ export function hasShelfSupport(threats,s,lane){
   for(let section=Math.max(0,Math.floor(s)-1);section<=Math.min(END+1,Math.ceil(s)+1);section++){
     if(threats.some(t=>t.type===ThreatType.HOLE&&t.s===section))continue;
     const platform=threats.find(t=>t.type===ThreatType.MOVING_PLATFORM&&t.s===section);
-    const angle=(s-section)*ROUTE_ANGLE;
+    const angle=route(s).theta-route(section).theta;
     const x=Math.cos(angle)*radius-(platform?.offset??0),z=Math.sin(angle)*radius,r=Math.hypot(x,z);
     if(r>=shelfInnerRadius(section)&&r<=SHELF_OUTER_RADIUS&&Math.abs(Math.atan2(z,x))<=SHELF_HALF_ANGLE)return true;
   }

@@ -1,10 +1,11 @@
+import {FLOORS} from './floor-config.js';
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {ROUTE_RADIUS,END,FLOOR_COUNT,SHELF_OUTER_RADIUS,shelfInnerRadius,route} from './game.js';
 import {applyTowerDepth} from './tower-depth.js';
 import {createVisualRandom} from './visual-random.js';
 const random=createVisualRandom('floor-gates');
-export function floorGateLayout(){return Array.from({length:FLOOR_COUNT},(_,i)=>{const plank=13+i*14;return {plank,positionS:plank+.49,s:Math.min(plank+.49,END-.2),nextFloor:Math.max(1,FLOOR_COUNT-i-1),passed:false};});}
+export function floorGateLayout(){return FLOORS.map(floor=>{const i=floor.index,plank=floor.end;return {plank,positionS:plank+.49,s:Math.min(plank+.49,END-.2),nextFloor:Math.max(1,FLOOR_COUNT-i-1),passed:false};});}
 export function gateCrossed(gate,previous,s,previousLane,lane){
   if(gate.passed||s<=previous||previous>=gate.s||s<gate.s)return false;
   const t=(gate.s-previous)/(s-previous),radius=ROUTE_RADIUS+previousLane+(lane-previousLane)*t;

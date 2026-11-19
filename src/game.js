@@ -1,20 +1,22 @@
+import {FLOORS,TOTAL_SECTIONS,floorForSection,stepAt} from './floor-config.js';
 import { visualSample } from './visual-random.js';
 import {RUN_UPGRADES} from './progression.js';
-export const FLOOR_COUNT = 10+RUN_UPGRADES.extraFloors;
-export const END = FLOOR_COUNT*14-1;
-export const TOWER_TOP=100+RUN_UPGRADES.extraFloors*7;
-export function floorAt(s) { return FLOOR_COUNT - Math.min(FLOOR_COUNT-1, Math.floor(clamp(s,0,END)/14)); }
-export function depthLight(s) { return Math.pow(1-clamp(s/END,0,1),1.25); }
+export const FLOOR_COUNT = FLOORS.length;
+export const END = TOTAL_SECTIONS-1;
+export const TOWER_TOP=100+(TOTAL_SECTIONS-140)*.5;
+export function floorAt(s) { return FLOOR_COUNT-floorForSection(clamp(s,0,END)).index; }
+export function depthLight(s) { return floorForSection(s).lighting?.daylight??Math.pow(1-clamp(s/END,0,1),1.25); }
 export function canStomp(previousFoot, foot, previousTop, top, velocity, overlaps) {
   return overlaps && velocity < 0 && previousFoot >= previousTop-.12 && foot <= top+.12;
 }
-export const gaps = [19, 38, 59, 81, 103, 126, 147,...Array.from({length:Math.ceil((END-167)/22)},(_,i)=>170+i*22).filter(s=>s<END-3)];
+export const gaps = FLOORS.flatMap(f=>f.holes.map(offset=>f.start+offset));
 export const ROUTE_ANGLE = Math.PI / 14;
 export const SHELF_HALF_ANGLE = .133;
 export const ROUTE_RADIUS = 15;
 export const SHELF_INNER_RADIUS = 13.1;
 export const SHELF_OUTER_RADIUS = 17.0;
 export function shelfInnerRadius(section){
+  const authored=stepAt(section);if(authored.innerRadius!==undefined)return authored.innerRadius;
   const random=visualSample('shelves',section);
   const length=(SHELF_OUTER_RADIUS-SHELF_INNER_RADIUS)*(1+(random*2-1)/8);
   return SHELF_OUTER_RADIUS-length;
@@ -61,8 +63,10 @@ export function lightStep(light, dt, { shadow = false, vitral = false, vitralTim
   const healing=vitral?PASSIVE_LIGHT_DRAIN*drainScale*dt+(vitralRecovery(vitralTime+dt)-vitralRecovery(vitralTime))*maxHP/100*regen:0;
   return clamp(light+healing-loss*dt,0,maxHP);
 }
+let routeYaw=()=>0;
+export function setRouteYawResolver(resolve){routeYaw=resolve;}
 export function route(s, lane = 0) {
-  const theta = s * ROUTE_ANGLE;
+  const theta = s * ROUTE_ANGLE+routeYaw(s);
   const radius = ROUTE_RADIUS + lane;
   return { x: Math.cos(theta) * radius, y: TOWER_TOP - s * .5, z: Math.sin(theta) * radius, theta };
 }

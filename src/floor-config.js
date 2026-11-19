@@ -1,0 +1,60 @@
+import config from './floors.json' with {type:'json'};
+import {RUN_UPGRADES} from './progression.js';
+
+export const FLOOR_CONFIG=config;
+const categories=['windows','loot','enemies','shadows','chests','bottles','books','springboards','threats'];
+function merge(base,override){const out=structuredClone(base);for(const [k,v] of Object.entries(override??{}))out[k]=v&&typeof v==='object'&&!Array.isArray(v)?merge(base?.[k]??{},v):v;return out;}
+function rng(seed){let n=2166136261;for(const c of seed)n=Math.imul(n^c.charCodeAt(0),16777619);return ()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
+function amount(value,random){if(Array.isArray(value)){if(value.length!==2||value[1]<value[0])throw new Error('floors.json: invalid count range');return value[0]+Math.floor(random()*(value[1]-value[0]+1));}return value??0;}
+export function buildFloorLayout(source,extraFloors=0){
+  if(!Number.isInteger(source.baseFloors)||source.baseFloors<1||!Number.isInteger(extraFloors)||extraFloors<0)throw new Error('floors.json: invalid floor count');
+  const result=[];let start=0;
+  for(let index=0;index<source.baseFloors+extraFloors;index++){
+    const custom=source.floors[index]??{},rule=merge(source.defaults,custom),count=rule.steps.count;
+    if(!Number.isInteger(count)||count<4||count>128)throw new Error('floors.json: steps.count must be 4..128');
+    if(!Number.isFinite(rule.rotationYDegrees??0))throw new Error('floors.json: invalid rotation');
+    if(rule.lighting?.daylight!==null&&rule.lighting?.daylight!==undefined&&(!Number.isFinite(rule.lighting.daylight)||rule.lighting.daylight<0||rule.lighting.daylight>1))throw new Error('floors.json: daylight must be 0..1 or null');
+    const checkStep=item=>{if(item.innerRadius!==undefined&&(!Number.isFinite(item.innerRadius)||item.innerRadius<1||item.innerRadius>=16.5))throw new Error('floors.json: invalid step innerRadius');if(item.style!==undefined&&!['carved','plain'].includes(item.style))throw new Error('floors.json: unknown step style '+item.style);};
+    checkStep(rule.steps);if(rule.steps.styles?.some(style=>!['carved','plain'].includes(style))||rule.steps.styles?.length===0)throw new Error('floors.json: invalid step styles');
+    const floor={...rule,id:custom.id??'floor-'+(index+1),index,start,count,end:start+count-1,rotationYDegrees:rule.rotationYDegrees??0,placements:{}};
+    if(result.some(f=>f.id===floor.id))throw new Error('floors.json: duplicate floor id '+floor.id);
+    const random=rng(String(source.seed)+':'+floor.id),used=new Set();
+    const valid=(offset)=>Number.isInteger(offset)&&offset>=0&&offset<count;
+    const select=(n,min=1,max=count-3)=>{const available=Array.from({length:count},(_,i)=>i).filter(i=>i>=min&&i<=max&&!used.has(i));for(let i=available.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[available[i],available[j]]=[available[j],available[i]];}return available.slice(0,n).sort((a,b)=>a-b);};
+    for(const key of categories)if(rule[key].mode==='explicit'&&Array.isArray(rule[key].items))for(const item of rule[key].items)used.add(typeof item==='number'?item:item.offset);
+    if(rule.secret?.enabled)used.add(rule.secret.offset??Math.min(5,count-3));
+    const stepRule=rule.steps;
+    if(stepRule.mode==='explicit'){
+      if(!Array.isArray(stepRule.items))throw new Error('floors.json: explicit steps require items');
+      floor.stepItems=new Map(stepRule.items.map(item=>{const value=typeof item==='number'?{offset:item}:item;if(!valid(value.offset))throw new Error('floors.json: invalid step offset');checkStep(value);return [value.offset,value];}));
+      if(floor.stepItems.size!==stepRule.items.length)throw new Error('floors.json: duplicate step offset');
+      floor.holes=Array.from({length:count},(_,i)=>i).filter(i=>!floor.stepItems.has(i));
+    }else if(stepRule.mode==='generated')floor.holes=select(amount(stepRule.holes?.count,random),stepRule.holes?.safeStart??2,count-1-(stepRule.holes?.safeEnd??2));
+    else throw new Error('floors.json: unknown steps mode');
+    if(floor.holes.includes(count-1))throw new Error('floors.json: final step is required for the floor gate');
+    floor.holes.forEach(i=>used.add(i));used.add(count-1);
+    // Reserve authored placements first so generated content cannot overwrite them.
+    for(const key of categories){const r=rule[key];if(r.mode!=='explicit'&&r.mode!=='generated')throw new Error('floors.json: unknown mode for '+key);if(r.mode==='explicit'){
+      if(!Array.isArray(r.items))throw new Error('floors.json: explicit '+key+' requires items');
+      floor.placements[key]=r.items.map(item=>{const value=typeof item==='number'?{offset:item}:item;if(!valid(value.offset)||floor.holes.includes(value.offset)||!Number.isFinite(value.lane??0)||Math.abs(value.lane??0)>1.2)throw new Error('floors.json: invalid '+key+' offset '+value.offset);used.add(value.offset);return {...value,s:start+value.offset};});
+    }}
+    const lights=new Set((floor.placements.windows??[]).map(p=>p.offset));
+    for(const key of ['enemies','shadows','threats','books'])if((floor.placements[key]??[]).some(p=>lights.has(p.offset)))throw new Error('floors.json: windows conflict with '+key+' on '+floor.id);
+    for(const key of categories){const r=rule[key];if(r.mode==='explicit')continue;
+      const n=amount(r.count,random);if(!Number.isInteger(n)||n<0)throw new Error('floors.json: invalid count for '+key);
+      const selected=select(n);if(selected.length!==n)throw new Error('floors.json: '+floor.id+' has no space for '+key+' (requested '+n+', available '+selected.length+')');
+      floor.placements[key]=selected.map(offset=>{used.add(offset);const pool=r.pool;if(pool!==null&&pool!==undefined&&!pool.length)throw new Error('floors.json: empty pool for '+key);return {offset,s:start+offset,...(pool?.length?{id:pool[Math.floor(random()*pool.length)]}:{})};});
+    }
+    for(const item of floor.placements.threats)if(!['moving-platform','pendulum','ink-wave','thorns'].includes(item.id))throw new Error('floors.json: unknown threat '+item.id);
+    for(const item of floor.placements.loot)if(item.count!==undefined&&(!Number.isInteger(item.count)||item.count<1||item.count>64))throw new Error('floors.json: invalid loot count');
+    if(index>=source.baseFloors){floor.arena.enabled=(index+1)%(source.extraFloor?.arena?.every??10)===0;floor.secret.enabled=index%(source.extraFloor?.secret?.every??3)===0;}
+    result.push(floor);start+=count;
+  }
+  return result;
+}
+export const FLOORS=buildFloorLayout(config,RUN_UPGRADES.extraFloors);
+export const TOTAL_SECTIONS=FLOORS.reduce((n,f)=>n+f.count,0);
+export function floorForSection(s){return FLOORS.find(f=>s<f.start+f.count)??FLOORS.at(-1);}
+export function floorForHeight(y,top=100+(TOTAL_SECTIONS-140)*.5){return floorForSection((top-y)*2);}
+export function placementAt(category,s){return floorForSection(s).placements[category].find(item=>item.s===s);}
+export function stepAt(s){const f=floorForSection(s);const styles=f.steps.styles??['carved'];return {style:styles[Math.abs(Math.floor(s))%styles.length],innerRadius:f.steps.innerRadius,decorations:f.steps.decorations,...f.stepItems?.get(s-f.start)};}

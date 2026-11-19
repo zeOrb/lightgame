@@ -1,14 +1,15 @@
+import {FLOORS} from './floor-config.js';
 import {FLOOR_COUNT,END,route} from './game.js';
 // Leave clearance between the arena barrier and the spiral shelves.
 export const ARENA_RADIUS=11.25;
 export function risingJumpHits(previousHeight,height,velocity,overlaps){
   return overlaps&&velocity>0&&height>.02&&height>previousHeight;
 }
-export function arenaLayout(){return Array.from({length:FLOOR_COUNT},(_,index)=>{
-  const plank=13+index*14,p=route(plank);
+export function arenaLayout(){return FLOORS.map(floor=>{
+  const index=floor.index,plank=floor.end,p=route(plank);
   const gateS=Math.min(plank+.49,END-.2);
-  return {index,plank,s:gateS,exitS:Math.min(END,plank+.8),returnS:gateS,y:p.y,theta:p.theta,cleared:false};
-}).filter(arena=>(arena.index+1)%10===0);}
+  return {bossId:floor.arena.boss,index,plank,s:gateS,exitS:Math.min(END,plank+.8),returnS:gateS,y:p.y,theta:p.theta,cleared:false};
+}).filter(arena=>FLOORS[arena.index].arena.enabled);}
 export function clampArena(point,radius=ARENA_RADIUS-.45){
   const length=Math.hypot(point.x,point.z);
   if(length>radius){point.x*=radius/length;point.z*=radius/length;}

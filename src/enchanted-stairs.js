@@ -1,3 +1,4 @@
+import {stepAt} from './floor-config.js';
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {SHELF_HALF_ANGLE,SHELF_OUTER_RADIUS,shelfInnerRadius} from './game.js';
@@ -21,6 +22,7 @@ export function createEnchantedStep(parent,section,materials){
   const inner=shelfInnerRadius(section),outer=SHELF_OUTER_RADIUS,a=SHELF_HALF_ANGLE;
   const tread=wedge(inner,outer,a,.3,.035);mapWoodPanel(tread,section,inner,outer,a);
   const floor=new THREE.Mesh(tread,materials.wood);floor.position.y=-.355;parent.add(floor);
+  if(stepAt(section).style==='plain')return floor;
   const molding=new THREE.Mesh(wedge(inner+.07,outer-.07,a-.004,.15,.025),materials.carved);molding.position.y=-.51;parent.add(molding);
   const metal=[],ribs=[];
   function line(points,radius=.013){metal.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),Math.max(8,points.length*3),radius,4,false));}

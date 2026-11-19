@@ -1,3 +1,4 @@
+import {FLOORS} from './floor-config.js';
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {applyTowerDepth} from './tower-depth.js';
@@ -8,9 +9,11 @@ import {lanternSurfaces,lanternGlow} from './lantern-surfaces.js';
 const palette=['#74523f','#52605c','#564c65','#77464a','#8a7250','#435367','#65513e','#48544a'];
 export function libraryLayout(){
   const random=createVisualRandom('library-layout'),cases=[],books=[];
-  for(let level=0;level<FLOOR_COUNT+1;level++)for(let bay=0;bay<8;bay++){
-    const angle=.18+Math.PI/8+bay*Math.PI/4,base=14+level*7;
-    cases.push({angle,base,level,bay,rows:5});
+  for(const floor of FLOORS)for(let bay=0;bay<8;bay++){
+    const angle=.18+Math.PI/8+bay*Math.PI/4;
+    const bottom=TOWER_TOP-(floor.end+1)*.5,top=TOWER_TOP-floor.start*.5;
+    const rows=Math.max(1,Math.floor((top-bottom-.9)/1.18));
+    cases.push({angle,base:bottom+.04,level:floor.index,bay,rows,floorIndex:floor.index});
   }
   // Window columns are book-filled too, except for the actual glass openings.
   for(let bay=0;bay<8;bay++){
@@ -26,26 +29,31 @@ export function libraryLayout(){
     for(let y=10;y<TOWER_TOP-5;y+=16)cases.push({angle:angle+side*.13,base:y-2.9,level:-2,bay,rows:4,width:1.05});
     cases.push({angle:angle+side*.16,base:TOWER_TOP+.3,level:-2,bay,rows:9,width:1.05});
   }
-  for(const {angle,base,rows,width=5.1} of cases){
+  for(const [caseId,cabinet] of cases.entries()){
+    const {angle,base,rows,width=5.1}=cabinet;
     for(let row=0;row<rows;row++)for(const side of [-1,1]){
       const half=width/2-.16;
       let x=side<0?-half:.12;const end=side<0?-.12:half,y=base+.18+row*1.18;
       // Irregular horizontal stacks interrupt otherwise densely packed rows.
       if(end-x>.9&&random()<.25){
         const count=3+Math.floor(random()*3),width=.6+random()*.22;
-        for(let j=0;j<count;j++)books.push({angle,x:x+width/2,y:y+.065+j*.13,z:-.22+(random()-.5)*.1,w:width,h:.11,d:.65+random()*.13,tilt:(random()-.5)*.07,tile:Math.floor(random()*32)});
+        for(let j=0;j<count;j++)books.push({caseId,angle,x:x+width/2,y:y+.065+j*.13,z:-.22+(random()-.5)*.1,w:width,h:.11,d:.65+random()*.13,tilt:(random()-.5)*.07,tile:Math.floor(random()*32)});
         x+=width+.07;
       }
       while(x<end-.13){
         const w=Math.min(end-x,.11+random()*.16),h=.63+random()*.43,d=.53+random()*.26;
-        books.push({angle,x:x+w/2,y:y+h/2,z:-.24+(random()-.5)*.12,w,h,d,tilt:random()<.09?(random()-.5)*.18:0,tile:Math.floor(random()*32)});
+        books.push({caseId,angle,x:x+w/2,y:y+h/2,z:-.24+(random()-.5)*.12,w,h,d,tilt:random()<.09?(random()-.5)*.18:0,tile:Math.floor(random()*32)});
         x+=w+.017+random()*.015;
       }
     }
   }
   return {cases,books};
 }
-let sharedSpineAtlas;
+let sharedSpineAtlas,sharedLayout,sharedWallTexture;
+export function partitionLibraryLayout(source,minY,maxY){
+  const owned=new Set(source.cases.map((c,i)=>c.base+(c.rows*1.18+.75)*.5>=minY&&c.base+(c.rows*1.18+.75)*.5<maxY?i:-1).filter(i=>i>=0));
+  return {cases:source.cases.filter((_,i)=>owned.has(i)),books:source.books.filter(b=>owned.has(b.caseId))};
+}
 export function spineAtlas(){
   if(sharedSpineAtlas)return sharedSpineAtlas;
   const random=createVisualRandom('library-spines'),canvas=document.createElement('canvas');canvas.width=1024;canvas.height=512;
@@ -64,13 +72,14 @@ export function spineAtlas(){
   }
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;sharedSpineAtlas=texture;return texture;
 }
-export function createAncientLibrary(scene){
-  const layout=libraryLayout(),group=new THREE.Group();group.name='Ancient library';scene.add(group);
+export function createAncientLibrary(scene,{minY=-Infinity,maxY=Infinity}={}){
+  const source=sharedLayout??=libraryLayout(),layout=partitionLibraryLayout(source,minY,maxY),group=new THREE.Group();group.name='Ancient library';scene.add(group);
   const material=color=>applyTowerDepth(new THREE.MeshStandardMaterial({color,roughness:.85}));
   const oak=material('#493a30'),recess=material('#231f1d'),brass=material('#8d7854');brass.metalness=.45;
   const leather=material('#5f4a3a'),pages=material('#a89c7d'),spines=material('#ffffff');spines.map=spineAtlas();
   // Continuous book-filled rear wall seals even the narrow gaps between cases.
   // The real windows and carved cases sit in front of this recessed layer.
+  if(!sharedWallTexture){
   const random=createVisualRandom('library-back-wall'),wall=document.createElement('canvas');wall.width=wall.height=2048;
   const wc=wall.getContext('2d');wc.fillStyle='#34291f';wc.fillRect(0,0,2048,2048);
   for(let row=0;row<13;row++){
@@ -81,9 +90,15 @@ export function createAncientLibrary(scene){
     }
     wc.fillStyle='#231a15';wc.fillRect(0,bottom,2048,13);wc.fillStyle='#766047';wc.fillRect(0,bottom+1,2048,3);
   }
-  const wallTexture=new THREE.CanvasTexture(wall);wallTexture.colorSpace=THREE.SRGBColorSpace;wallTexture.wrapS=wallTexture.wrapT=THREE.RepeatWrapping;wallTexture.repeat.set(8,(132+TOWER_TOP-100)/15.6);wallTexture.anisotropy=4;
+  const wallTexture=new THREE.CanvasTexture(wall);wallTexture.colorSpace=THREE.SRGBColorSpace;wallTexture.wrapS=wallTexture.wrapT=THREE.RepeatWrapping;wallTexture.repeat.set(8,1);wallTexture.anisotropy=4;sharedWallTexture=wallTexture;
+  }
+  const wallTexture=sharedWallTexture;
   const backdropMaterial=material('#d5c1a2');backdropMaterial.map=wallTexture;backdropMaterial.side=THREE.BackSide;
-  const backdrop=new THREE.Mesh(new THREE.CylinderGeometry(18.96,18.96,132+TOWER_TOP-100,128,1,true),backdropMaterial);backdrop.position.y=65+(TOWER_TOP-100)/2;backdrop.name='Continuous book-lined wall';group.add(backdrop);
+  const wallBottom=Math.max(-1,minY),wallTop=Math.min(TOWER_TOP+31,maxY),wallHeight=wallTop-wallBottom;
+  const wallGeometry=new THREE.CylinderGeometry(18.96,18.96,wallHeight,128,1,true);
+  const uv=wallGeometry.attributes.uv,position=wallGeometry.attributes.position;
+  for(let i=0;i<uv.count;i++)uv.setY(i,(position.getY(i)+(wallBottom+wallTop)/2+1)/15.6);
+  const backdrop=new THREE.Mesh(wallGeometry,backdropMaterial);backdrop.position.y=(wallBottom+wallTop)/2;backdrop.name='Continuous book-lined wall';group.add(backdrop);
   const previous=spines.onBeforeCompile;
   spines.onBeforeCompile=shader=>{previous(shader);shader.vertexShader='attribute vec2 spineTile;\n'+shader.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\nvMapUv=(vMapUv*.96+.02+spineTile)/vec2(8.,4.);');};
   spines.customProgramCacheKey=()=> 'ancient-library-spines-v1';
@@ -117,7 +132,7 @@ export function createAncientLibrary(scene){
   for(const [list,mat,name] of [[frames,oak,'Carved oak cases'],[backs,recess,'Deep shelf recesses'],[fittings,brass,'Worn brass edges']]){
     const batch=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),mat,list.length);list.forEach((m,i)=>batch.setMatrixAt(i,m));batch.instanceMatrix.needsUpdate=true;batch.name=name;group.add(batch);
   }
-  const archMesh=new THREE.Mesh(mergeGeometries(arches,false),brass);group.add(archMesh);arches.forEach(g=>g.dispose());
+  const archMesh=new THREE.Mesh(arches.length?mergeGeometries(arches,false):new THREE.BufferGeometry(),brass);group.add(archMesh);arches.forEach(g=>g.dispose());
   // Warm lanterns are emissive geometry, without adding dozens of scene lights.
   const {glass:lanternMaterial,metal:lanternMetal}=lanternSurfaces();
   const lanterns=[],cages=[];
