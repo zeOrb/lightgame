@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "baseFloors": 1,
+  "seed": "sunny-layout-v1",
+  "tower": {
+    "rotationYDegrees": 0,
+    "rotationSpeedDegrees": 0,
+    "rotationCameraFollow": true
+  },
+  "defaults": {
+    "placementRules": [
+      {
+        "between": [
+          "windows",
+          "windows"
+        ],
+        "minDistance": 2
+      }
+    ],
+    "steps": {
+      "mode": "generated",
+      "count": 14,
+      "holes": {
+        "count": [
+          0,
+          1
+        ],
+        "safeStart": 3,
+        "safeEnd": 3
+      },
+      "styles": [
+        "carved"
+      ],
+      "decorations": true
+    },
+    "windows": {
+      "mode": "generated",
+      "count": 3,
+      "width": 2.3,
+      "height": 5.8,
+      "columns": 1,
+      "rows": 4,
+      "heightAboveShelf": 4
+    },
+    "loot": {
+      "mode": "generated",
+      "count": [
+        2,
+        3
+      ],
+      "gemsPerTile": null,
+      "pool": null
+    },
+    "enemies": {
+      "mode": "generated",
+      "count": [
+        0,
+        1
+      ],
+      "pool": [
+        "wolf"
+      ]
+    },
+    "shadows": {
+      "mode": "generated",
+      "count": 1
+    },
+    "chests": {
+      "mode": "generated",
+      "count": [
+        0,
+        1
+      ]
+    },
+    "bottles": {
+      "mode": "generated",
+      "count": 0
+    },
+    "books": {
+      "mode": "generated",
+      "count": 0
+    },
+    "springboards": {
+      "mode": "generated",
+      "count": 0
+    },
+    "threats": {
+      "mode": "generated",
+      "count": 1,
+      "pool": [
+        "moving-platform",
+        "pendulum",
+        "ink-wave",
+        "thorns"
+      ]
+    },
+    "secret": {
+      "enabled": false
+    },
+    "arena": {
+      "enabled": false,
+      "boss": "reaper"
+    },
+    "lighting": {
+      "daylight": null
+    }
+  },
+  "floors": [
+    {
+      "id": "manual-rule-test",
+      "name": "Ручной тест конфликтов",
+      "placementRules": [
+        {
+          "between": [
+            "windows",
+            "windows"
+          ],
+          "minDistance": 2
+        },
+        {
+          "between": [
+            "windows",
+            "chests"
+          ],
+          "minDistance": 2
+        }
+      ],
+      "steps": {
+        "mode": "explicit",
+        "count": 14,
+        "items": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
+      },
+      "windows": {
+        "mode": "explicit",
+        "items": [
+          2,
+          3,
+          8
+        ]
+      },
+      "chests": {
+        "mode": "explicit",
+        "items": [
+          5,
+          9
+        ]
+      },
+      "loot": {
+        "mode": "explicit",
+        "items": []
+      },
+      "enemies": {
+        "mode": "explicit",
+        "items": []
+      },
+      "shadows": {
+        "mode": "explicit",
+        "items": []
+      },
+      "bottles": {
+        "mode": "explicit",
+        "items": []
+      },
+      "books": {
+        "mode": "explicit",
+        "items": []
+      },
+      "springboards": {
+        "mode": "explicit",
+        "items": []
+      },
+      "threats": {
+        "mode": "explicit",
+        "items": []
+      },
+      "secret": {
+        "enabled": false
+      },
+      "arena": {
+        "enabled": false
+      }
+    }
+  ],
+  "extraFloor": {
+    "arena": {
+      "every": 10
+    },
+    "secret": {
+      "every": 3
+    }
+  }
+}

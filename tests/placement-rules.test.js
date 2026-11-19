@@ -26,12 +26,29 @@ test('rules apply symmetrically to generated and authored categories',()=>{
  c.floors[0]={windows:{mode:'explicit',items:[5]},chests:{count:3}};
  const f=buildFloorLayout(c)[0];assert.ok(separated(f.placements.windows,f.placements.chests,3));
 });
-test('authored rule violations fail clearly and floor overrides can disable inherited rules',()=>{
- const c=empty();c.floors[0]={windows:{mode:'explicit',items:[2,3]}};
- assert.throws(()=>buildFloorLayout(c),/authored placements violate placementRules on floor-1/);
- c.floors[0].placementRules=[];assert.deepEqual(buildFloorLayout(c)[0].placements.windows.map(p=>p.offset),[2,3]);
+test('authored conflicts are repaired nearby, reported, and can be disabled per floor',()=>{
+ const c=empty();c.floors[0]={windows:{mode:'explicit',items:[{offset:2,width:4},{offset:3,width:5}]}};
+ const original=structuredClone(c),f=buildFloorLayout(c)[0];
+ assert.deepEqual(f.placements.windows.map(p=>p.offset),[2,4]);assert.equal(f.placements.windows[1].width,5);
+ assert.deepEqual(f.placementWarnings,[{code:'authored-placement-adjusted',floorId:'floor-1',category:'windows',index:1,fromOffset:3,toOffset:4}]);
+ assert.equal(f.placements.windows[1].s,f.start+4);assert.deepEqual(c,original);
+ c.floors[0].placementRules=[];const disabled=buildFloorLayout(c)[0];
+ assert.deepEqual(disabled.placements.windows.map(p=>p.offset),[2,3]);assert.deepEqual(disabled.placementWarnings,[]);
  c.floors[0].placementRules=[{between:['windows','windows'],minDistance:3}];
- c.floors[0].windows.items=[2,4];assert.throws(()=>buildFloorLayout(c),/violate/);
+ assert.deepEqual(buildFloorLayout(c)[0].placements.windows.map(p=>p.offset),[2,5]);
+});
+test('repair avoids holes and reserved sections and generation uses corrected reservations',()=>{
+ const c=empty();c.floors[0]={steps:{mode:'explicit',items:[1,2,3,5,6,7,8,9,10,11,12,13]},secret:{enabled:true,offset:5},windows:{mode:'explicit',items:[2,3]},chests:{count:3}};
+ const a=buildFloorLayout(c,0,'repair'),b=buildFloorLayout(c,0,'repair');assert.deepEqual(a,b);
+ const f=a[0];assert.deepEqual(f.placements.windows.map(p=>p.offset),[2,6]);
+ assert.ok(f.placements.chests.every(p=>p.offset!==2&&p.offset!==6&&p.offset!==4&&p.offset!==5));
+});
+test('repair also corrects authored cross-category conflicts and rejects impossible repairs',()=>{
+ const c=empty();c.defaults.placementRules=[{between:['windows','chests'],minDistance:3}];
+ c.floors[0]={windows:{mode:'explicit',items:[5]},chests:{mode:'explicit',items:[{offset:6,id:'chest-data'}]}};
+ const f=buildFloorLayout(c)[0];assert.equal(f.placements.chests[0].offset,8);assert.equal(f.placements.chests[0].id,'chest-data');
+ c.floors[0]={steps:{count:4,mode:'explicit',items:[0,3]},windows:{mode:'explicit',items:[0]},chests:{mode:'explicit',items:[0]}};
+ assert.throws(()=>buildFloorLayout(c),/cannot repair authored placementRules/);
 });
 test('invalid rule definitions are rejected before placement',()=>{
  for(const bad of [null,{},[{between:['window','windows'],minDistance:2}],[{between:['windows'],minDistance:2}],[{between:['windows','windows'],minDistance:1.5}],[{between:['windows','windows'],minDistance:0}]]){

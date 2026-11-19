@@ -1,4 +1,4 @@
-import {readPlacementRules,solveFloorPlacements} from './placement-rules.js';
+import {readPlacementRules,repairAuthoredPlacements,solveFloorPlacements} from './placement-rules.js';
 import {RandomManager,randomManager} from './random-manager.js';
 import config from './floors.json' with {type:'json'};
 import {RUN_UPGRADES} from './progression.js';
@@ -51,8 +51,8 @@ export function buildFloorLayout(source,extraFloors=0,seed=randomManager.seed){
       if(!Array.isArray(r.items))throw new Error('floors.json: explicit '+key+' requires items');
       floor.placements[key]=r.items.map(item=>{const value=typeof item==='number'?{offset:item}:item;if(!valid(value.offset)||floor.holes.includes(value.offset)||!Number.isFinite(value.lane??0)||Math.abs(value.lane??0)>1.2)throw new Error('floors.json: invalid '+key+' offset '+value.offset);used.add(value.offset);return {...value,s:start+value.offset};});
     }}
-    const lights=new Set((floor.placements.windows??[]).map(p=>p.offset));
-    for(const key of ['enemies','shadows','threats','books'])if((floor.placements[key]??[]).some(p=>lights.has(p.offset)))throw new Error('floors.json: windows conflict with '+key+' on '+floor.id);
+    const authoredRules=[...placementRules,...['enemies','shadows','threats','books'].map(key=>({between:['windows',key],minDistance:1}))];
+    repairAuthoredPlacements(floor,authoredRules,used);
     const requests=[];
     let budget=Array.from({length:count},(_,i)=>i).filter(i=>i>=1&&i<=count-3&&!used.has(i)).length;
     for(const key of categories){const r=rule[key];if(r.mode==='explicit')continue;
@@ -76,6 +76,7 @@ export function buildFloorLayout(source,extraFloors=0,seed=randomManager.seed){
   return result;
 }
 export const FLOORS=buildFloorLayout(config,RUN_UPGRADES.extraFloors);
+export const LEVEL_DIAGNOSTICS=FLOORS.flatMap(floor=>floor.placementWarnings);
 export const TOTAL_SECTIONS=FLOORS.reduce((n,f)=>n+f.count,0);
 export function floorForSection(s){return FLOORS.find(f=>s<f.start+f.count)??FLOORS.at(-1);}
 export function floorForHeight(y,top=100+(TOTAL_SECTIONS-140)*.5){return floorForSection((top-y)*2);}

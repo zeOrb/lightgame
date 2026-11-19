@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+export const VINE_RESPONSE_REACH=3;
 
 // One shared position and velocity; every blade evaluates its response on GPU.
 const playerPosition={value:new THREE.Vector3(1e6,1e6,1e6)};
@@ -16,6 +17,7 @@ export function updateFoliagePlayer(position,dt,active=true){
     vinePosition.value.lerp(position,1-Math.exp(-dt*6));
   }
   playerPosition.value.copy(position);
+  return playerVector.value;
 }
 export function applyFoliageResponse(shader,weight,reach,strength,strand=false){
   shader.uniforms.foliagePlayerPosition=strand?vinePosition:playerPosition;shader.uniforms.foliagePlayerVector=strand?vineVector:playerVector;

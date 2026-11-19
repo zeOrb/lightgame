@@ -1,0 +1,89 @@
+{
+  "id": "manual-rule-test",
+  "name": "Ручной тест конфликтов",
+  "placementRules": [
+    {
+      "between": [
+        "windows",
+        "windows"
+      ],
+      "minDistance": 2
+    },
+    {
+      "between": [
+        "windows",
+        "chests"
+      ],
+      "minDistance": 2
+    }
+  ],
+  "steps": {
+    "mode": "explicit",
+    "count": 14,
+    "items": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ]
+  },
+  "windows": {
+    "mode": "explicit",
+    "items": [
+      2,
+      3,
+      8
+    ]
+  },
+  "chests": {
+    "mode": "explicit",
+    "items": [
+      5,
+      9
+    ]
+  },
+  "loot": {
+    "mode": "explicit",
+    "items": []
+  },
+  "enemies": {
+    "mode": "explicit",
+    "items": []
+  },
+  "shadows": {
+    "mode": "explicit",
+    "items": []
+  },
+  "bottles": {
+    "mode": "explicit",
+    "items": []
+  },
+  "books": {
+    "mode": "explicit",
+    "items": []
+  },
+  "springboards": {
+    "mode": "explicit",
+    "items": []
+  },
+  "threats": {
+    "mode": "explicit",
+    "items": []
+  },
+  "secret": {
+    "enabled": false
+  },
+  "arena": {
+    "enabled": false
+  }
+}

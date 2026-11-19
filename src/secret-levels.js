@@ -6,6 +6,7 @@ import {route,FLOOR_COUNT,END} from './game.js';
 import {ARENA_RADIUS,clampArena} from './arena-state.js';
 import {SecretArenaGround} from './secret-arena-ground.js';
 
+export const SECRET_ROAD_ASSIST=Object.freeze({height:1.25,duration:.2});
 const SECRET_LIFT=1.7; // First step is 2.6m above its shelf, below the base jump apex.
 
 // Optional rising routes share the arena's free-movement space, without combat.
@@ -42,7 +43,7 @@ export class SecretLevels {
     g.add(new THREE.Mesh(new THREE.TorusGeometry(1,.065,8,48),m));
     const inner=new THREE.Mesh(new THREE.CircleGeometry(.94,48),new THREE.MeshBasicMaterial({color:0x7061a8,transparent:true,opacity:.32,side:THREE.DoubleSide,depthWrite:false,toneMapped:false}));g.add(inner);return g;
   }
-  reset(){this.active=null;for(const r of this.routes){r.used=false;r.completed=false;r.dropCooldown=0;r.reveal=0;r.room.visible=false;r.portal.visible=false;r.road.reveal(0);r.road.grass.windTime.value=0;r.ground.windTime.value=0;r.stars.forEach(m=>m.visible=true);}}
+  reset(){this.assist=null;this.active=null;for(const r of this.routes){r.used=false;r.completed=false;r.dropCooldown=0;r.reveal=0;r.room.visible=false;r.portal.visible=false;r.road.reveal(0);r.road.grass.windTime.value=0;r.ground.windTime.value=0;r.stars.forEach(m=>m.visible=true);}}
   reveal(s,dt,time){
     for(const r of this.routes){
       r.dropCooldown=Math.max(0,(r.dropCooldown??0)-dt);
@@ -56,7 +57,32 @@ export class SecretLevels {
     if(velocity>0)return null;let hit=null;
     for(const r of this.routes){if(r.dropCooldown>0)continue;const y=r.road.landing(previousFoot,foot,p,before);if(y!==null&&(!hit||y>hit.y))hit={route:r,y};}return hit;
   }
-  drop(surface){surface.route.dropCooldown=.4;}
+  assistUp(position,previousFoot,foot,velocity,dt){
+    if(dt<=0)return null;
+    let assist=this.assist;
+    if(!assist){
+      // Approximate the visible upper body/ears by height, never by a mesh collider.
+      if(velocity<-.5||foot<=previousFoot)return null;
+      let candidate=null;
+      for(const route of this.routes){
+        if(route.dropCooldown>0)continue;
+        const y=route.road.heightAt(position),gap=y===null?Infinity:y-foot;
+        if(gap>.025&&gap<=SECRET_ROAD_ASSIST.height&&(!candidate||y<candidate.y))candidate={route,y};
+      }
+      if(!candidate)return null;
+      assist=this.assist={route:candidate.route,age:0};
+    }
+    const y=assist.route.dropCooldown>0?null:assist.route.road.heightAt(position);
+    // Walking out of the footprint cancels the lift without pulling sideways.
+    if(y===null||foot>=y){this.assist=null;return null;}
+    const ease=t=>t*t*(3-2*t),old=ease(Math.min(1,assist.age/SECRET_ROAD_ASSIST.duration));
+    assist.age+=dt;const next=ease(Math.min(1,assist.age/SECRET_ROAD_ASSIST.duration));
+    const base=Math.min(y,Math.max(foot,previousFoot)),amount=(next-old)/Math.max(1e-8,1-old);
+    const lifted=Math.min(y,base+(y-base)*amount),landed=y-lifted<.01||next>=1;
+    if(landed)this.assist=null;
+    return {route:assist.route,y:landed?y:lifted,velocity:landed?0:Math.max(0,velocity),landed};
+  }
+  drop(surface){surface.route.dropCooldown=.4;if(this.assist?.route===surface.route)this.assist=null;}
   enterPortal(p,foot,s){
     const r=this.routes.find(r=>{if(r.completed||!r.portal.visible)return false;const endpoint=r.group.localToWorld(r.points[12].clone());return Math.hypot(p.x-endpoint.x,p.z-endpoint.z)<.75&&Math.abs(foot-endpoint.y)<.5;});if(!r)return null;
     r.used=true;r.returnS=s;r.age=0;r.stage='portal';r.secret=true;r.theta=route(r.s).theta;r.enemies=[];r.from=new THREE.Vector3(p.x,foot,p.z);r.y=r.room.getWorldPosition(new THREE.Vector3()).y;r.room.visible=true;

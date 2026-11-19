@@ -1,4 +1,4 @@
-import {applyFoliageResponse} from './foliage-response.js';
+import {applyFoliageResponse,VINE_RESPONSE_REACH} from './foliage-response.js';
 import * as THREE from 'three';
 import {createVisualRandom} from './random-manager.js';
 
@@ -47,7 +47,7 @@ export class SecretVines{
         transformed.z+=sin(vineTime*.63+vinePhase*.7-position.y*.5)*.08*vineWeight;`);
     };
     const windCompile=material.onBeforeCompile;
-    material.onBeforeCompile=shader=>{windCompile(shader);applyFoliageResponse(shader,'pow(clamp(uv.y,0.,1.),2.)',3.0,2.25,true);};
+    material.onBeforeCompile=shader=>{windCompile(shader);applyFoliageResponse(shader,'pow(clamp(uv.y,0.,1.),2.)',VINE_RESPONSE_REACH,2.25,true);};
     material.customProgramCacheKey=()=> 'secret-vines-player-response-v8-'+groundMaterial.customProgramCacheKey();
     this.meshes=[];const dummy=new THREE.Object3D();
     for(let style=0;style<3;style++){
@@ -55,7 +55,7 @@ export class SecretVines{
       selected.forEach((anchor,i)=>{dummy.position.copy(anchor.position);dummy.rotation.set(0,random()*Math.PI*2,0);const scale=.65+random()*.8;const fullness=.65+random()*.95;dummy.scale.set(fullness,scale,fullness);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});
       // Draw after atmospheric blur, against the copied solid-scene depth.
       // Material fog and tower-height tint still apply to the foliage itself.
-      mesh.layers.set(2);
+      mesh.layers.set(2);mesh.userData.vineLength=1.8+style*.75;
       mesh.userData.sections=selected.map(a=>a.section??0);mesh.frustumCulled=false;parent.add(mesh);this.meshes.push(mesh);
     }
   }

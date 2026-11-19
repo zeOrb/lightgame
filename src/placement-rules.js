@@ -12,6 +12,36 @@ function compatible(key,offset,placed,rules){
     return !matches||Math.abs(offset-item.offset)>=minDistance;
   }));
 }
+// Keep authored data in the JSON intact; corrections belong to the compiled floor.
+export function repairAuthoredPlacements(floor,rules,used){
+  const items=Object.entries(floor.placements).flatMap(([key,entries])=>entries.map((item,index)=>({key,index,item,original:item.offset})));
+  floor.placementWarnings=[];
+  if(items.every((entry,i)=>compatible(entry.key,entry.original,items.slice(0,i).map(e=>({key:e.key,offset:e.original})),rules)))return;
+  const blocked=new Set(floor.holes);blocked.add(floor.count-1);
+  if(floor.secret?.enabled)blocked.add(floor.secret.offset??Math.min(5,floor.count-3));
+  const placed=[];let visits=0,exhausted=false;
+  const domains=items.map(entry=>Array.from({length:floor.count},(_,i)=>i).filter(offset=>offset===entry.original||!blocked.has(offset)).sort((a,b)=>Math.abs(a-entry.original)-Math.abs(b-entry.original)||a-b));
+  function search(index){
+    if(++visits>100000){exhausted=true;return false;}
+    if(index===items.length)return true;
+    const entry=items[index];
+    for(const offset of domains[index]){
+      if(!compatible(entry.key,offset,placed,rules))continue;
+      // Preserve existing permitted overlaps, but do not introduce new ones.
+      if(placed.some(other=>other.offset===offset&&(offset!==entry.original||offset!==other.original)))continue;
+      placed.push({...entry,offset});
+      if(search(index+1))return true;
+      placed.pop();if(exhausted)return false;
+    }
+    return false;
+  }
+  if(!search(0))throw new Error('floors.json: '+floor.id+(exhausted?' authored repair search limit reached':' has no valid placement: cannot repair authored placementRules'));
+  for(const entry of placed)if(entry.offset!==entry.original){
+    entry.item.offset=entry.offset;entry.item.s=floor.start+entry.offset;
+    floor.placementWarnings.push({code:'authored-placement-adjusted',floorId:floor.id,category:entry.key,index:entry.index,fromOffset:entry.original,toOffset:entry.offset});
+  }
+  used.clear();for(const offset of blocked)used.add(offset);for(const entry of placed)used.add(entry.offset);
+}
 export function solveFloorPlacements(floor,requests,used,rules){
   const placed=Object.entries(floor.placements).flatMap(([key,items])=>items.map(item=>({key,offset:item.offset})));
   for(let i=0;i<placed.length;i++)if(!compatible(placed[i].key,placed[i].offset,placed.slice(0,i),rules))throw new Error('floors.json: authored placements violate placementRules on '+floor.id);
