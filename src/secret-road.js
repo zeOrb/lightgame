@@ -1,8 +1,10 @@
+import {SecretVines} from './secret-vines.js';
+import {createVisualRandom} from './visual-random.js';
 import {SecretGrass} from './secret-grass.js';
 import * as THREE from 'three';
 import {applyTowerDepth} from './tower-depth.js';
 
-function roadMaterial(source,repeat){
+export function roadMaterial(source,repeat,{arena=false}={}){
   const size=128,data=new Uint8Array(size*size*4),height=new Uint8Array(size*size*4);
   const hash=(x,y)=>{let n=Math.imul(x,374761393)^Math.imul(y,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295;};
   const noise=(x,y,period)=>{
@@ -34,11 +36,11 @@ function roadMaterial(source,repeat){
       float grassBlend=grassNoise(worldGrass*.19+vec2(8.3,13.7));
       vec4 worldColour=mix(texture2D(map,grassA),texture2D(map,grassB),smoothstep(.18,.82,grassBlend));
       worldColour=mix(worldColour,texture2D(map,grassC),.22);
-      diffuseColor*=mix(texture2D(map,vMapUv),worldColour,.8);
+      diffuseColor*=mix(texture2D(map,vMapUv),worldColour,${arena?'1.':'.8'});
       diffuseColor.rgb*=mix(vec3(.77,.85,.88),vec3(1.15,1.13,.96),grassNoise(worldGrass*.37));
       float topMask=1.-step(1.001,grassUV.x);
       float centre=pow(max(0.,sin(clamp(grassUV.x,0.,1.)*3.14159265)),.65);
-      diffuseColor.rgb*=mix(vec3(.42,.62,.51),vec3(1.12,1.18,.91),centre*topMask);
+      diffuseColor.rgb*=mix(vec3(.42,.62,.51),vec3(1.12,1.18,.91),${arena?'1.':'centre*topMask'});
       float soilMask=smoothstep(.18,.30,grassDepth+(grassNoise(worldGrass*5.3)-.5)*.20);
       vec2 soilUV=vec2(dot(grassWorld.xz,vec2(.73,.68))*11.,grassDepth*6.+grassWorld.y*.4);
       float soilGrain=grassNoise(soilUV*2.7),soilPatch=grassNoise(worldGrass*2.3);
@@ -50,7 +52,7 @@ function roadMaterial(source,repeat){
       diffuseColor.rgb=mix(diffuseColor.rgb,soil,soilMask);
     `);
   };
-  material.customProgramCacheKey=()=> 'secret-road-turf-soil-v3';return material;
+  material.customProgramCacheKey=()=> 'secret-road-turf-soil-v4-'+arena;return material;
 }
 
 // A closed ribbon: the upper surface follows the route's height exactly;
@@ -112,9 +114,21 @@ export class SecretRoad {
     const vector=i=>new THREE.Vector3().fromArray(positions,i*3);
     for(let i=0;i<this.segments;i++){const a=i*this.rowStride,b=(i+1)*this.rowStride;for(const edge of [0,1,7]){const j=edge*2;this.triangles.push([vector(a+j),vector(b+j),vector(a+j+1)],[vector(a+j+1),vector(b+j),vector(b+j+1)]);}}
     this.grass=new SecretGrass(this,seed,total/3);
+    const vineRandom=createVisualRandom('road-vine-anchors-'+seed),anchors=[];
+    for(let row=3;row<this.segments-2;row+=3)for(const side of [0,1]){
+      if(vineRandom()<.25)continue;
+      const position=vector(row*this.rowStride+side);
+      const outward=position.clone().sub(vector(row*this.rowStride+(1-side)));outward.y=0;outward.normalize();
+      // The rounded soil shoulder extends beyond the top surface: anchor to
+      // its actual outer vertex rather than applying a fixed top-edge offset.
+      const shoulder=vector(row*this.rowStride+(side===0?14:3));
+      position.x=shoulder.x+outward.x*.18;position.z=shoulder.z+outward.z*.18;position.y+=.045;
+      anchors.push({position,section:row});
+    }
+    this.vines=new SecretVines(this.mesh,anchors,seed,this.grass.windTime,this.mesh.material);
     this.ray=new THREE.Ray();this.result=new THREE.Vector3();this.from=new THREE.Vector3();this.direction=new THREE.Vector3();
   }
-  reveal(amount){this.revealed=Math.min(this.segments,Math.floor(amount*this.segments));this.mesh.visible=this.revealed>0;this.grass.reveal(this.revealed);this.mesh.geometry.setDrawRange(0,this.revealed*this.indicesPerSegment+(amount>=1?this.capIndexCount:0));}
+  reveal(amount){this.revealed=Math.min(this.segments,Math.floor(amount*this.segments));this.mesh.visible=this.revealed>0;this.grass.reveal(this.revealed);this.vines.reveal(this.revealed);this.mesh.geometry.setDrawRange(0,this.revealed*this.indicesPerSegment+(amount>=1?this.capIndexCount:0));}
   heightAt(p){
     this.ray.origin.set(p.x,this.mesh.geometry.boundingSphere.center.y+this.mesh.geometry.boundingSphere.radius+1,p.z);this.ray.direction.set(0,-1,0);
     for(let i=0;i<this.revealed*this.topTrianglesPerSegment;i++){const tri=this.triangles[i];if(this.ray.intersectTriangle(...tri,false,this.result))return this.result.y;}

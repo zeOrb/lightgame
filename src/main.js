@@ -1,3 +1,4 @@
+import {updateFoliagePlayer} from './foliage-response.js';
 import {warmupFirstActions} from './first-action-warmup.js';
 import {SecretLevels} from './secret-levels.js';
 import {ShardCounter} from './shard-counter.js';
@@ -348,6 +349,7 @@ addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{ke
 for(const button of document.querySelectorAll('[data-key]')){button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);keys.add(button.dataset.key);if(button.dataset.key==='Space')jumpQueued=true;if(button.dataset.key==='KeyE')flareQueued=true;if(button.dataset.key==='ShiftLeft')phaseQueued=true;};button.onpointerup=button.onpointercancel=()=>keys.delete(button.dataset.key);}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 function updateHUD(dt=0){
+  $('hud').style.setProperty('--hud-scale',Math.min(1,Math.max(.35,(innerWidth-56)/320))); 
   const marker=document.querySelector('.shadow-threshold');marker.parentElement.style.setProperty('--shadow-threshold',SHADOW_LIGHT_THRESHOLD+'%');marker.title='Тень начинается ниже '+SHADOW_LIGHT_THRESHOLD+'% Света';marker.setAttribute('aria-label',marker.title);
   lightBarRecovery.update(light,RUN_UPGRADES.maxHP,dt);
   $('arena-controls').hidden=!arenas.active;$('movement-mode').textContent=arenas.active?'по арене':'по спирали';
@@ -383,7 +385,7 @@ function updateArena(dt){
   if(movable){height+=abilities.consumePhaseRise();if(dash||abilities.gravityDelay>0)velocity=0;const jump=motion.jumpStep(height,velocity,abilities.gravityDt,keys.has('Space'));height=jump.height;velocity=jump.velocity;}
   let flare=false;if(movable&&flareQueued&&abilities.use(AbilityType.FLARE)){flare=true;flareAge=0;flareBurst.start(new THREE.Vector3(old.x,old.y+height+.5,old.z),glassGlowPalette);}flareQueued=false;
   const movement=movable?motion.arenaStep(direction,4.8*RUN_UPGRADES.speed,height>.025,dt):{x:0,z:0};
-  const result=active.secret?secretLevels.update(dt,time,arenas.player,keys,Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')),movement,movable?dash:null):arenas.update(dt,time,{direction:movement,dash:movable?dash:null,height,previousHeight,velocity,speed:4.8*RUN_UPGRADES.speed,flare,chargedPalette:rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null});
+  const result=active.secret?secretLevels.update(dt,time,arenas.player,movement,movable?dash:null,4.8*RUN_UPGRADES.speed):arenas.update(dt,time,{direction:movement,dash:movable?dash:null,height,previousHeight,velocity,speed:4.8*RUN_UPGRADES.speed,flare,chargedPalette:rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null});
   const p=arenas.player,dx=p.x-old.x,dz=p.z-old.z;moveSpeed=result.teleported?0:Math.hypot(dx,dz)/Math.max(.0001,dt);
   if(Math.hypot(dx,dz)>.0001)facingTarget=Math.atan2(dx,dz);
   if(result.bounce){height=Math.max(height,result.bounce);velocity=result.jumpRebound?Math.max(velocity,7):bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;if(!result.jumpRebound)abilities.resetAirJump();}
@@ -549,7 +551,11 @@ function update(dt){
     const overlapsChest=Math.abs(s-c.s)<c.radius/(15*Math.PI/14)+.12&&Math.abs(lane-c.lane)<c.radius;
     if(crossedLid&&overlapsChest){
       breakChest(c);
-      height=Math.max(height,.08);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;abilities.resetAirJump();break;
+      height=Math.max(height,c.top-route(s,lane).y-.12);
+      const chestLaunchDirection=Math.sign(motion.rail)||railFacing;
+      velocity=JUMP_SPEED*RUN_UPGRADES.jump*(1.27+Math.min(1,Math.abs(motion.rail)/(1.6*RUN_UPGRADES.speed))*.035)*Math.sqrt(1.15);
+      motion.rail=chestLaunchDirection*1.6*RUN_UPGRADES.speed*1.75;
+      rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;motion.jumpBuffer=0;abilities.resetAirJump();break;
     }
   }
   for(const g of glints)if(!g.taken&&g.s>Math.min(beforeMoveS,s)-RUN_UPGRADES.magnet&&g.s<Math.max(beforeMoveS,s)+RUN_UPGRADES.magnet&&Math.abs(lane-g.lane)<1.15&&height<1.8){if(!g.collect())continue;rabbitAnimation.pickup();const amount=g.lightValue(RUN_UPGRADES.shardHeal);pickupEffects.collect(g.o,()=>{if(state!=='playing'&&state!=='won')return;healFromShard(amount);collected++;const previousPoints=progression.state.points;progression.award(g.definition.points*RUN_UPGRADES.shardPointsMultiplier);shardCounter.add(progression.state.points-previousPoints,g.definition.textColor);tone(800+collected%4*90);updateHUD(0);});}
@@ -808,6 +814,7 @@ function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(no
   rabbitHitEffects.update(state==='playing'?dt:0);
   if(state==='playing'||state==='won'){pickupEffects.update(dt);shardCounter.update(dt);}
   rabbitShadowForm.update(state==='playing'?dt:0,rabbit.position,state==='playing'&&!falling,innerHeight*renderer.getPixelRatio());
+  updateFoliagePlayer(rabbit.position,dt,state==='playing');
   lanternLighting.update(rabbit.position,visualTime);
   const desiredFov=58;
   camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,6,dt);camera.updateProjectionMatrix();
@@ -843,6 +850,7 @@ if(runURL.searchParams.has('sunny-run')){
 }else try{if(sessionStorage.getItem('sunny.next-run')==='1'){sessionStorage.removeItem('sunny.next-run');start();}}catch{}
 requestAnimationFrame(frame);
 requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();frameClock.reset();state='playing';flashRunStart();}}));
+
 
 
 
