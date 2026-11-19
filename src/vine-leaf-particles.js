@@ -21,10 +21,10 @@ function leafGeometry(){
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(indices);g.computeVertexNormals();return g;
 }
 export class VineLeafParticles {
-  constructor(scene,{random=RandomManager.graphics,capacity=96,camera=null}={}){
+  constructor(scene,{random=RandomManager.graphics,capacity=96,camera=null,geometry=null,contacts=true}={}){
     this.random=random;this.camera=camera;this.tumble=new THREE.Quaternion();this.sources=[];this.previous=null;
-    scene.traverse(mesh=>{if(mesh.isInstancedMesh&&mesh.userData.vineLength)this.sources.push({mesh,length:mesh.userData.vineLength,inside:new Uint8Array(mesh.instanceMatrix.count)});});
-    this.geometry=leafGeometry();
+    if(contacts)scene.traverse(mesh=>{if(mesh.isInstancedMesh&&mesh.userData.vineLength)this.sources.push({mesh,length:mesh.userData.vineLength,inside:new Uint8Array(mesh.instanceMatrix.count)});});
+    this.geometry=geometry??leafGeometry();
     this.alpha=new THREE.InstancedBufferAttribute(new Float32Array(capacity),1).setUsage(THREE.DynamicDrawUsage);this.geometry.setAttribute('leafAlpha',this.alpha);
     const material=applyTowerDepth(new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,depthWrite:false,fog:true}));
     const previous=material.onBeforeCompile;

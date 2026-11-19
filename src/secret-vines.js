@@ -30,6 +30,7 @@ export class SecretVines{
   constructor(parent,anchors,seed,windTime,groundMaterial){
     const random=createVisualRandom('secret-vines-'+seed),material=groundMaterial.clone();
     material.vertexColors=false;material.bumpMap=null;material.side=THREE.DoubleSide;
+    material.defines={...material.defines,SECRET_VINE:1};
     material.transparent=true;material.depthWrite=false;
     const previous=groundMaterial.onBeforeCompile;
     material.onBeforeCompile=shader=>{previous(shader);shader.uniforms.vineTime=windTime;

@@ -1,4 +1,5 @@
 import {applySecretTransition} from './secret-transition.js';
+import {subdivideRoadSurface} from './secret-road-surface.js';
 import {SecretVines} from './secret-vines.js';
 import {createVisualRandom} from './random-manager.js';
 import {SecretGrass} from './secret-grass.js';
@@ -55,7 +56,7 @@ export function roadMaterial(source,repeat,{arena=false}={}){
   };
   const turfCompile=material.onBeforeCompile;
   material.onBeforeCompile=shader=>{turfCompile(shader);applySecretTransition(shader);};
-  material.customProgramCacheKey=()=> 'secret-road-turf-soil-pass-v5-'+arena;return material;
+  material.customProgramCacheKey=()=> 'secret-road-turf-soil-pass-wpo-v6-'+arena;return material;
 }
 
 // A closed ribbon: the upper surface follows the route's height exactly;
@@ -129,6 +130,8 @@ export class SecretRoad {
       anchors.push({position,section:row});
     }
     this.vines=new SecretVines(this.mesh,anchors,seed,this.grass.windTime,this.mesh.material);
+    const surface=subdivideRoadSurface(geometry,this.segments,this.indicesPerSegment);
+    this.mesh.geometry=surface.geometry;this.indicesPerSegment=surface.indicesPerSegment;geometry.dispose();
     this.ray=new THREE.Ray();this.result=new THREE.Vector3();this.from=new THREE.Vector3();this.direction=new THREE.Vector3();
   }
   reveal(amount){this.revealed=Math.min(this.segments,Math.floor(amount*this.segments));this.mesh.visible=this.revealed>0;this.grass.reveal(this.revealed);this.vines.reveal(this.revealed);this.mesh.geometry.setDrawRange(0,this.revealed*this.indicesPerSegment+(amount>=1?this.capIndexCount:0));}

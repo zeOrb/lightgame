@@ -25,7 +25,7 @@ test('terrain slip stretches only the visual, releases smoothly and resets at se
 });
 
 test('turf glow shares uniforms, follows the contact point and expires/reset without new materials',()=>{
-  const shader={uniforms:{},fragmentShader:'#include <emissivemap_fragment>'};
+  const shader={uniforms:{},vertexShader:'#include <defaultnormal_vertex>\n#include <project_vertex>',fragmentShader:'#include <emissivemap_fragment>'};
   applySecretTransition(shader);
   secretTransition.start(new THREE.Vector3(2,3,4));secretTransition.update(.1);
   assert.equal(shader.uniforms.secretPassAge.value,.1);

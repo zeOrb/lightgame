@@ -6,7 +6,7 @@ import {route,FLOOR_COUNT,END} from './game.js';
 import {ARENA_RADIUS,clampArena} from './arena-state.js';
 import {SecretArenaGround} from './secret-arena-ground.js';
 
-export const SECRET_ROAD_ASSIST=Object.freeze({height:1.25,duration:.2});
+export const SECRET_ROAD_ASSIST=Object.freeze({height:1.25,duration:.2,exitVelocity:3.6,exitClearance:.06});
 const SECRET_LIFT=1.7; // First step is 2.6m above its shelf, below the base jump apex.
 
 // Optional rising routes share the arena's free-movement space, without combat.
@@ -74,13 +74,19 @@ export class SecretLevels {
     }
     const y=assist.route.dropCooldown>0?null:assist.route.road.heightAt(position);
     // Walking out of the footprint cancels the lift without pulling sideways.
-    if(y===null||foot>=y){this.assist=null;return null;}
+    if(y===null){this.assist=null;return null;}
+    // Support tolerance can reach the top before the lift timer finishes.
+    // Both completion paths release into the same small, real ballistic hop.
+    if(foot>=y){
+      this.assist=null;
+      return {route:assist.route,y:Math.max(y,foot)+SECRET_ROAD_ASSIST.exitClearance,velocity:SECRET_ROAD_ASSIST.exitVelocity,landed:true};
+    }
     const ease=t=>t*t*(3-2*t),old=ease(Math.min(1,assist.age/SECRET_ROAD_ASSIST.duration));
     assist.age+=dt;const next=ease(Math.min(1,assist.age/SECRET_ROAD_ASSIST.duration));
     const base=Math.min(y,Math.max(foot,previousFoot)),amount=(next-old)/Math.max(1e-8,1-old);
     const lifted=Math.min(y,base+(y-base)*amount),landed=y-lifted<.01||next>=1;
     if(landed)this.assist=null;
-    return {route:assist.route,y:landed?y:lifted,velocity:landed?0:Math.max(0,velocity),landed};
+    return {route:assist.route,y:landed?y+SECRET_ROAD_ASSIST.exitClearance:lifted,velocity:landed?SECRET_ROAD_ASSIST.exitVelocity:Math.max(0,velocity),landed};
   }
   drop(surface){surface.route.dropCooldown=.4;if(this.assist?.route===surface.route)this.assist=null;}
   enterPortal(p,foot,s){

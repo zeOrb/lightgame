@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {SecretLevels} from '../src/secret-levels.js';
+import {SecretLevels,SECRET_ROAD_ASSIST} from '../src/secret-levels.js';
+import {PlatformerMotion} from '../src/platformer-motion.js';
 const setup=()=>{const l=new SecretLevels(new THREE.Scene(),{carved:new THREE.MeshBasicMaterial()}),r=l.routes[0];l.reveal(r.s,1,0);return {l,r};};
 test('landing only reports the top surface without activating an arena or moving the player',()=>{
  const {l,r}=setup(),p=r.points[0].clone().add(new THREE.Vector3(.25,0,.15)),before=p.clone();
@@ -33,10 +34,10 @@ test('near-miss upward jumps are lifted smoothly onto the road at multiple frame
   for(let i=0;i<fps&&!landed;i++){
    const before=foot;foot+=velocity/fps;velocity-=20/fps;
    const lift=l.assistUp(p,i?before:previous,foot,velocity,1/fps);
-   assert.ok(lift);assert.ok(lift.y>=before-1e-8);assert.ok(lift.y<=top+.001);assert.ok(lift.y-before<.4);
+   assert.ok(lift);assert.ok(lift.y>=before-1e-8);assert.ok(lift.y<=top+SECRET_ROAD_ASSIST.exitClearance+.001);assert.ok(lift.y-before<.4);
    foot=lift.y;velocity=lift.velocity;landed=lift.landed;
   }
-  assert.ok(landed);assert.ok(Math.abs(foot-top)<1e-8);assert.equal(velocity,0);assert.equal(l.assist,null);assert.equal(l.active,null);assert.deepEqual(p,original);
+  assert.ok(landed);assert.ok(Math.abs(foot-top-SECRET_ROAD_ASSIST.exitClearance)<1e-8);assert.equal(velocity,SECRET_ROAD_ASSIST.exitVelocity);assert.equal(l.assist,null);assert.equal(l.active,null);assert.deepEqual(p,original);
  }
 });
 test('assist does not grab a descending, distant, stationary or unrevealed player',()=>{
@@ -64,4 +65,22 @@ test('assistance preserves caller movement coordinates on a rotated road and res
 test('a head crossing just before the apex still receives assistance',()=>{
  const {l,r}=setup(),p=r.points[3],top=r.road.heightAt(p);
  assert.ok(l.assistUp(p,top-1.002,top-1,-.1,1/30));
+});
+
+test('early support completion releases into a micro hop and naturally lands at different frame rates',()=>{
+ for(const fps of [30,60,144]){
+  const {l,r}=setup(),p=r.points[3].clone(),top=r.road.heightAt(p),original=p.clone();
+  l.assistUp(p,top-1.1,top-1,2,1/fps);
+  const exit=l.assistUp(p,top-.02,top,0,1/fps);
+  assert.ok(exit.landed);assert.ok(exit.velocity>0);assert.equal(l.assist,null);
+  const motion=new PlatformerMotion();let foot=exit.y,velocity=exit.velocity,peak=foot;
+  for(let i=0;i<fps;i++){
+   const previous=foot,step=motion.jumpStep(foot-top,velocity,1/fps,false);
+   foot=top+step.height;velocity=step.velocity;peak=Math.max(peak,foot);
+   if(velocity<=0&&foot<=top+.0001)break;
+   assert.equal(l.assistUp(p,previous,foot,velocity,1/fps),null,'hop never starts another assist');
+  }
+  assert.ok(peak-top>.35&&peak-top<.4);assert.equal(foot,top);assert.equal(velocity,0);
+  assert.deepEqual(p,original);assert.ok(l.support(p,foot));
+ }
 });
