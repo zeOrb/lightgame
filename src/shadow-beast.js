@@ -2,7 +2,7 @@ import {shadowSilhouette} from './shadow-silhouette.js';
 import {rebuildShadowCat} from './shadow-cat.js';
 import * as THREE from 'three';
 import { BeastVitralBurst } from './beast-vitral-burst.js';
-import { createVisualRandom } from './visual-random.js';
+import { createVisualRandom } from './random-manager.js';
 import {ENEMY_CONFIG,enemyStats} from './enemy-config.js';
 import {clearBossFlash} from './boss-flash.js';
 const random=createVisualRandom('beast-smoke');

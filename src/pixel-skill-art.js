@@ -1,8 +1,8 @@
+import {RandomManager} from './random-manager.js';
 import {createPixelSun,SUN_SPRITE_GRID,SUN_PIXEL} from './pixel-sun.js';
 import {skillIcon} from './skill-icons.js';
 import {SKILLS,ROOT_SKILL,SKILL_BRANCH_COUNT,SKILL_MAP_SIZE} from './progression.js';
 import {FrameClock} from './frame-clock.js';
-import {visualSample} from './visual-random.js';
 import gemsConfig from './collectibles.json' with {type:'json'};
 // U wraps once around the four edges; this keeps the shine attached to the rim.
 const SOLID_UNAFFORDABLE_BRANCH=true;
@@ -25,7 +25,7 @@ function curve(a,b,ray,tier,central=false){
 }
 export class PixelSkillArt {
   constructor(map,isOpen){
-    this.canvas=document.createElement('canvas');this.canvas.className='pixel-skill-canvas';this.canvas.width=this.canvas.height=Math.round(SKILL_MAP_SIZE*.4);this.canvas.style.width=this.canvas.style.height=SKILL_MAP_SIZE+'px';this.canvas.setAttribute('aria-hidden','true');map.prepend(this.canvas);this.ctx=this.canvas.getContext('2d');this.isOpen=isOpen;this.nodes=new Map();this.clicks=new Map();this.time=0;this.frame=null;
+    this.canvas=document.createElement('canvas');this.canvas.className='pixel-skill-canvas';this.canvas.width=this.canvas.height=Math.round(SKILL_MAP_SIZE*.4);this.canvas.style.width=this.canvas.style.height=SKILL_MAP_SIZE+'px';this.canvas.setAttribute('aria-hidden','true');map.prepend(this.canvas);this.ctx=this.canvas.getContext('2d');this.isOpen=isOpen;this.treasuryPhases=Array.from({length:5},()=>RandomManager.graphics());this.nodes=new Map();this.clicks=new Map();this.time=0;this.frame=null;
   }
   pulse(id){this.clicks.set(id,this.time);}
   clickScale(id){const start=this.clicks.get(id);if(start===undefined)return 1;const t=(this.time-start)/.42;if(t>=1){this.clicks.delete(id);return 1;}return 1+.1*Math.sin(Math.PI*Math.max(0,t))**2;}
@@ -107,7 +107,7 @@ export class PixelSkillArt {
     const gemArt=['0LLL0','LWWWL','LCCDL','0CDD0','00D00'];
     const scatter=[[-62,-18],[-27,-67],[43,-54],[56,34],[-43,47]];
     scatter.forEach(([x,y],i)=>{
-      const phase=visualSample('treasury-gem',i),motion=owned?Math.sin(this.time*.9+phase*6.28):0;
+      const phase=this.treasuryPhases[i],motion=owned?Math.sin(this.time*.9+phase*6.28):0;
       const length=Math.hypot(x,y),drift=motion*(4+phase*4),px=Math.round((x+x/length*drift)/4)*4,py=Math.round((y+y/length*drift)/4)*4;
       const pixels=[5,4.5,5.5,4.5,5][i];
       const gem=gemsConfig.variants[i],base=owned?gem.color:'#85463e';
@@ -159,7 +159,7 @@ export class PixelSkillArt {
       c.restore();return;
     }
     const owned=node.status==='owned',ready=node.status==='ready',flash=Math.max(0,1-(this.time-node.purchased)/.55);
-    const seed=visualSample('skill-ready-border:'+skill.id,0);
+    const seed=(node.visualPhase??=RandomManager.graphics());
     const pulse=Math.pow(.5+.5*Math.sin(this.time*(.58+seed*.24)+seed*Math.PI*2),2.5);
     const tint=(a,b)=>`rgb(${a.map((value,i)=>Math.round(value+(b[i]-value)*pulse)).join(',')})`;
     const readyRim=tint([58,61,64],[255,226,127]),readyOuter=tint([40,43,46],[248,202,86]);

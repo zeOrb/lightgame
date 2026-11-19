@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 const random=createVisualRandom('rabbit-fall');
 export class FallingShadows {
   constructor(scene,texture){

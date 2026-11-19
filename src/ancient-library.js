@@ -2,7 +2,7 @@ import {FLOORS} from './floor-config.js';
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {applyTowerDepth} from './tower-depth.js';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 import {FLOOR_COUNT,TOWER_TOP} from './game.js';
 import {lanternSurfaces,lanternGlow} from './lantern-surfaces.js';
 

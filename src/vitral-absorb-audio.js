@@ -1,3 +1,4 @@
+import {RandomManager} from './random-manager.js';
 // Plucked strings followed by inharmonic glass resonances. No external assets.
 export function playVitralAbsorb(context){
   const start=context.currentTime,master=context.createGain(),filter=context.createBiquadFilter();
@@ -13,14 +14,14 @@ export function playVitralAbsorb(context){
     osc.connect(envelope);envelope.connect(master);osc.start(time);osc.stop(time+length+.02);
     osc.onended=()=>{osc.disconnect();envelope.disconnect();if(--voices===0){master.disconnect();filter.disconnect();}};
   };
-  const variation=Math.pow(2,(Math.random()-.5)*.08/12);
+  const variation=Math.pow(2,(RandomManager.graphics()-.5)*.08/12);
   for(const [i,note] of [587.33,880,1174.66,1479.98].entries()){
     const time=start+i*.28,frequency=note*variation;
     voice(frequency,time,1.25-i*.07,.035-i*.004,'triangle');
     voice(frequency*2.003,time,.48,.009-i*.001);
   }
   for(const [i,partial] of [1387,2131,3167,4381,6233].entries()){
-    voice(partial*(.99+Math.random()*.02),start+.35+i*.045,1.8-i*.16,.010/(1+i*.45),'sine',.975);
+    voice(partial*(.99+RandomManager.graphics()*.02),start+.35+i*.045,1.8-i*.16,.010/(1+i*.45),'sine',.975);
   }
   // Soft bowed friction: a slow upward glissando under the harp and glass.
   const bow=context.createOscillator(),bowFilter=context.createBiquadFilter(),bowGain=context.createGain();

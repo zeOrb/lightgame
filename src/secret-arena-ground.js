@@ -1,6 +1,6 @@
 import {SecretVines} from './secret-vines.js';
 import * as THREE from 'three';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 import {roadMaterial} from './secret-road.js';
 import {tuftGeometry,createGrassMaterial} from './secret-grass.js';
 

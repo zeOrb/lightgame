@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {createVisualRandom,visualSample} from './visual-random.js';
+import {createVisualRandom,visualSample} from './random-manager.js';
 export function createOldWoodAtlas(){
   const random=createVisualRandom('old-oak-atlas'),w=512,h=256;
   const canvas=document.createElement('canvas');canvas.width=w*4;canvas.height=h*4;

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { visualSample } from './visual-random.js';
+import { visualSample } from './random-manager.js';
 
 // A single draw call of soft, overlapping billboards gives the air some volume.
 export class TowerMist {

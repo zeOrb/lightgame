@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 import {shelfInnerRadius,SHELF_OUTER_RADIUS} from './game.js';
 import {applyTowerDepth} from './tower-depth.js';
 

@@ -1,5 +1,5 @@
 import {SecretVines} from './secret-vines.js';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 import {SecretGrass} from './secret-grass.js';
 import * as THREE from 'three';
 import {applyTowerDepth} from './tower-depth.js';

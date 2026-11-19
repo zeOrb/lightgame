@@ -1,3 +1,4 @@
+import {RandomManager} from './random-manager.js';
 import * as THREE from 'three';
 
 export class RabbitHitEffects {
@@ -30,12 +31,12 @@ export class RabbitHitEffects {
     const direction=root.position.clone().sub(source);direction.y=.12;direction.normalize();
     const impact=root.position.clone().add(new THREE.Vector3(0,.5,0)).addScaledVector(direction,-.24);
     this.point.value.set(0,.5,0);this.age=0;this.time.value=0;
-    const count=6+Math.floor(Math.random()*5);
+    const count=6+Math.floor(RandomManager.graphics()*5);
     this.bits.forEach((bit,i)=>{
-      bit.age=0;bit.life=.22+Math.random()*.18;bit.size=.10+Math.random()*.09;
+      bit.age=0;bit.life=.22+RandomManager.graphics()*.18;bit.size=.10+RandomManager.graphics()*.09;
       bit.mesh.visible=i<count;bit.mesh.position.copy(impact);bit.mesh.material.opacity=1;
-      bit.velocity.copy(direction).multiplyScalar(3+Math.random()*3).add(new THREE.Vector3((Math.random()-.5)*2,Math.random()*2.3,(Math.random()-.5)*2));
-      bit.spin.set(Math.random()*20,Math.random()*20,Math.random()*20);bit.mesh.rotation.set(Math.random()*6,Math.random()*6,Math.random()*6);bit.mesh.scale.set(bit.size,bit.size*2.5,bit.size*.5);
+      bit.velocity.copy(direction).multiplyScalar(3+RandomManager.graphics()*3).add(new THREE.Vector3((RandomManager.graphics()-.5)*2,RandomManager.graphics()*2.3,(RandomManager.graphics()-.5)*2));
+      bit.spin.set(RandomManager.graphics()*20,RandomManager.graphics()*20,RandomManager.graphics()*20);bit.mesh.rotation.set(RandomManager.graphics()*6,RandomManager.graphics()*6,RandomManager.graphics()*6);bit.mesh.scale.set(bit.size,bit.size*2.5,bit.size*.5);
     });
   }
   update(dt){

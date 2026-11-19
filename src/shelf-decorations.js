@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {spineAtlas} from './ancient-library.js';
 import {applyTowerDepth} from './tower-depth.js';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 import {SHELF_OUTER_RADIUS} from './game.js';
 import {lanternSurfaces,lanternGlow} from './lantern-surfaces.js';
 

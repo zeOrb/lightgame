@@ -38,7 +38,8 @@ export function sweepShelfLanding(before,after,floors){
   const visible=floors.filter(o=>{for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;});
   for(const floor of visible)floor.updateWorldMatrix(true,false);
   return ray.intersectObjects(visible,false).find(hit=>{
-    if(!hit.face)return false;
+    // A contact at the departure point is not a new landing.
+    if(!hit.face||hit.distance<1e-7)return false;
     matrix.getNormalMatrix(hit.object.matrixWorld);normal.copy(hit.face.normal).applyMatrix3(matrix).normalize();
     return normal.y>.5;
   })??null;

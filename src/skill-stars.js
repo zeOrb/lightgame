@@ -1,4 +1,4 @@
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 
 // Integer rectangles and independent SVG twinkles need no JavaScript render loop.
 export function createSkillStarfield(){

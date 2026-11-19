@@ -1,5 +1,5 @@
 import {FLOORS,TOTAL_SECTIONS,floorForSection,stepAt} from './floor-config.js';
-import { visualSample } from './visual-random.js';
+import {randomManager} from './random-manager.js';
 import {RUN_UPGRADES} from './progression.js';
 export const FLOOR_COUNT = FLOORS.length;
 export const END = TOTAL_SECTIONS-1;
@@ -17,7 +17,7 @@ export const SHELF_INNER_RADIUS = 13.1;
 export const SHELF_OUTER_RADIUS = 17.0;
 export function shelfInnerRadius(section){
   const authored=stepAt(section);if(authored.innerRadius!==undefined)return authored.innerRadius;
-  const random=visualSample('shelves',section);
+  const random=randomManager.sample('geometry','shelves',section);
   const length=(SHELF_OUTER_RADIUS-SHELF_INNER_RADIUS)*(1+(random*2-1)/8);
   return SHELF_OUTER_RADIUS-length;
 }

@@ -1,3 +1,4 @@
+import {RandomManager} from './random-manager.js';
 import * as THREE from 'three';
 const TRAIL_LIFETIME=.4,TRAIL_FADE_DELAY=.06;
 export class PhaseTrail {
@@ -68,9 +69,9 @@ export class PhaseTrail {
         const side=new THREE.Vector3().crossVectors(backward,camera.position.clone().sub(position)).normalize(),up=new THREE.Vector3().crossVectors(side,backward).normalize();
         this.emission=(this.emission??0)+dt*210;const emitted=Math.min(60,Math.floor(this.emission));this.emission-=emitted;
         for(let i=0;i<emitted;i++){
-          const angle=Math.random()*Math.PI*2,spread=Math.sqrt(Math.random()),radial=side.clone().multiplyScalar(Math.cos(angle)).addScaledVector(up,Math.sin(angle));
-          const speed=.8+Math.random()*1.2;
-          this.particles.push({point:start.clone().lerp(position,(i+.5)/emitted).addScaledVector(radial,spread*.055),color:new THREE.Color(1,1,1),age:0,life:.45+Math.random()*.4,drift:backward.clone().multiplyScalar(speed).addScaledVector(radial,speed*spread*.7).add(new THREE.Vector3(0,.12,0))});
+          const angle=RandomManager.graphics()*Math.PI*2,spread=Math.sqrt(RandomManager.graphics()),radial=side.clone().multiplyScalar(Math.cos(angle)).addScaledVector(up,Math.sin(angle));
+          const speed=.8+RandomManager.graphics()*1.2;
+          this.particles.push({point:start.clone().lerp(position,(i+.5)/emitted).addScaledVector(radial,spread*.055),color:new THREE.Color(1,1,1),age:0,life:.45+RandomManager.graphics()*.4,drift:backward.clone().multiplyScalar(speed).addScaledVector(radial,speed*spread*.7).add(new THREE.Vector3(0,.12,0))});
         }
       }
     }

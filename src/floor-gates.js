@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {ROUTE_RADIUS,END,FLOOR_COUNT,SHELF_OUTER_RADIUS,shelfInnerRadius,route} from './game.js';
 import {applyTowerDepth} from './tower-depth.js';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 const random=createVisualRandom('floor-gates');
 export function floorGateLayout(){return FLOORS.map(floor=>{const i=floor.index,plank=floor.end;return {plank,positionS:plank+.49,s:Math.min(plank+.49,END-.2),nextFloor:Math.max(1,FLOOR_COUNT-i-1),passed:false};});}
 export function gateCrossed(gate,previous,s,previousLane,lane){

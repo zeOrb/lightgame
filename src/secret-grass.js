@@ -1,6 +1,6 @@
 import {applyFoliageResponse} from './foliage-response.js';
 import * as THREE from 'three';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 
 const tipGradient=height=>'pow(smoothstep(.42,1.,'+height+'),1.5)';
 

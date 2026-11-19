@@ -1,9 +1,9 @@
+import {randomManager,createVisualRandom} from './random-manager.js';
 import * as THREE from 'three';
 import {ArenaRun,ARENA_RADIUS,clampArena,risingJumpHits} from './arena-state.js';
 import {route,canStomp} from './game.js';
 import {phaseHitsTarget} from './abilities.js';
 import {animateShadowBeast,killShadowBeast,animateBeastDeath,resetShadowBeast} from './shadow-beast.js';
-import {createVisualRandom} from './visual-random.js';
 import {ENEMY_CONFIG} from './enemy-config.js';
 import {createEnemy} from './enemy-factory.js';
 import {applyWoodPOM} from './wood-pom.js';
@@ -387,7 +387,7 @@ export class FloorArenas extends ArenaRun {
       for(let i=0;i<1;i++){
         const id=ENEMY_CONFIG.arenas.bossCycle[a.index%ENEMY_CONFIG.arenas.bossCycle.length];
         const b=createEnemy(a.bossId??id,{floorIndex:a.index,s:a.s}),boss=b.boss;
-        b.phase=this.random()*Math.PI*2;
+        b.phase=randomManager.sample('enemies',a.index,'boss-phase')*Math.PI*2;
         if(boss){
           const crown=new THREE.Group();crown.position.set(0,b.stats.crownHeight,0);b.o.add(crown);
           for(let j=0;j<b.stats.maxHP;j++){const gem=new THREE.Mesh(new THREE.OctahedronGeometry(.1),new THREE.MeshBasicMaterial({color:'#ff264d',fog:false,toneMapped:false}));const offset=j-(b.stats.maxHP-1)/2;gem.position.set(offset*.16,.12-Math.abs(offset)*.025,0);crown.add(gem);}

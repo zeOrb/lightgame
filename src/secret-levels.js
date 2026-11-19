@@ -1,8 +1,8 @@
+import {randomManager} from './random-manager.js';
 import {FLOORS} from './floor-config.js';
 import {SecretRoad} from './secret-road.js';
 import * as THREE from 'three';
 import {route,FLOOR_COUNT,END} from './game.js';
-import {createVisualRandom} from './visual-random.js';
 import {ARENA_RADIUS,clampArena} from './arena-state.js';
 import {SecretArenaGround} from './secret-arena-ground.js';
 
@@ -11,24 +11,25 @@ const SECRET_LIFT=1.7; // First step is 2.6m above its shelf, below the base jum
 // Optional rising routes share the arena's free-movement space, without combat.
 export class SecretLevels {
   constructor(scene,materials){
-    this.random=createVisualRandom('secret-constellations');this.routes=[];this.active=null;
+    this.routes=[];this.active=null;
     const wood=materials.carved;
     for(const floor of FLOORS){
       if(!floor.secret.enabled)continue;
+      const layoutRng=randomManager.create('secret-layout',floor.id);
       const s=floor.start+(floor.secret.offset??Math.min(5,floor.count-3)),p=route(s),group=new THREE.Group();scene.add(group);
       const points=[];
       for(let i=0;i<=12;i++){
         const t=i/12,base=route(s+i*.5);
         points.push(new THREE.Vector3(base.x,p.y+.9+SECRET_LIFT+t*6,base.z));
       }
-      const road=new SecretRoad(points,wood,this.random()*20);group.add(road.mesh);
+      const road=new SecretRoad(points,wood,layoutRng.float()*20);group.add(road.mesh);
       const portal=this.portal();portal.position.copy(points[12]).add(new THREE.Vector3(0,1.3,0));portal.rotation.y=-p.theta;portal.visible=false;group.add(portal);
       const room=new THREE.Group();room.position.y=p.y+9+SECRET_LIFT;room.visible=false;scene.add(room);
-      const ground=new SecretArenaGround(room,ARENA_RADIUS,this.random()*20);
+      const ground=new SecretArenaGround(room,ARENA_RADIUS,layoutRng.float()*20);
       const exit=this.portal();exit.position.set(0,1.3,9.2);exit.visible=false;room.add(exit);
       const stars=[];
       for(let i=0;i<5;i++){
-        const angle=i*Math.PI*2/5+this.random()*.45,radius=4.7+this.random()*2.5;
+        const angle=i*Math.PI*2/5+layoutRng.float()*.45,radius=4.7+layoutRng.float()*2.5;
         const material=new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(i/5,.45,.75),toneMapped:false});
         const star=new THREE.Mesh(new THREE.OctahedronGeometry(.27),material);star.position.set(Math.cos(angle)*radius,.75,Math.sin(angle)*radius);room.add(star);stars.push(star);
       }
@@ -59,7 +60,7 @@ export class SecretLevels {
   enterPortal(p,foot,s){
     const r=this.routes.find(r=>{if(r.completed||!r.portal.visible)return false;const endpoint=r.group.localToWorld(r.points[12].clone());return Math.hypot(p.x-endpoint.x,p.z-endpoint.z)<.75&&Math.abs(foot-endpoint.y)<.5;});if(!r)return null;
     r.used=true;r.returnS=s;r.age=0;r.stage='portal';r.secret=true;r.theta=route(r.s).theta;r.enemies=[];r.from=new THREE.Vector3(p.x,foot,p.z);r.y=r.room.getWorldPosition(new THREE.Vector3()).y;r.room.visible=true;
-    r.order=[0,1,2,3,4];for(let i=4;i>0;i--){const j=Math.floor(this.random()*(i+1));[r.order[i],r.order[j]]=[r.order[j],r.order[i]];}r.next=0;this.active=r;return r;
+    r.order=randomManager.stream('secret-order',r.s).shuffle([0,1,2,3,4]);r.next=0;this.active=r;return r;
   }
   update(dt,time,player,movement,dash,speed=4.8){
     const r=this.active;if(!r)return {};

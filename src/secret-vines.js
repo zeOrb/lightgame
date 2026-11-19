@@ -1,6 +1,6 @@
 import {applyFoliageResponse} from './foliage-response.js';
 import * as THREE from 'three';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 
 function vineShape(random,style){
   const positions=[],colors=[],indices=[],uvs=[],depths=[];

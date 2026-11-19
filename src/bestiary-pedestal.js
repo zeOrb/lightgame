@@ -1,3 +1,4 @@
+import {RandomManager} from './random-manager.js';
 import * as THREE from 'three';
 
 let surfaces;
@@ -30,11 +31,11 @@ function materials(){
   if(surfaces)return surfaces;
   const canvas=document.createElement('canvas');canvas.width=canvas.height=512;const c=canvas.getContext('2d');
   c.fillStyle='#4a4947';c.fillRect(0,0,512,512);
-  for(let i=0;i<16000;i++){const v=45+Math.random()*80;c.fillStyle=`rgba(${v},${v},${v},.16)`;c.fillRect(Math.random()*512,Math.random()*512,1+Math.random()*4,1+Math.random()*3);}
+  for(let i=0;i<16000;i++){const v=45+RandomManager.graphics()*80;c.fillStyle=`rgba(${v},${v},${v},.16)`;c.fillRect(RandomManager.graphics()*512,RandomManager.graphics()*512,1+RandomManager.graphics()*4,1+RandomManager.graphics()*3);}
   // Irregular stone joints, with chipped bright lips beside the recesses.
   for(let row=0;row<4;row++)for(let col=0;col<4;col++){
     let x=col*142+(row%2)*65,y=row*142;c.beginPath();c.moveTo(x,y);
-    for(let j=0;j<7;j++){x+=(Math.random()-.5)*15;y+=24;c.lineTo(x,y);}
+    for(let j=0;j<7;j++){x+=(RandomManager.graphics()-.5)*15;y+=24;c.lineTo(x,y);}
     c.strokeStyle='#171719';c.lineWidth=5;c.stroke();c.translate(2,0);c.strokeStyle='#77736b';c.lineWidth=1;c.stroke();c.translate(-2,0);
     c.beginPath();c.moveTo(col*142,row*142);c.lineTo(col*142+70,row*142+7);c.lineTo(col*142+142,row*142-3);c.strokeStyle='#222224';c.lineWidth=4;c.stroke();
   }
@@ -68,9 +69,9 @@ export function createBestiaryPedestal(){
   // Individually cut blocks in the upper and lower masonry rings.
   for(let ring=0;ring<2;ring++)for(let i=0;i<20;i++){
     const angle=(i+ring*.5)*Math.PI/10;
-    const radius=ring?1.65:1.45,height=ring?.16:.22+Math.random()*.07;
+    const radius=ring?1.65:1.45,height=ring?.16:.22+RandomManager.graphics()*.07;
     const block=new THREE.Mesh(new THREE.BoxGeometry(ring?.50:.435,height,ring?.28:.23),edge);
-    block.position.set(Math.sin(angle)*radius,ring?-.95:-.10+height/2,Math.cos(angle)*radius);block.rotation.y=angle;block.rotation.z=(Math.random()-.5)*.045;root.add(block);
+    block.position.set(Math.sin(angle)*radius,ring?-.95:-.10+height/2,Math.cos(angle)*radius);block.rotation.y=angle;block.rotation.z=(RandomManager.graphics()-.5)*.045;root.add(block);
   }
   for(let i=0;i<8;i++){
     const a=i*Math.PI/4,group=new THREE.Group();group.rotation.y=a;root.add(group);

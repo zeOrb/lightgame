@@ -92,12 +92,12 @@ export function unsupportedThreat(threats,s,lane){
 }
 
 // Test the actual curved footprint, including overlapping neighbour shelves.
-export function hasShelfSupport(threats,s,lane){
-  const radius=ROUTE_RADIUS+lane;
+export function hasShelfSupport(threats,s,lane,position=route(s,lane)){
+  const radius=Math.hypot(position.x,position.z),theta=Math.atan2(position.z,position.x);
   for(let section=Math.max(0,Math.floor(s)-1);section<=Math.min(END+1,Math.ceil(s)+1);section++){
     if(threats.some(t=>t.type===ThreatType.HOLE&&t.s===section))continue;
     const platform=threats.find(t=>t.type===ThreatType.MOVING_PLATFORM&&t.s===section);
-    const angle=route(s).theta-route(section).theta;
+    const angle=theta-route(section).theta;
     const x=Math.cos(angle)*radius-(platform?.offset??0),z=Math.sin(angle)*radius,r=Math.hypot(x,z);
     if(r>=shelfInnerRadius(section)&&r<=SHELF_OUTER_RADIUS&&Math.abs(Math.atan2(z,x))<=SHELF_HALF_ANGLE)return true;
   }

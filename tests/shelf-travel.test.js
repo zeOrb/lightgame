@@ -1,3 +1,4 @@
+import {hasShelfSupport} from '../src/threats.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
@@ -62,4 +63,23 @@ test('normal fall preserves world inertia, remains visible, and can land on a lo
   }
   assert.ok(hit);near(hit.point.y,7.15);
   assert.ok(hit.point.z>0);
+});
+
+test('falling from a tread does not immediately land on the same zero-distance contact',()=>{
+  const upper=new THREE.Mesh(new THREE.BoxGeometry(3,.4,3)),lower=upper.clone();
+  upper.position.y=7;lower.position.y=4;
+  const start={x:0,y:7.2,z:0};
+  assert.equal(sweepShelfLanding(start,{x:.05,y:7.19,z:0},[upper,lower]),null);
+  const landing=sweepShelfLanding(start,{x:.5,y:3,z:0},[upper,lower]);
+  assert.equal(landing.object,lower);near(landing.point.y,4.2);
+});
+test('support uses the actual retained floor frame instead of an unrelated nearby rail',()=>{
+  try{
+    setRouteYawResolver(s=>floorForSection(s).index===1?.87:0);
+    const travel=new ShelfTravel(),section=FLOORS[1].start;
+    travel.land(section,route(section));const outside=section-.8,p=travel.position(outside);
+    assert.equal(hasShelfSupport([],outside,0),true);
+    assert.equal(hasShelfSupport([],outside,0,p),false);
+    assert.equal(travel.leavesFloor(section-.58,section-.61,0),true);
+  }finally{setRouteYawResolver(()=>0);}
 });

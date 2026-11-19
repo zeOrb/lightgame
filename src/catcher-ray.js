@@ -1,3 +1,4 @@
+import {RandomManager} from './random-manager.js';
 import * as THREE from 'three';
 
 // A camera-facing triangle tapers from the selected crystal to the rabbit.
@@ -16,7 +17,7 @@ export class CatcherRay {
   update(dt,time,rabbit,visible,camera){
     this.age+=dt;
     if(time>=this.next){
-      this.index=(this.index+1+Math.floor(Math.random()*(this.gems.length-1)))%this.gems.length;
+      this.index=(this.index+1+Math.floor(RandomManager.graphics()*(this.gems.length-1)))%this.gems.length;
       this.next=time+1;this.age=0;
       this.color.copy(this.gems[this.index].material.userData.beamColor??new THREE.Color('#ffd68e'));
       this.material.color.copy(this.color);this.spark.material.color.copy(this.color);

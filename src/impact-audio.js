@@ -1,3 +1,4 @@
+import {RandomManager} from './random-manager.js';
 const buffers=new WeakMap();
 export function playImpact(context,strong=false){
   const now=context.currentTime;
@@ -9,7 +10,7 @@ export function playImpact(context,strong=false){
     osc.onended=()=>{osc.disconnect();gain.disconnect();};
   }
   let buffer=buffers.get(context);
-  if(!buffer){buffer=context.createBuffer(1,Math.ceil(context.sampleRate*.09),context.sampleRate);const data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;buffers.set(context,buffer);}
+  if(!buffer){buffer=context.createBuffer(1,Math.ceil(context.sampleRate*.09),context.sampleRate);const data=buffer.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=RandomManager.graphics()*2-1;buffers.set(context,buffer);}
   const noise=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
   noise.buffer=buffer;filter.type='highpass';filter.frequency.value=1400;
   gain.gain.setValueAtTime(.065,now);gain.gain.exponentialRampToValueAtTime(.001,now+.07);

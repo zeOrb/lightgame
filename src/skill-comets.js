@@ -1,4 +1,4 @@
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 
 export class SkillComets {
   constructor(viewport){

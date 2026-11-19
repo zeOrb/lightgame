@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import config from './collectibles.json' with {type:'json'};
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 
 const random=createVisualRandom('gem-idle'),clock={value:0},assets=new Map();
 const gemAuraGeometry=new THREE.PlaneGeometry(1.05,1.05);

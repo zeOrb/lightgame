@@ -8,6 +8,9 @@
     "rotationCameraFollow": true
   },
   "defaults": {
+    "placementRules": [
+      {"between": ["windows", "windows"], "minDistance": 2}
+    ],
     "steps": {
       "mode": "generated",
       "count": 14,
@@ -132,7 +135,7 @@
           }
         ]
       },
-      "rotationSpeedDegrees": 30
+      "rotationSpeedDegrees": 0
     },
     {
       "id": "stacks-03",

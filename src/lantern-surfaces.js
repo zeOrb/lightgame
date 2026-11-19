@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {applyTowerDepth} from './tower-depth.js';
-import {createVisualRandom} from './visual-random.js';
+import {createVisualRandom} from './random-manager.js';
 import {TOWER_TOP,END,depthLight} from './game.js';
 let surfaces;
 const lanterns=[];
