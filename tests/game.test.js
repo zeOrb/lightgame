@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { END, route, gaps, isGap, lightStep, cameraAnchor, turnTowards, LANE_LIMIT, PASSIVE_LIGHT_DRAIN, VITRAL_REGEN_DURATION } from '../src/game.js';
+import { END, TOWER_TOP, route, gaps, isGap, lightStep, cameraAnchor, turnTowards, LANE_LIMIT, PASSIVE_LIGHT_DRAIN, VITRAL_REGEN_DURATION } from '../src/game.js';
 test('gaze turns smoothly along the shortest arc, including the angle wrap',()=>{
   const start=Math.PI-.1,target=-Math.PI+.1;
   const next=turnTowards(start,target,1/60);
@@ -40,7 +40,7 @@ test('rabbit stays within the screen through the full route, reversal and camera
 });
 test('route descends continuously into the tower and reaches a distinct destination',()=>{
   for(let s=1;s<=END;s++)assert.equal(route(s).y,route(s-1).y-.5);
-  assert.ok(route(END).y>0);assert.ok(route(END).y<20);
+  assert.ok(route(END).y>0);assert.ok(route(END).y<TOWER_TOP);
   assert.ok(Math.hypot(route(0).x-route(END).x,route(0).z-route(END).z)>1);
 });
 test('gaps have a safe approach and landing, and do not block the start or crystal',()=>{

@@ -4,8 +4,11 @@ import * as THREE from 'three';
 import {SecretRoad} from '../src/secret-road.js';
 const points=Array.from({length:13},(_,i)=>new THREE.Vector3(Math.cos(i*.1)*15,10+i*.5,Math.sin(i*.1)*15));
 test('road has no vertical noise and a solid downward thickness',()=>{
- const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3),p=road.mesh.geometry.attributes.position;
- for(let i=0;i<(road.segments+1)*road.rowStride;i+=road.rowStride){assert.equal(p.getY(i),p.getY(i+1));assert.ok(p.getY(i)-p.getY(i+8)>.3);assert.ok(p.getY(i)-p.getY(i+8)<.57);assert.ok(p.getY(i+6)<p.getY(i+4));}
+ const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3);
+ for(let i=0;i<road.segments;i++){const top=road.triangles[i*6];assert.ok(Math.abs(top[0].y-top[2].y)<1e-9);}
+ road.reveal(1);
+ const top=road.heightAt(points[6]),bottom=road.undersideAt(new THREE.Vector3(points[6].x,top-.3,points[6].z));
+ assert.ok(top-bottom>.3);assert.ok(top-bottom<.7);
 });
 test('visible top is raycastable and collision excludes the unrevealed road',()=>{
  const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3);assert.equal(road.heightAt(points[6]),null);road.reveal(1);
@@ -15,9 +18,10 @@ test('visible top is raycastable and collision excludes the unrevealed road',()=
 });
 
 test('top UV is a straight normalized strip with increasing arc-length V',()=>{
- const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3),uv=road.mesh.geometry.attributes.uv;
- for(let i=0;i<=road.segments;i++){assert.equal(uv.getX(i*road.rowStride),0);assert.equal(uv.getX(i*road.rowStride+1),1);assert.equal(uv.getY(i*road.rowStride),uv.getY(i*road.rowStride+1));if(i)assert.ok(uv.getY(i*road.rowStride)>uv.getY((i-1)*road.rowStride));}
- assert.equal(uv.getY(0),0);assert.equal(uv.getY(road.segments*road.rowStride),1);assert.ok(road.mesh.material.roughness>.9);
+ const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3),g=road.mesh.geometry,uv=g.attributes.uv,depth=g.attributes.roadDepth;
+ let minU=Infinity,maxU=-Infinity,minV=Infinity,maxV=-Infinity;
+ for(let i=0;i<uv.count;i++)if(depth.getX(i)===0&&uv.getX(i)<=1){const u=uv.getX(i),v=uv.getY(i);if(u<minU)minU=u;if(u>maxU)maxU=u;if(v<minV)minV=v;if(v>maxV)maxV=v;}
+ assert.equal(minU,0);assert.equal(maxU,1);assert.equal(minV,0);assert.equal(maxV,1);assert.ok(road.mesh.material.roughness>.9);
 });
 
 test('grass material is continuous, textured and independent of the wood atlas',()=>{
@@ -34,10 +38,12 @@ test('road silhouette has a pronounced horizontal bend while remaining under the
 });
 
 test('road tips taper smoothly and the soil layer has matching vertex attributes',()=>{
- const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3),g=road.mesh.geometry,p=g.attributes.position;
- const width=row=>new THREE.Vector3().fromBufferAttribute(p,row*road.rowStride).distanceTo(new THREE.Vector3().fromBufferAttribute(p,row*road.rowStride+1));
- assert.ok(width(0)<width(12)*.3);assert.ok(width(road.segments)<width(road.segments-12)*.3);
- assert.equal(g.attributes.roadDepth.count,p.count);assert.equal(g.attributes.roadDepth.getX(0),0);assert.ok(g.attributes.roadDepth.getX(8)>.8);
+ const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3),g=road.mesh.geometry,d=g.attributes.roadDepth;
+ const width=i=>{const t=road.triangles[i*6];return t[0].distanceTo(t[2]);};
+ assert.ok(width(0)<width(12)*.5);assert.ok(width(road.segments-1)<width(road.segments-13)*.5);
+ assert.equal(d.count,g.attributes.position.count);
+ let min=Infinity,max=-Infinity;for(let i=0;i<d.count;i++){const x=d.getX(i);if(x<min)min=x;if(x>max)max=x;}
+ assert.equal(min,0);assert.ok(max>.8);
 });
 
 test('decorative grass is sparse, instanced and revealed with the road',()=>{
@@ -55,7 +61,7 @@ test('tufts participate in opaque depth and fog with matched two-sided lighting'
 
 test('three grass forms cover the road interior with varied instance transforms',()=>{
  const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3),meshes=road.grass.meshes;road.reveal(1);
- assert.equal(meshes.length,3);assert.equal(new Set(meshes.map(m=>m.geometry.attributes.position.count)).size,3);
+ assert.equal(meshes.length,6);assert.equal(new Set(meshes.map(m=>m.geometry.attributes.position.count)).size,6);
  const scales=new Set(),rotations=new Set();let middle=0,total=0;const matrix=new THREE.Matrix4(),position=new THREE.Vector3(),scale=new THREE.Vector3(),rotation=new THREE.Quaternion();
  for(const mesh of meshes)for(let i=0;i<mesh.count;i++){total++;const u=mesh.geometry.attributes.tuftRoadUV.getX(i);if(u>.3&&u<.7)middle++;mesh.getMatrixAt(i,matrix);matrix.decompose(position,rotation,scale);scales.add(scale.x.toFixed(3));rotations.add(rotation.y.toFixed(3));}
  assert.ok(total>50&&total<160);assert.ok(middle>5);assert.ok(scales.size>20);assert.ok(rotations.size>20);

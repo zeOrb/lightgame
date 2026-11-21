@@ -7,9 +7,10 @@ import {ARENA_RADIUS,clampArena} from './arena-state.js';
 import {SecretArenaGround} from './secret-arena-ground.js';
 
 export const SECRET_ROAD_ASSIST=Object.freeze({height:1.25,duration:.2,exitVelocity:3.6,exitClearance:.06});
-export const SECRET_ROAD_REBOUND=4.2;
+// A head bump should gently drop the rabbit instead of kicking it down hard.
+export const SECRET_ROAD_REBOUND=1.8;
 // Physical contact follows the stretched head; ears yield visually instead.
-export const SECRET_ROAD_HEAD_CLEARANCE=Object.freeze({height:1.62,radius:.38});
+export const SECRET_ROAD_HEAD_CLEARANCE=Object.freeze({height:1.4,radius:.3});
 const SECRET_LIFT=1.7; // First step is 2.6m above its shelf, below the base jump apex.
 
 // Optional rising routes share the arena's free-movement space, without combat.
@@ -64,7 +65,7 @@ export class SecretLevels {
     let ceiling=null;
     for(const route of this.routes){
       if(route.dropCooldown>0)continue;
-      const y=route.road.undersideAt(position,.38);
+      const y=route.road.undersideAt(position,SECRET_ROAD_HEAD_CLEARANCE.radius);
       if(y!==null&&y>position.y&&y-position.y<2.6&&(ceiling===null||y<ceiling))ceiling=y;
     }
     return ceiling;

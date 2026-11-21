@@ -1,14 +1,14 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {gaps,END,shelfInnerRadius,SHELF_OUTER_RADIUS} from '../src/game.js';
+import {gaps,END,shelfInnerRadius,SHELF_OUTER_RADIUS,ROUTE_RADIUS} from '../src/game.js';
 import {createThreats,hasShelfSupport,ThreatType,updateThreats} from '../src/threats.js';
 import {RabbitState} from '../src/rabbit-state.js';
 test('ordinary shelves support the playable centre but not either exposed edge',()=>{
   const threats=createThreats(gaps,END);
   for(const s of [0,4,8,23,45,99,END]){
     assert.ok(hasShelfSupport(threats,s,0));
-    assert.ok(!hasShelfSupport(threats,s,SHELF_OUTER_RADIUS-12+.1));
-    assert.ok(!hasShelfSupport(threats,s,shelfInnerRadius(s)-12-.1));
+    assert.ok(!hasShelfSupport(threats,s,SHELF_OUTER_RADIUS-ROUTE_RADIUS+.1));
+    assert.ok(!hasShelfSupport(threats,s,shelfInnerRadius(s)-ROUTE_RADIUS-.1));
   }
   for(const s of gaps)assert.ok(!hasShelfSupport(threats,s,0));
 });

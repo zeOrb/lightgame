@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {libraryLayout} from '../src/ancient-library.js';
 test('library densely fills the tower with varied books while preserving window bays',()=>{
   const {cases,books}=libraryLayout();
-  assert.equal(cases.length,272);assert.ok(books.length>16000);
+  assert.equal(cases.length,248);assert.ok(books.length>16000);
   const tiles=new Set(),heights=new Set();let stacks=0,leaning=0;
   for(const book of books){
     assert.ok([book.x,book.y,book.z,book.w,book.h,book.d,book.angle].every(Number.isFinite));

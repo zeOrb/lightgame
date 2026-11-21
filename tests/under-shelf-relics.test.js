@@ -7,7 +7,7 @@ test('under-shelf debris uses shared instanced batches and follows moving shelve
   const scene=new THREE.Scene(),relics=new UnderShelfRelics(scene),fixed=new THREE.Group(),moving=new THREE.Group();
   scene.add(fixed,moving);relics.addShelf(fixed,0);relics.addShelf(moving,9,true);relics.build();
   const batches=scene.children.filter(o=>o.isInstancedMesh);assert.ok(batches.length<=3);assert.ok(batches.reduce((n,b)=>n+b.count,0)>=12);
-  const part=relics.dynamic[0],before=new THREE.Matrix4(),after=new THREE.Matrix4();part.batch.getMatrixAt(part.index,before);
+  const part=relics.dynamic.find(p=>p.moving),before=new THREE.Matrix4(),after=new THREE.Matrix4();part.batch.getMatrixAt(part.index,before);
   moving.position.set(-2,5,1);relics.updateDynamic();part.batch.getMatrixAt(part.index,after);
   assert.ok(Math.abs(after.elements[12]-before.elements[12]+2)<1e-5);
   assert.ok(Math.abs(after.elements[13]-before.elements[13]-5)<1e-5);

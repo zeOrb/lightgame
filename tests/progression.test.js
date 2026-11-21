@@ -7,13 +7,13 @@ import {RabbitState} from '../src/rabbit-state.js';
 test('configured tree has unique nodes, valid dependencies and matching branch sizes',()=>{
   assert.ok(SKILLS.length>0);assert.equal(new Set(SKILLS.map(s=>s.id)).size,SKILLS.length);
   for(let ray=0;ray<SKILL_BRANCH_COUNT;ray++){
-    const branch=SKILLS.filter(s=>s.ray===ray);assert.ok(branch.length>0);
+    const branch=SKILLS.filter(s=>s.treeId==='light'&&s.ray===ray);assert.ok(branch.length>0);
     for(const skill of branch){assert.equal(skill.tiers,branch.length);assert.ok(!skill.requires||SKILLS.some(parent=>parent.id===skill.requires));}
   }
 });
 test('only the dormant source is visible until its one-point unlock',()=>{
   const p=new SkillProgression();
-  assert.deepEqual(SKILLS.filter(s=>isSkillVisible(p.state,s.id)).map(s=>s.id),['source']);
+  assert.deepEqual(SKILLS.filter(s=>isSkillVisible(p.state,s.id)).map(s=>s.id),['source','treasurySource']);
   assert.equal(SKILLS.filter(s=>isSkillPreview(p.state,s.id)).length,0);
   p.award();assert.equal(p.canBuy('heart'),false);assert.equal(p.canBuy('source'),true);
   assert.equal(p.buy('source'),true);assert.equal(p.state.points,0);assert.equal(p.buy('source'),false);
@@ -61,7 +61,7 @@ test('upgrades alter live abilities and light math, not only tree labels',()=>{
   assert.ok(a.use(AbilityType.JUMP,{height:1}));a.advance(.2);assert.equal(a.use(AbilityType.JUMP,{height:1}),null);
   a.land();a.advance(.2);assert.ok(a.use(AbilityType.JUMP,{height:1}));
   assert.ok(a.use(AbilityType.FLARE));assert.equal(a.use(AbilityType.FLARE),null);
-  a.use(AbilityType.PHASING);assert.equal(a.cooldowns.phasing,1.35);
+  a.use(AbilityType.PHASING);assert.equal(a.cooldowns.phasing,.75);
   assert.ok(rabbit.updateLight(150,1,false)>138);
   rabbit.setVitral({},false,true);let light=rabbit.updateLight(100,0,false);assert.equal(light,150);
   light=rabbit.updateLight(light,1,false);assert.ok(light<150);assert.equal(stats.rayDashHeal,.25);

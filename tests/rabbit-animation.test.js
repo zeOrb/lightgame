@@ -3,6 +3,45 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { RabbitAnimation } from '../src/rabbit-animation.js';
 import {createRabbitTraveler} from '../src/rabbit-model.js';
+test('landing holds the takeoff direction, compresses and settles at different frame rates',()=>{
+  for(const speed of [0,7])for(const fps of [30,60,144]){
+    const visual=new THREE.Group(),a=new RabbitAnimation(visual,[],[],new THREE.Group());
+    a.jump(12,speed);a.update(.5,{speed:0,height:2,velocity:-10});
+    let low=1,pitch=0;
+    for(let i=0;i<fps;i++){
+      a.update(1/fps,{speed:0,height:0,velocity:0});
+      low=Math.min(low,visual.scale.y);if(i/fps<.25)pitch=speed?Math.min(pitch,visual.rotation.x):Math.max(pitch,visual.rotation.x);
+    }
+    assert.ok(low<.85,'landing compression is visible');
+    assert.equal(a.landingMoving,speed>0);
+    if(speed)assert.ok(pitch<-.1);else assert.equal(pitch,0);
+    assert.ok(Math.abs(visual.scale.y/a.idleStretch-1)<.001);
+    a.jump();assert.equal(a.landing,0);assert.equal(a.landingAge,1);
+    a.reset();assert.equal(a.landingStrength,0);assert.equal(a.landingMoving,false);
+  }
+});
+test('ceiling contact compresses both jump entries without restarting or stretching on release',()=>{
+  for(const speed of [0,7])for(const fps of [30,60,144]){
+    const root=new THREE.Group(),visual=new THREE.Group();root.add(visual);root.position.set(2,3,4);
+    const material=new THREE.MeshStandardMaterial(),t=createRabbitTraveler(visual,material,material,material);
+    const a=new RabbitAnimation(visual,t.ears,t.paws,t.coat,t.arms,t.head);
+    a.jump(12,speed);a.update(.3,{speed,height:2,velocity:6});
+    a.ceilingBump();assert.equal(a.jumpActive,false);
+    let low=1,previous=visual.scale.y;
+    for(let i=0;i<Math.ceil(fps*.65);i++){
+      if(i<fps*.08)a.ceilingBump();
+      a.update(1/fps,{speed,height:2,velocity:-2});
+      if(i/fps<.1)assert.ok(visual.scale.y<=previous+1e-6,'contact moves towards compression');
+      if(i/fps>.15)assert.ok(visual.scale.y<=1.001,'release has no stretch overshoot');
+      if(i/fps<.2)low=Math.min(low,visual.scale.y);
+      previous=visual.scale.y;
+    }
+    assert.ok(low<.81);assert.ok(Math.abs(visual.scale.y-1)<1e-6);
+    assert.deepEqual(root.position.toArray(),[2,3,4]);
+    if(!speed)assert.equal(visual.rotation.x,0);
+    a.reset();assert.equal(a.ceilingEntry,null);assert.equal(a.ceilingBumpAge,1);
+  }
+});
 test('hit pose leans backwards without rotating the root and releases after the recoil',()=>{
   const root=new THREE.Group(),visual=new THREE.Group();root.add(visual);root.rotation.y=1.2;
   const material=new THREE.MeshStandardMaterial(),t=createRabbitTraveler(visual,material,material,material);

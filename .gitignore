@@ -3,3 +3,5 @@ dist/
 *.log
 .qa/
 /output/
+/launchers/builds/*
+!/launchers/builds/.gitkeep

@@ -2,9 +2,9 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {floorGateLayout,gateCrossed,FloorGates} from '../src/floor-gates.js';
-import {END,gaps} from '../src/game.js';
+import {END,gaps,FLOOR_COUNT} from '../src/game.js';
 test('each floor ends in one gate on a real plank, including the final approach',()=>{
-  const gates=floorGateLayout();assert.equal(gates.length,12);
+  const gates=floorGateLayout();assert.equal(gates.length,FLOOR_COUNT);
   for(const gate of gates){assert.ok(!gaps.includes(gate.plank));assert.equal(gate.plank%14,13);assert.ok(gateCrossed(gate,gate.s-.5,gate.s+.5,0,0));assert.ok(!gateCrossed(gate,gate.s+.5,gate.s-.5,0,0));assert.ok(!gateCrossed(gate,gate.s-.5,gate.s+.5,-5,-5));gate.passed=true;assert.ok(!gateCrossed(gate,gate.s-.5,gate.s+.5,0,0));}
   assert.ok(gates.at(-1).s<END-.1);
 });

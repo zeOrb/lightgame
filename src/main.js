@@ -460,6 +460,7 @@ function normalShelfSurface(position,footY){
   return hit?{y:hit.point.y,section:hit.object.userData.s}:null;
 }
 function landOnSecret(surface,position){
+  rabbitAnimation.land(rabbitState.fall?.vy??velocity,moveSpeed);
   if(surface.section!==undefined){
     const projected=shelfTravel.land(surface.section,position);s=projected.s;lane=projected.lane;
   }else{
@@ -729,12 +730,17 @@ let cameraNeedsReset=true;
 function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(now);towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
   const stopped=state==='playing'&&hitStop>0,dt=stopped?0:realDt;
   hitStop=state==='playing'?Math.max(0,hitStop-realDt):0;
-  const previousJumpHeight=height,landingVelocity=velocity;
+  const previousJumpHeight=height,landingVelocity=velocity,landingFrom=rabbit.position.clone();
   if(state==='playing')lightBarRecovery.tick(dt);
   if(state==='playing'&&!stopped)update(dt);
-  if(state==='playing'&&previousJumpHeight>.025&&height<=.025&&rabbitState.mode!==RabbitMode.FALLING&&!arenas.active?.collapse){
+  const landingRoute=arenas.active?arenas.player:playerRoute(s,lane);
+  const landingSecret=landingVelocity<0?secretLevels.support(landingRoute,landingRoute.y+height):null;
+  if(state==='playing'&&previousJumpHeight>.025&&(height<=.025||landingSecret)&&rabbitState.mode!==RabbitMode.FALLING&&!arenas.active?.collapse){
     const p=arenas.active?arenas.player:playerRoute(s,lane);
-    landingEffects.land(new THREE.Vector3(p.x,p.y+.05,p.z),clamp(Math.abs(landingVelocity)/9,.35,1));
+    const travel=new THREE.Vector3(p.x-landingFrom.x,0,p.z-landingFrom.z);
+    const floorHit=arenas.active?null:shelfSupport(p,p.y+height,walkableFloors.filter(floor=>floor.visible&&!floor.userData.secretStep));
+    const dustY=landingSecret?.y??floorHit?.point.y??p.y;
+    landingEffects.land(new THREE.Vector3(p.x,dustY+.10,p.z),clamp(Math.abs(landingVelocity)/9,.35,1),travel,travel.length()/Math.max(dt,.001));
   }
   landingEffects.update(state==='paused'?0:dt);
   vitralEntryEffects.update(state==='playing'?dt:0);

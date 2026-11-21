@@ -6,6 +6,9 @@ export class RabbitAnimation {
   constructor(visual,ears,paws,tail,arms=[],head=null){
     this.visual=visual;this.ears=ears;this.paws=paws;this.tail=tail;this.arms=arms;this.head=head;
     this.headRest=head?.position.clone();
+    this.pawRestX=paws.map(paw=>paw.position.x);
+    this.lowerBody=visual.children.filter(mesh=>mesh.isMesh&&mesh.geometry.type==='CylinderGeometry')
+      .map(mesh=>({mesh,scale:mesh.scale.clone()}));
     this.earBends=ears.flatMap(ear=>ear.children.filter(mesh=>mesh.isMesh).map(mesh=>{
       mesh.geometry=mesh.geometry.clone();mesh.geometry.attributes.position.setUsage(THREE.DynamicDrawUsage);mesh.frustumCulled=false;
       return {mesh,rest:new Float32Array(mesh.geometry.attributes.position.array),angle:0};
@@ -15,7 +18,10 @@ export class RabbitAnimation {
   }
   reset(){
     this.pickupAge=1;this.slipAge=1;this.slipWeight=0;
-    this.earContactAge=1;
+    this.earContactAge=1;this.ceilingBumpAge=1;
+    this.ceilingEntry=null;
+    for(const {mesh,scale} of this.lowerBody)mesh.scale.copy(scale);
+    this.landingAge=1;this.landingStrength=0;this.landingMoving=false;this.landingCloth=0;
     for(const bend of this.earBends){bend.angle=0;bend.mesh.geometry.attributes.position.array.set(bend.rest);bend.mesh.geometry.attributes.position.needsUpdate=true;bend.mesh.geometry.computeVertexNormals();}
     this.phase=0;this.blend=0;this.air=0;this.landing=0;this.lastVelocity=0;this.wasAirborne=false;this.fallTime=0;
     this.clothTime=0;this.clothWind=0;this.clothTurn=0;this.fallClothBlend=0;this.dashClothBlend=0;this.dashClothTime=0;
@@ -30,6 +36,8 @@ export class RabbitAnimation {
     this.pose(0,0,0);
   }
   updateFall(dt){
+    for(const {mesh,scale} of this.lowerBody)mesh.scale.copy(scale);
+    this.paws.forEach((paw,i)=>{paw.position.x=this.pawRestX[i];paw.scale.setScalar(1);});
     this.slipAge=1;this.slipWeight=0;
     this.idleBlend=0;this.idleWeight=0;
     if(this.head){this.head.rotation.x=THREE.MathUtils.damp(this.head.rotation.x,0,12,dt);this.head.position.lerp(this.headRest,1-Math.exp(-12*dt));}
@@ -91,6 +99,11 @@ export class RabbitAnimation {
           normalY-=loose*loose*.13*this.slipWeight;
           normalZ-=loose*loose*.045*this.slipWeight;
         }
+        if(!falling&&this.landingCloth>.001){
+          const bend=loose*loose*this.landingCloth;
+          normalY+=bend*.42;
+          normalZ-=bend*.25;
+        }
         if(!falling&&this.dashClothBlend>.001){
           const rush=this.dashClothBlend,clock=this.dashClothTime;
           const ripple=Math.sin(clock*23-loose*8+phase*1.7);
@@ -144,11 +157,19 @@ export class RabbitAnimation {
     this.jumpBounce=this.jumpActive&&airborne&&bounceTime>=0&&bounceTime<1
       ?.045*Math.sin(-bounceTime*Math.PI*3)*Math.exp(-bounceTime*3)*(1-THREE.MathUtils.smootherstep(bounceTime,.7,1)):0;
     this.jumpRise=this.jumpActive&&airborne&&velocity>0?takeoff*apexReturn:0;
-    if(this.wasAirborne&&!airborne)this.landing=.16+THREE.MathUtils.clamp(-this.lastVelocity/9,0,1)*.16;
+    if(this.wasAirborne&&!airborne&&velocity<=0)this.land(this.lastVelocity,speed);
     if(!airborne&&velocity<=0)this.jumpActive=false;
     this.lastVelocity=velocity;
     this.wasAirborne=airborne;
-    this.landing=Math.max(0,this.landing-dt);
+    this.landingAge=Math.min(1,this.landingAge+dt);
+    // Impact first (3 frames at 60 Hz), recovery second. Both keys ease,
+    // but the compression must happen while contact is still readable.
+    const landingWeight=THREE.MathUtils.smootherstep(this.landingAge,0,.055)
+      *(1-THREE.MathUtils.smootherstep(this.landingAge,.08,.28))*(airborne||dashing?0:1);
+    this.landing=this.landingStrength*landingWeight;
+    this.landingCloth=this.landingMoving?THREE.MathUtils.smootherstep(this.landingAge,.02,.10)
+      *(1-THREE.MathUtils.smootherstep(this.landingAge,.12,.34))
+      *(airborne||dashing?0:1):0;
     this.blend=THREE.MathUtils.damp(this.blend,Math.min(1,speed/3.6),12,dt);
     this.air=THREE.MathUtils.damp(this.air,airborne?1:0,14,dt);
     this.phase+=Math.min(speed,5.5)*dt*4.5;
@@ -163,7 +184,7 @@ export class RabbitAnimation {
     this.visual.position.y=(strideBounce*.11-.025)*this.blend*ground;
     this.visual.rotation.x=(skidding?-.28:.34+Math.sin(this.phase*2-.4)*.055)*this.blend*ground+jumpLean;
     this.visual.rotation.z=(Math.sin(this.phase)*.025*this.blend-THREE.MathUtils.clamp(turn,-1,1)*.09)*ground;
-    let squash=1+(.10*strideBounce-.07*(1-strideBounce))*this.blend*ground-this.landing*1.05;
+    let squash=1+(.10*strideBounce-.07*(1-strideBounce))*this.blend*ground*(1-landingWeight)-this.landing*1.05;
     if(this.jumpActive&&velocity>0){
       // Hold the stretch through 3/4 of ascent, then release it at the apex.
       if(this.jumpAge<compressEnd)squash=THREE.MathUtils.lerp(1,.67,THREE.MathUtils.smootherstep(this.jumpAge,0,compressEnd));
@@ -173,10 +194,30 @@ export class RabbitAnimation {
       squash=THREE.MathUtils.lerp(1,squash,apexReturn);
     }
     else if(this.jumpActive&&airborne)squash=1+this.jumpBounce;
-    const y=airborne||this.jumpActive?squash:THREE.MathUtils.damp(this.visual.scale.y,squash,18,dt),width=1/Math.sqrt(y);
+    const y=airborne||this.jumpActive||this.landing>0?squash:THREE.MathUtils.damp(this.visual.scale.y,squash,18,dt),width=1/Math.sqrt(y);
     this.visual.scale.set(width,y,width);
     this.visual.position.x=0;this.visual.position.z=(.055+Math.sin(this.phase*2-.3)*.015)*this.blend*ground;
     this.pose(skidding?step*.3:step,ground,velocity);
+    if(this.landing>0){
+      const weight=this.landing/Math.max(.001,this.landingStrength);
+      const pitch=this.landingMoving?-.156:0;
+      this.visual.rotation.x=THREE.MathUtils.lerp(this.visual.rotation.x,pitch,weight);
+      this.visual.rotation.z*=1-weight;
+      this.visual.position.z*=1-weight;
+      this.visual.position.y*=1-weight;
+      this.ears.forEach(ear=>{ear.rotation.x+=this.landing*.7;});
+      this.paws.forEach(paw=>{paw.position.z=THREE.MathUtils.lerp(paw.position.z,this.landingMoving?.22:.12,weight);paw.rotation.x=THREE.MathUtils.lerp(paw.rotation.x,this.landingMoving?-.15:-.09,weight);});
+      this.arms.forEach((arm,i)=>{arm.rotation.z+=(i?1:-1)*this.landing*.45;});
+    }
+    // Widen the planted silhouette at the feet and jacket hem, not the head.
+    const planted=airborne?0:landingWeight*(1-rush);
+    this.paws.forEach((paw,i)=>{
+      paw.position.x=this.pawRestX[i]*(1+.32*planted);
+      paw.scale.set(1+.16*planted,1,1+.08*planted);
+    });
+    for(const {mesh,scale} of this.lowerBody){
+      mesh.scale.copy(scale);mesh.scale.x*=1+.12*planted;mesh.scale.z*=1+.08*planted;
+    }
     if(diagonal){
       this.paws.forEach(paw=>{paw.rotation.x=-.3*this.jumpRise;paw.position.z=.12-.06*this.jumpRise;});
       this.arms.forEach(arm=>{arm.rotation.x=.45*this.jumpRise;});
@@ -217,12 +258,13 @@ export class RabbitAnimation {
     this.runClothBlend=THREE.MathUtils.damp(this.runClothBlend,ground*this.blend*(this.recoiling?0:1),8,dt);
     this.tail.rotation.set(-this.clothWind*.12+Math.sin(this.clothTime*4)*this.clothWind*.025,-this.clothTurn*.12,Math.sin(this.clothTime*3)*this.clothWind*.018+Math.sin(this.dashClothTime*11)*this.dashClothBlend*.07);
     if(diagonal)this.tail.rotation.x-=.12*this.jumpRise;
+    this.tail.rotation.x+=this.landingCloth*.06;
     // Cancel the panel's rest tilt during the burst so its long edge follows
     // the horizontal travel line; leave a little roll and flutter in the cloth.
     this.tail.rotation.x=THREE.MathUtils.lerp(this.tail.rotation.x,Math.PI/2-DASH_PITCH-.33,rush);
     this.tail.rotation.y*=1-DASH_FLATTEN*rush;
     this.tail.rotation.z*=1-DASH_FLATTEN*rush;
-    const resting=!airborne&&!this.jumpActive&&!dashing&&!this.recoiling&&speed<.18&&this.landing<=0;
+    const resting=!airborne&&!this.jumpActive&&!dashing&&!this.recoiling&&speed<.18&&this.landingAge>=.34;
     this.idleBlend=THREE.MathUtils.damp(this.idleBlend,resting?1:0,resting?3.5:12,dt);
     const idle=this.idleBlend*ground*(1-this.blend)*(this.recoiling?0:1);
     this.idleWeight=idle;
@@ -285,6 +327,33 @@ export class RabbitAnimation {
       this.arms.forEach((arm,i)=>{arm.rotation.x=THREE.MathUtils.lerp(arm.rotation.x,-.24,slip);arm.rotation.z=THREE.MathUtils.lerp(arm.rotation.z,(i?1:-1)*.14,slip);});
       this.tail.rotation.x-=.16*follow;
     }
+    this.ceilingBumpAge=Math.min(1,this.ceilingBumpAge+dt);
+    if(this.ceilingEntry&&this.ceilingBumpAge<.46&&!dashing&&!this.recoiling){
+      const entry=this.ceilingEntry;
+      const attack=THREE.MathUtils.smootherstep(this.ceilingBumpAge,0,.11);
+      const weight=1-THREE.MathUtils.smootherstep(this.ceilingBumpAge,.22,.46);
+      // Own the contact silhouette: do not multiply the old jump stretch.
+      const vertical=THREE.MathUtils.lerp(entry.scale.y,.62,attack);
+      const width=1/Math.sqrt(vertical);
+      this.visual.scale.lerp(new THREE.Vector3(width,vertical,width),weight);
+      this.visual.rotation.x=THREE.MathUtils.lerp(this.visual.rotation.x,THREE.MathUtils.lerp(entry.pitch,entry.moving?.18:0,attack),weight);
+      this.visual.rotation.z*=1-weight;
+      this.visual.position.z*=1-weight;
+      if(this.head)this.head.rotation.x=THREE.MathUtils.lerp(this.head.rotation.x,-this.visual.rotation.x*.8+.08*attack,weight);
+      const follow=THREE.MathUtils.smootherstep(this.ceilingBumpAge,.025,.14)*weight;
+      this.paws.forEach(paw=>{paw.position.z=THREE.MathUtils.lerp(paw.position.z,entry.moving?.08:.12,follow);paw.rotation.x=THREE.MathUtils.lerp(paw.rotation.x,-.18,follow);});
+      this.arms.forEach((arm,i)=>{arm.rotation.x=THREE.MathUtils.lerp(arm.rotation.x,-.2,follow);arm.rotation.z=THREE.MathUtils.lerp(arm.rotation.z,(i?1:-1)*.2,follow);});
+      this.tail.rotation.x-=.1*follow;
+    }
+    if(landingWeight>0&&!this.recoiling&&rush<.01){
+      // Feet take the weight; squash must not lift the soles off the floor.
+      this.paws.forEach(paw=>{
+        const plantedY=(.065-this.visual.position.y+Math.sin(this.visual.rotation.x)*paw.position.z*this.visual.scale.z)
+          /Math.max(.5,Math.cos(this.visual.rotation.x)*this.visual.scale.y);
+        paw.position.y=THREE.MathUtils.lerp(paw.position.y,plantedY,landingWeight);
+      });
+      if(this.head)this.head.rotation.x-=this.visual.rotation.x*.6*landingWeight;
+    }
     this.bendEarsToCeiling(dt,ceiling);
     this.animateCloth(this.clothTime,this.clothWind);
   }
@@ -298,7 +367,7 @@ export class RabbitAnimation {
       const {mesh,rest}=bend,position=mesh.geometry.attributes.position;
       let top=-Infinity;
       for(let i=0;i<position.count;i++){point.fromArray(rest,i*3).applyMatrix4(mesh.matrixWorld);top=Math.max(top,point.y);}
-      const target=Math.max(contact,ceiling===null?0:2.65*THREE.MathUtils.smoothstep(top-ceiling,-.22,.3));
+      const target=Math.max(contact,ceiling===null?0:2.65*THREE.MathUtils.smoothstep(top-ceiling,-.32,.18));
       bend.angle=THREE.MathUtils.damp(bend.angle,target,target>bend.angle?18:8,dt);
       if(ceiling===null&&bend.angle<.0001)bend.angle=0;
       inverse.copy(mesh.matrixWorld).invert();
@@ -316,12 +385,26 @@ export class RabbitAnimation {
       position.needsUpdate=true;mesh.geometry.computeVertexNormals();
     }
   }
-  ceilingBump(){this.earContactAge=0;}
+  ceilingBump(){
+    this.earContactAge=0;
+    // The head can remain under the road for several frames after the first
+    // hit. Keep that as one squash pulse instead of restarting it each frame.
+    if(this.ceilingBumpAge>.46){
+      this.ceilingEntry={scale:this.visual.scale.clone(),pitch:this.visual.rotation.x,moving:this.jumpMoving};
+      this.ceilingBumpAge=0;
+      this.jumpActive=false;this.jumpRise=0;this.jumpBounce=0;this.apexAge=-1;
+    }
+  }
+  land(velocity=0,speed=0){
+    if(this.landingAge<.34)return;
+    this.landingAge=0;this.landingStrength=.182+.104*THREE.MathUtils.clamp(-velocity/12,0,1);
+    this.landingMoving=this.jumpActive?this.jumpMoving:Math.abs(speed)>.5;
+  }
   slipThrough(){this.slipAge=0;}
   pickup(){this.pickupAge=0;}
   get recoiling(){return this.hitAge<.46;}
   hit(){this.hitAge=0;this.jumpActive=false;this.dashActive=false;this.dashClothBlend=0;}
-  jump(velocity=12,speed=0){this.jumpAge=0;this.jumpActive=true;this.launchVelocity=Math.max(1,velocity);this.launchSpeed=Math.abs(speed);this.jumpMoving=this.launchSpeed>.5;this.apexAge=-1;this.jumpBounce=0;}
+  jump(velocity=12,speed=0){this.landingAge=1;this.landing=0;this.jumpAge=0;this.jumpActive=true;this.launchVelocity=Math.max(1,velocity);this.launchSpeed=Math.abs(speed);this.jumpMoving=this.launchSpeed>.5;this.apexAge=-1;this.jumpBounce=0;}
   doubleJump(){this.jump(12,this.launchSpeed);}
   pose(step,ground,velocity){
     this.ears.forEach((ear,i)=>{
@@ -329,6 +412,7 @@ export class RabbitAnimation {
       ear.rotation.z=(i===0?.165:-.165)+Math.sin(this.phase-.5+i*.15)*.035*this.blend*ground;
     });
     this.paws.forEach((paw,i)=>{
+      paw.position.x=this.pawRestX[i];paw.scale.setScalar(1);
       const cycle=((this.phase/(Math.PI*2)+i*.5)%1+1)%1,stance=cycle<.6;
       const u=stance?cycle/.6:(cycle-.6)/.4;
       const swing=u*u*(3-2*u),stride=stance?THREE.MathUtils.lerp(.15,-.15,u):THREE.MathUtils.lerp(-.15,.15,swing);

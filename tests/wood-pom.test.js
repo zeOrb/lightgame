@@ -16,7 +16,7 @@ test('wood POM composes with tower shading and uses one march for albedo and bum
   assert.match(shader.fragmentShader,/texture2D\( map, woodShiftedUV \)/);
   assert.match(shader.fragmentShader,/dFdx\( woodShiftedUV \)/);
   assert.equal(shader.fragmentShader.split('woodParallax(vMapUv)').length-1,1);
-  assert.match(material.customProgramCacheKey(),/tower-height-blue-v1-wood-pom/);
+  assert.match(material.customProgramCacheKey(),/tower-height-muted-blue-v2-wood-pom-v2/);
 });
 
 test('untextured materials are unchanged',()=>{
