@@ -1,3 +1,9 @@
+import {InputManager} from './input/input-manager.js';
+import {FocusIndicator} from './input/focus-indicator.js';
+import {BrowserInput} from './input/browser-input.js';
+import INPUT from './input/input-actions.json' with {type:'json'};
+import {ACTION_CODES} from './settings-store.js';
+import {preferences,initializeSettings,t,keyName} from './settings.js';
 import {secretTransition} from './secret-transition.js';
 import {GrassExitParticles} from './grass-exit-particles.js';
 import {SecretDirtParticles} from './secret-dirt-particles.js';
@@ -335,10 +341,11 @@ const motion=new PlatformerMotion();
 const shelfTravel=new ShelfTravel();
 const playerRoute=(s,lane=0)=>shelfTravel.position(s,lane);
 initializeMainMenu();
-const keys=new Set();let jumpQueued=false;let audio=null,muted=true;
+const keys=new Set();const inputManager=new InputManager();let inputDevices;let jumpQueued=false;let audio=null,masterAudio=null,muted=preferences.volume===0;
 const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent='Готовим забег…';fadeToNextRun(()=>location.assign(nextRunURL(location.href)));});
-function tone(freq=660,length=.15){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(freq,audio.currentTime);gain.gain.setValueAtTime(.055,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+length);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+length);}
-function vitralAbsorbSound(){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();playVitralAbsorb(audio);}
+function ensureAudio(){audio??=new (window.AudioContext||window.webkitAudioContext)();if(!masterAudio){masterAudio=audio.createGain();masterAudio.gain.value=preferences.volume;masterAudio.connect(audio.destination);}audio.resume();return masterAudio;}
+function tone(freq=660,length=.15){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(freq,audio.currentTime);gain.gain.setValueAtTime(.055,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+length);osc.connect(gain);gain.connect(ensureAudio());osc.start();osc.stop(audio.currentTime+length);}
+function vitralAbsorbSound(){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();playVitralAbsorb(audio,ensureAudio());}
 function toast(text){$('toast').textContent=text;$('toast').style.opacity=1;toastTime=4;}
 function beginRabbitFall(outward,message,launched=true){
   if(!launched){
@@ -352,12 +359,12 @@ function beginRabbitFall(outward,message,launched=true){
   const p=playerRoute(s,lane);rabbitState.startFall({x:p.x,y:p.y+.12+height,z:p.z},outward,launched);
   rabbitAnimation.reset();rabbit.rotation.z=0;
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
-  abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent='Падение';
+  abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent='Падение';
 }
-function reset(){secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function reset(){secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent='по спирали';for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
 function start({boss=false}={}){frameClock.reset();skillTree.element.hidden=true;reset();if(boss&&arenas.arenas.length){const a=arenas.arenas[0];s=a.s;arenas.enter(a.s-.01,a.s,route(a.s));}state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
-function pause(){if(state==='playing'){state='paused';$('world').classList.add('is-paused');keys.clear();showModal('','Пауза','','Продолжить');$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('world').classList.remove('is-paused');$('modal').hidden=true;}}
+function pause(){if(state==='playing'){state='paused';$('world').classList.add('is-paused');keys.clear();inputDevices?.clear();inputManager.clear();showModal('',t('pause'),'',t('resume'));$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('world').classList.remove('is-paused');$('modal').hidden=true;}}
 function breakChest(c){
   if(c.broken)return false;c.broken=true;c.o.visible=false;
   const pool=Math.max(1,Math.min(RUN_UPGRADES.gemPoolTier,COLLECTIBLES.variants.length));
@@ -365,17 +372,30 @@ function breakChest(c){
   for(let i=0;i<count;i++){const itemS=c.s+(i-(count-1)/2)*.13,p=route(itemS,0),gem=createGemPickable(loot[i],{s:itemS,lane:0,position:new THREE.Vector3(p.x,p.y+.035,p.z)});scene.add(gem.o);towerHierarchy.worldDriven(gem.o,floorForSection(itemS).index);gem.fromChest=true;gem.drop={start:visualTime,originX:p.x,fromY:p.y+.035,velocity:2.2+RandomManager.graphics()*1.5,drift:(RandomManager.graphics()-.5)*1.5};gem.o.position.y+=.5;glints.push(gem);}
   tone(260,.16);return true;
 }
-function finish(won){if(state==='won'||state==='lost')return;if(won)progression.award(VICTORY_BONUS);state=won?'won':'lost';keys.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;tone(won?1046:164,won?1.8:.6);skillTree.open(won,collected,won?VICTORY_BONUS:0);}
+function finish(won){if(state==='won'||state==='lost')return;if(won)progression.award(VICTORY_BONUS);state=won?'won':'lost';keys.clear();inputDevices?.clear();inputManager.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;tone(won?1046:164,won?1.8:.6);skillTree.open(won,collected,won?VICTORY_BONUS:0);}
 $('debug-boss').onclick=()=>start({boss:true});
 $('start').onclick=()=>start();$('restart').onclick=start;$('resume').onclick=()=>state==='paused'?pause():start();
 $('main-menu').onclick=()=>{reset();state='intro';$('modal').hidden=true;$('hud').hidden=true;$('intro').hidden=false;document.body.classList.remove('playing');toastTime=0;$('toast').style.opacity=0;};
 $('reset-progress').onclick=()=>{progression.reset();const url=new URL(location.href);url.searchParams.delete('sunny-run');url.searchParams.set('sunny-reset',String(Date.now()));location.assign(url.href);};
-$('sound').onclick=()=>{muted=!muted;$('sound').textContent='Звук: '+(muted?'выкл.':'вкл.')+' · debug';$('sound').setAttribute('aria-label',muted?'Включить звук':'Выключить звук');tone(784,.3);};
-const supported=new Set(['KeyA','KeyD','KeyW','KeyS','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','KeyE','Escape','ShiftLeft','ShiftRight']);
-addEventListener('keydown',e=>{if(state==='lost'||state==='won'||state==='loading')return;if(!supported.has(e.code))return;e.preventDefault();if(e.code==='Escape'&&!e.repeat)pause();if(e.code==='Space'&&!e.repeat&&state==='playing')jumpQueued=true;if(e.code==='KeyE'&&!e.repeat&&state==='playing')flareQueued=true;if((e.code==='ShiftLeft'||e.code==='ShiftRight')&&!e.repeat&&state==='playing'&&rabbitState.mode!==RabbitMode.FALLING)phaseQueued=true;keys.add(e.code);});
-addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();if(state==='playing')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')pause();});
-for(const button of document.querySelectorAll('[data-key]')){button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);keys.add(button.dataset.key);if(button.dataset.key==='Space')jumpQueued=true;if(button.dataset.key==='KeyE')flareQueued=true;if(button.dataset.key==='ShiftLeft')phaseQueued=true;};button.onpointerup=button.onpointercancel=()=>keys.delete(button.dataset.key);}
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+$('sound').remove();
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')pause();});
+for(const button of document.querySelectorAll('[data-key]')){
+  button.onpointerdown=e=>{e.preventDefault();button.setPointerCapture(e.pointerId);inputDevices.setTouch(button.dataset.key,true);};
+  button.onpointerup=button.onpointercancel=()=>inputDevices.setTouch(button.dataset.key,false);
+}
+function applyRenderSettings(){
+  const [width,height]=preferences.resolution==='auto'?[innerWidth,innerHeight]:preferences.resolution.split('x').map(Number);
+  const ratio=preferences.resolution==='auto'?Math.min(devicePixelRatio,1.7):Math.min(width/innerWidth,height/innerHeight);
+  renderer.setPixelRatio(ratio);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
+}
+addEventListener('resize',applyRenderSettings);
+const settingsUI=initializeSettings({onOpen:()=>{keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=phaseQueued=flareQueued=false;if(state==='playing')pause();},onChange:()=>{
+  muted=preferences.volume===0;if(masterAudio)masterAudio.gain.setTargetAtTime(preferences.volume,audio.currentTime,.03);
+  applyRenderSettings();
+  const codes=['left','right','left','right','jump','dash','flare','pause'];
+  document.querySelectorAll('body>footer kbd').forEach((el,i)=>{const action=codes[i];if(action)el.textContent=keyName(preferences.bindings[action][i===2||i===3?1:0]);});
+}});
+
 function updateHUD(dt=0){
   $('hud').style.setProperty('--hud-scale',Math.min(1,Math.max(.35,(innerWidth-56)/320))); 
   const marker=document.querySelector('.shadow-threshold');marker.parentElement.style.setProperty('--shadow-threshold',SHADOW_LIGHT_THRESHOLD+'%');marker.title='Тень начинается ниже '+SHADOW_LIGHT_THRESHOLD+'% Света';marker.setAttribute('aria-label',marker.title);
@@ -426,7 +446,7 @@ function updateArena(dt){
   if(result.phaseKill){light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.phaseHeal*result.kills);if(RUN_UPGRADES.resonance)abilities.cooldowns.phasing=Math.max(0,abilities.cooldowns.phasing-.5);}
   if(result.hits){
     hitStop=result.kills?.065:.045;
-    if(!muted){audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();playImpact(audio,!!result.kills);}
+    if(!muted){audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();playImpact(audio,!!result.kills,ensureAudio());}
     if(result.impact)bossHitEffects.hit(result.impact,result.impactPalette);
   }
   if(result.secretReward){healFromShard(35);const previous=progression.state.points;progression.award(5*RUN_UPGRADES.shardPointsMultiplier);shardCounter.add(progression.state.points-previous,'#dac2ff');rabbitAnimation.pickup();tone(1046,.4);}
@@ -727,7 +747,43 @@ function emitSunParticle(particle,initial=false){
   animation.onfinish=()=>{if(sunWasRegenerating)emitSunParticle(particle);};
 }
 let cameraNeedsReset=true;
-function frame(now){requestAnimationFrame(frame);const realDt=frameClock.step(now);towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
+function registerInputContext(id,enabled,handle,handleRaw){inputManager.register({id,...INPUT.contexts[id],enabled,handle,handleRaw});}
+let inputWasFocused=true;
+registerInputContext('global',()=>true,frame=>{
+  if(!frame.focused&&inputWasFocused){keys.clear();inputDevices?.clear();inputManager.clear();if(state==='playing')pause();}
+  inputWasFocused=frame.focused;
+  if(frame.focused&&frame.globalPressed?.has('toggleFullscreen')){
+    if(window.sunnyDesktop?.toggleFullscreen)window.sunnyDesktop.toggleFullscreen().catch(()=>{});
+    else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+    else document.documentElement.requestFullscreen().catch(()=>{});
+  }
+});
+registerInputContext('rebinding',()=>settingsUI.isCapturing,frame=>settingsUI.handleInput(frame),control=>settingsUI.captureRaw(control));
+registerInputContext('settings',()=>settingsUI.isOpen,frame=>settingsUI.handleInput(frame));
+registerInputContext('upgrades',()=>!skillTree.element.hidden,frame=>skillTree.handleInput(frame));
+registerInputContext('bestiary',()=>document.body.classList.contains('bestiary-open'),frame=>{
+  document.dispatchEvent(new CustomEvent('sunny:bestiary-input',{detail:frame}));
+});
+function handleMenuInput(surface,frame){
+  if(frame.pressed.has('pause')&&state==='paused'){pause();return;}
+  const buttons=[...surface.querySelectorAll('button:not(:disabled)')];
+  const direction=frame.uiPressed.has('down')?1:frame.uiPressed.has('up')?-1:0;
+  if(direction){const i=buttons.indexOf(document.activeElement);buttons[(i+direction+buttons.length)%buttons.length]?.focus();}
+  if(frame.uiPressed.has('submit'))(buttons.includes(document.activeElement)?document.activeElement:buttons[0])?.click();
+}
+registerInputContext('pause',()=>state==='paused',frame=>handleMenuInput($('modal'),frame));
+registerInputContext('mainMenu',()=>state==='intro',frame=>handleMenuInput($('intro'),frame));
+registerInputContext('gameplay',()=>state==='playing',frame=>{
+  keys.clear();for(const action of frame.held)if(action!=='pause')keys.add(ACTION_CODES[action]);
+  if(frame.pressed.has('jump'))jumpQueued=true;
+  if(frame.pressed.has('dash')&&rabbitState.mode!==RabbitMode.FALLING)phaseQueued=true;
+  if(frame.pressed.has('flare'))flareQueued=true;
+  if(frame.pressed.has('pause'))pause();
+});
+inputDevices=new BrowserInput({preferences:()=>preferences,onRaw:control=>inputManager.dispatchRaw(control),captureKeyboard:()=>inputManager.resolve()?.map==='gameplay',onBlur:()=>{keys.clear();inputManager.clear();if(state==='playing')pause();}});
+const focusIndicator=new FocusIndicator();
+function updateInput(){keys.clear();inputManager.update(inputDevices.sample());document.body.dataset.inputDevice=inputManager.scheme;focusIndicator.update(document.activeElement,inputManager.scheme);}
+function frame(now){requestAnimationFrame(frame);updateInput();const realDt=frameClock.step(now);towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
   const stopped=state==='playing'&&hitStop>0,dt=stopped?0:realDt;
   hitStop=state==='playing'?Math.max(0,hitStop-realDt):0;
   const previousJumpHeight=height,landingVelocity=velocity,landingFrom=rabbit.position.clone();
@@ -958,7 +1014,7 @@ if(runURL.searchParams.has('sunny-run')){
   history.replaceState(history.state,'',runURL.href);
 }else try{if(sessionStorage.getItem('sunny.next-run')==='1'){sessionStorage.removeItem('sunny.next-run');start();}}catch{}
 requestAnimationFrame(frame);
-requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();frameClock.reset();state='playing';flashRunStart();}}));
+requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();inputDevices?.clear();inputManager.clear();frameClock.reset();state='playing';flashRunStart();}}));
 
 
 

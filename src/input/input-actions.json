@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "schemes": ["keyboardMouse", "xbox", "playstation", "touch"],
+  "maps": {
+    "global": {"toggleFullscreen":"Button","applicationFocus":"Boolean"},
+    "gameplay": {
+      "move": "Axis2D",
+      "jump": "Button",
+      "dash": "Button",
+      "flare": "Button",
+      "pause": "Button"
+    },
+    "ui": {
+      "navigate": "Axis2D",
+      "submit": "Button",
+      "cancel": "Button",
+      "previousTab": "Button",
+      "nextTab": "Button",
+      "menu": "Button",
+      "point": "Vector2",
+      "click": "Button"
+    }
+  },
+  "contexts": {
+    "global": {"map":"global","priority":2000,"modal":false},
+    "rebinding": {"map": "ui", "priority": 1000, "modal": true},
+    "settings": {"map": "ui", "priority": 900, "modal": true},
+    "upgrades": {"map": "ui", "priority": 800, "modal": true},
+    "bestiary": {"map": "ui", "priority": 700, "modal": true},
+    "pause": {"map": "ui", "priority": 600, "modal": true},
+    "mainMenu": {"map": "ui", "priority": 500, "modal": true},
+    "gameplay": {"map": "gameplay", "priority": 0, "modal": true}
+  }
+}

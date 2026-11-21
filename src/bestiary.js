@@ -73,6 +73,11 @@ export function initializeBestiary(){
   stage.addEventListener('pointermove',event=>{const rect=stage.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);pointerInside=true;if(drag===null)return;const delta=drag.x-event.clientX;move(delta*.022);drag.total+=delta;drag.x=event.clientX;});
   stage.addEventListener('pointerleave',()=>{pointerInside=false;});
   const stop=()=>{if(drag&&Math.abs(drag.total)>24&&Math.round(target/spacing)===Math.round(drag.start/spacing))target=THREE.MathUtils.clamp(drag.start+Math.sign(drag.total)*spacing,0,(definitions.length-1)*spacing);drag=null;snap();};stage.addEventListener('pointerup',stop);stage.addEventListener('pointercancel',stop);stage.addEventListener('lostpointercapture',stop);
-  document.addEventListener('keydown',event=>{if(!active)return;if(event.code==='Escape'){event.preventDefault();event.stopImmediatePropagation();close();}else if(['ArrowLeft','ArrowRight','KeyA','KeyD'].includes(event.code)){event.preventDefault();move(['ArrowLeft','KeyA'].includes(event.code)?-spacing:spacing);}},{capture:true});
+
+  document.addEventListener('sunny:bestiary-input',event=>{
+    if(!active)return;const ui=event.detail.uiPressed;
+    if(ui.has('cancel')||ui.has('submit')||ui.has('menu'))close();
+    else if(ui.has('left'))move(-spacing);else if(ui.has('right'))move(spacing);
+  });
   window.addEventListener('resize',resize);
 }

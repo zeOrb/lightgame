@@ -1,0 +1,35 @@
+#settings[hidden]{display:none}
+#desktop-bar{position:fixed;top:0;left:0;right:0;height:26px;z-index:110;display:flex;align-items:center;background:#13120fe8;color:#aaa59b;font:13px Georgia,serif;-webkit-app-region:drag}
+#desktop-bar[hidden]{display:none}
+#desktop-bar span{flex:1;padding-left:12px}
+#desktop-bar button{-webkit-app-region:no-drag;background:none;border:0;color:#ccc;font:18px Georgia,serif;padding:0 16px;height:26px;min-height:0;border-radius:0}
+#desktop-bar button:hover{background:#ffffff20}
+#settings{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 45%,#0a0908ed,#030303f7);color:#e3e0d9;backdrop-filter:blur(5px)}
+#settings .settings-card{width:min(720px,calc(100% - 40px));max-height:94vh;overflow:auto;padding:20px 32px;text-align:center;font:18px/1.5 Georgia,'Times New Roman',serif}
+#settings h2{font:400 clamp(30px,4vw,48px)/1.2 Georgia,serif;letter-spacing:.08em;margin:0;color:#f0ede6}
+#settings .menu-divider{height:36px;width:min(340px,85vw);margin:8px auto 12px;background:url('./menu-flourish.svg') center/contain no-repeat;opacity:.95}
+#settings nav{display:flex;justify-content:center;gap:14px;border-bottom:1px solid #bcb8b12b;margin-bottom:18px}
+#settings button{border:0;border-radius:0;background:transparent;color:#bcb8b1;font:inherit;cursor:pointer;padding:8px 12px;text-shadow:0 2px 6px #000;box-shadow:none;clip-path:none;transform:none}
+#settings button:hover,#settings button:focus-visible,#settings button[aria-selected=true]{background:#ffffff08;outline:1px solid #d6cdb440}
+#settings button[aria-selected=true]{color:#fff9e9}
+#settings button[aria-selected=true]{border-bottom:1px solid #d6cdb4}
+#settings .settings-content{min-height:200px;text-align:left}
+#settings .settings-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:8px 0;border-bottom:1px solid #ffffff0c}
+#settings select{max-width:58%;padding:7px 12px;background:#181715;border:1px solid #bcb8b145;color:#e3e0d9;font:16px Georgia,serif}
+#settings input[type=range]{width:52%;accent-color:#c6bca4}
+#settings .settings-note,#settings .settings-status{font-size:14px;color:#aaa59b;line-height:1.5}
+#settings .settings-status{min-height:22px;margin:10px 0}
+#settings .settings-bindings{display:flex;gap:8px}
+#settings .settings-bindings button{min-width:95px;min-height:0;padding:4px 10px;font-size:15px;border:1px solid #bcb8b12b}
+#settings .settings-bindings .gamepad-binding{width:42px;height:28px;min-width:42px;padding:5px;border:1px solid #bcb8b16b;border-radius:0;display:grid;place-items:center}
+#settings .gamepad-binding img{width:30px;height:30px;object-fit:contain;pointer-events:none}
+#settings .settings-bindings .gamepad-add{width:42px;display:grid;place-items:center;border:0;padding:0;font-size:14px}
+#settings .gamepad-add-square{display:grid;place-items:center;width:40px;height:40px;border:1px solid #bcb8b16b;font-size:24px}
+#settings .gamepad-binding.is-binding{outline:2px solid #e5d3a0;box-shadow:0 0 12px #e5d3a026}
+#settings .settings-row:has(.settings-bindings){padding:4px 0}
+#settings .settings-card{scrollbar-width:thin;scrollbar-color:#736c5c #161512}
+#settings .is-binding{color:#ffe6a1!important}
+#settings .settings-back{font-size:21px}
+#settings .settings-actions{display:flex;justify-content:center;gap:32px}
+#settings .settings-apply{font-size:21px;color:#e9e5dc}
+@media(max-width:540px){#settings .settings-card{padding:16px 8px}#settings nav{gap:0}#settings nav button{padding:7px;font-size:15px}#settings .settings-row{font-size:16px;gap:8px}#settings .settings-bindings button{min-width:64px;padding:6px;font-size:13px}}

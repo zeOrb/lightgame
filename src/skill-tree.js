@@ -1,9 +1,10 @@
 import {SKILLS,progression,isSkillVisible,isSkillPreview,SKILL_MAP_SIZE} from './progression.js';
-import {TreeViewport,TREE_PAN_KEYS,treeKeyboardDelta,PanTail,SmoothTreeZoom} from './tree-viewport.js';
+import {TreeViewport,treeKeyboardDelta,PanTail,SmoothTreeZoom} from './tree-viewport.js';
 import {PixelSkillArt,skillPosition} from './pixel-skill-art.js';
 import {createSkillStarfield} from './skill-stars.js';
 import {StarParallax} from './star-parallax.js';
 import {SkillComets} from './skill-comets.js';
+import {directionalTarget} from './menu-gamepad-navigation.js';
 export class SkillTree {
   constructor(onNext){
     this.treeId='light';this.onNext=onNext;this.selected=null;this.hovered=null;this.navKeys=new Set();this.panTail=new PanTail();this.smoothZoom=new SmoothTreeZoom();this.dragging=false;
@@ -39,6 +40,59 @@ export class SkillTree {
     const child=!skill.isRoot&&SKILLS.find(node=>node.requires===skill.id);
     if(child){this.smoothZoom.clear();this.interruptCamera();const p=skillPosition(child);this.map.classList.add('is-guiding');this.camera.x=this.viewport.clientWidth/2-p.x*this.camera.zoom;this.camera.y=this.viewport.clientHeight/2-p.y*this.camera.zoom;this.applyCamera();}
   }
+  focusPadButton(button){
+    if(!button)return;
+    if(button.classList.contains('skill-node')){
+      this.smoothZoom.clear();this.panTail.clear();this.navKeys.clear();this.interruptCamera();
+      const id=[...this.buttons].find(([,node])=>node===button)?.[0];
+      const skill=SKILLS.find(node=>node.id===id);
+      if(skill){
+        const p=skillPosition(skill),r=button.getBoundingClientRect(),view=this.viewport.getBoundingClientRect();
+        if(r.left<view.left+40||r.right>view.right-40||r.top<view.top+40||r.bottom>view.bottom-40){
+          this.camera.x=this.viewport.clientWidth/2-p.x*this.camera.zoom;
+          this.camera.y=this.viewport.clientHeight/2-p.y*this.camera.zoom;this.applyCamera();
+        }
+      }
+    }
+    button.focus({preventScroll:true});
+  }
+  handleInput(sample){
+    if(this.element.hidden)return false;
+    const ui=sample.uiPressed;
+    const buttons=[...this.element.querySelectorAll('button')].filter(b=>!b.hidden&&!b.disabled);
+    let focused=buttons.includes(document.activeElement)?document.activeElement:null;
+    if(ui.has('previousTab')||ui.has('nextTab')){
+      const tabs=[...this.element.querySelectorAll('[data-tree]')],index=tabs.findIndex(tab=>tab.dataset.tree===this.treeId);
+      const next=tabs[(index+(ui.has('nextTab')?1:-1)+tabs.length)%tabs.length];
+      next.click();this.focusPadButton(next);return true;
+    }
+    if(ui.has('cancel')||ui.has('menu')){
+      this.selected=this.hovered=null;this.renderDetail();this.focusPadButton(this.element.querySelector('#tree-next'));return true;
+    }
+    const dx=ui.has('right')?1:ui.has('left')?-1:0;
+    const dy=ui.has('down')?1:ui.has('up')?-1:0;
+    if(dx||dy){
+      if(focused?.closest('.tree-header')&&dx){
+        const header=buttons.filter(button=>button.closest('.tree-header'));
+        this.focusPadButton(header[(header.indexOf(focused)+dx+header.length)%header.length]);
+      }else if(!focused||focused.closest('.tree-header,.tree-tabs')&&dy>0){
+        this.focusPadButton([...this.buttons.values()].find(b=>!b.hidden));
+      }else if(focused.closest('.tree-tabs')&&dx){
+        const tabs=[...this.element.querySelectorAll('[data-tree]')],i=tabs.indexOf(focused);
+        const next=tabs[(i+dx+tabs.length)%tabs.length];next.click();this.focusPadButton(next);
+      }else{
+        const positions=buttons.map((button,id)=>{const r=button.getBoundingClientRect();return {id,x:r.left+r.width/2,y:r.top+r.height/2};});
+        const id=directionalTarget(positions[buttons.indexOf(focused)],positions,dx,dy);
+        if(id!==null)this.focusPadButton(buttons[id]);
+      }
+      return true;
+    }
+    if(ui.has('submit')){
+      if(!focused){focused=[...this.buttons.values()].find(b=>!b.hidden);this.focusPadButton(focused);}
+      else focused.click();
+    }
+    return true;
+  }
   applyCamera(){this.map.style.transform=this.camera.transform();this.positionDetail();}
   panView(x,y){this.camera.pan(x,y);this.sky.drag(x,y);this.applyCamera();}
   updateKeyboard(dt){
@@ -58,13 +112,13 @@ export class SkillTree {
   center(){this.smoothZoom.clear();this.panTail.clear();this.camera.zoom=1;this.camera.center(this.viewport.clientWidth,this.viewport.clientHeight);this.applyCamera();}
   bindNavigation(){
     let drag=null,suppressClick=false,lastWidth=0,lastHeight=0;
-    addEventListener('keydown',event=>{
-      if(this.element.hidden||!TREE_PAN_KEYS.has(event.code)||event.ctrlKey||event.altKey||event.metaKey)return;
-      event.preventDefault();
-      if(event.repeat&&!this.navKeys.has(event.code))return;
-      this.navKeys.add(event.code);
+    this.element.addEventListener('keydown',event=>{
+      if(event.code!=='Tab')return;
+      event.preventDefault();event.stopPropagation();
+      const controls=[...this.element.querySelectorAll('button')].filter(button=>!button.hidden&&!button.disabled);
+      const index=controls.indexOf(document.activeElement),step=event.shiftKey?-1:1;
+      this.focusPadButton(controls[index<0?(step>0?0:controls.length-1):(index+step+controls.length)%controls.length]);
     });
-    addEventListener('keyup',event=>this.navKeys.delete(event.code));
     addEventListener('blur',()=>{this.navKeys.clear();this.panTail.clear();});
     document.addEventListener('visibilitychange',()=>{if(document.hidden)this.navKeys.clear();});
     this.viewport.addEventListener('pointerdown',event=>{if(event.button!==0)return;this.smoothZoom.clear();this.interruptCamera();this.panTail.clear();suppressClick=false;drag={time:event.timeStamp,id:event.pointerId,startX:event.clientX,startY:event.clientY,x:event.clientX,y:event.clientY,moved:false};});
@@ -81,11 +135,11 @@ export class SkillTree {
     this.viewport.addEventListener('click',event=>{if(suppressClick){event.preventDefault();event.stopPropagation();suppressClick=false;}},true);
     this.viewport.addEventListener('click',event=>{if(event.button===0&&!event.target.closest('.skill-node')){this.element.querySelector('.skill-node:focus')?.blur();this.selected=null;this.hovered=null;this.render();}});
     this.map.addEventListener('transitionend',()=>this.positionDetail());
-    this.element.addEventListener('keydown',event=>{if(event.key==='Escape'){event.stopPropagation();this.selected=null;this.hovered=null;this.render();}});
     this.viewport.addEventListener('wheel',event=>{event.preventDefault();this.panTail.clear();this.interruptCamera();const rect=this.viewport.getBoundingClientRect(),delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?this.viewport.clientHeight:1);this.smoothZoom.queue(this.camera,event.clientX-rect.left,event.clientY-rect.top,Math.exp(-delta*.0015));},{passive:false});
     this.observer=new ResizeObserver(()=>{const w=this.viewport.clientWidth,h=this.viewport.clientHeight;if(!w||!h)return;if(lastWidth&&lastHeight)this.camera.pan((w-lastWidth)/2,(h-lastHeight)/2);else this.camera.center(w,h);lastWidth=w;lastHeight=h;this.applyCamera();});this.observer.observe(this.viewport);
   }
   open(won,collected,victoryBonus=0){
+    this.element.querySelector('#tree-next').disabled=false;
     this.comets.reset();
     this.navKeys.clear();
     this.selected=null;this.hovered=null;this.rootRevealUntil=0;this.element.classList.remove('is-source-awakening');

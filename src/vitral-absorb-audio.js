@@ -1,9 +1,9 @@
 import {RandomManager} from './random-manager.js';
 // Plucked strings followed by inharmonic glass resonances. No external assets.
-export function playVitralAbsorb(context){
+export function playVitralAbsorb(context,output=context.destination){
   const start=context.currentTime,master=context.createGain(),filter=context.createBiquadFilter();
   master.gain.value=.7;filter.type='lowpass';filter.frequency.setValueAtTime(8200,start);filter.frequency.exponentialRampToValueAtTime(1800,start+2.3);
-  master.connect(filter);filter.connect(context.destination);
+  master.connect(filter);filter.connect(output);
   let voices=0;
   const voice=(frequency,time,length,volume,type='sine',bend=1)=>{
     const osc=context.createOscillator(),envelope=context.createGain();voices++;

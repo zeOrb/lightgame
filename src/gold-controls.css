@@ -1,0 +1,21 @@
+:is(#settings,.gold-controls){--gold-border:#d4ae58;color-scheme:dark}
+:is(#settings,.gold-controls) :is(button,select){outline:1px solid transparent;transition:border-color .28s ease-in-out,outline-color .28s ease-in-out,box-shadow .28s ease-in-out,background-color .28s ease-in-out}
+:is(#settings,.gold-controls) select option{color:#e3e0d9;background:#242321}
+:is(#settings,.gold-controls) select:open option:checked{color:#fff1cf;background:#79602c}
+@supports (appearance:base-select){
+  :is(#settings,.gold-controls) select,:is(#settings,.gold-controls) select::picker(select){appearance:base-select}
+  :is(#settings,.gold-controls) select::picker(select){background:#242321;color:#e3e0d9;border:1px solid #7b704f;border-radius:0;padding:4px;box-shadow:0 5px 20px #0009}
+  :is(#settings,.gold-controls) select option{padding:6px 12px;border:1px solid transparent}
+  :is(#settings,.gold-controls) select:open option{transition:background-color .2s ease-in-out,border-color .2s ease-in-out,box-shadow .2s ease-in-out}
+  :is(#settings,.gold-controls) select:open option:is(:hover,:focus-visible,:checked){background:#79602c;border-color:#d4ae58;box-shadow:inset 0 0 12px #d5aa4824;outline:0}
+  :is(#settings,.gold-controls) select::picker-icon{color:#d6cdb4;transition:rotate .28s ease-in-out}
+  :is(#settings,.gold-controls) select:open::picker-icon{rotate:180deg}
+}
+:is(#settings,.gold-controls) .settings-row{position:relative;isolation:isolate}
+:is(#settings,.gold-controls) .settings-row::before{content:'';position:absolute;inset:2px -6px;z-index:-1;pointer-events:none;border-radius:3px;background:#d5aa4807;box-shadow:0 0 16px 3px #d5aa4817;opacity:0;transition:opacity .28s ease-in-out}
+:is(#settings,.gold-controls) .settings-row:hover::before{opacity:1}
+:is(#settings,.gold-controls) :is(button:is(:hover,:focus-visible),select:is([data-pointer-hover],:focus-visible)){outline-color:#d4ae58;border-color:#d4ae58;box-shadow:0 0 7px 2px #dfb95e52,0 0 21px 6px #d5aa4838;background-color:transparent}
+:is(#settings,.gold-controls) .gamepad-add:is(:hover,:focus-visible){outline:0;box-shadow:none;background:transparent}
+:is(#settings,.gold-controls) .gamepad-add-square{transition:border-color .28s ease-in-out,box-shadow .28s ease-in-out,background-color .28s ease-in-out}
+:is(#settings,.gold-controls) .gamepad-add:is(:hover,:focus-visible) .gamepad-add-square{border-color:#d4ae58;box-shadow:0 0 7px 2px #dfb95e52,0 0 21px 6px #d5aa4838;background:transparent}
+@media(prefers-reduced-motion:reduce){:is(#settings,.gold-controls) :is(button,select,.gamepad-add-square),:is(#settings,.gold-controls) .settings-row::before{transition:none}}
