@@ -3,7 +3,7 @@ import {createVisualRandom} from './random-manager.js';
 import {shelfInnerRadius,SHELF_OUTER_RADIUS} from './game.js';
 import {applyTowerDepth} from './tower-depth.js';
 
-export function applyMetalGradient(material,geometry){
+export function applyMetalGradient(material,geometry,wood=false){
   geometry.computeBoundingBox();const extent=geometry.boundingBox.getSize(new THREE.Vector3()).multiplyScalar(.5),previous=material.onBeforeCompile;
   material.onBeforeCompile=function(shader,...args){
     previous.call(this,shader,...args);shader.uniforms.metalExtent={value:extent};
@@ -14,9 +14,12 @@ export function applyMetalGradient(material,geometry){
       #endif
       float metalHalfHeight=max(.001,dot(abs(vec3(metalBasis[0].y,metalBasis[1].y,metalBasis[2].y)),metalExtent));
       metalVertical=clamp(.5+(metalBasis*position).y/(metalHalfHeight*2.),0.,1.);`);
-    shader.fragmentShader='varying float metalVertical;\n'+shader.fragmentShader.replace('#include <opaque_fragment>','#include <opaque_fragment>\n gl_FragColor.rgb*=mix(.30,1.,smoothstep(0.,.88,metalVertical));');
+    const fade=wood?`float timberTop=smoothstep(0.,.95,metalVertical);
+      float timberLuma=dot(gl_FragColor.rgb,vec3(.2126,.7152,.0722));
+      gl_FragColor.rgb=mix(vec3(timberLuma),gl_FragColor.rgb,mix(.45,1.,timberTop))*mix(.42,1.,timberTop);`:'gl_FragColor.rgb*=mix(.30,1.,smoothstep(0.,.88,metalVertical));';
+    shader.fragmentShader='varying float metalVertical;\n'+shader.fragmentShader.replace('#include <opaque_fragment>','#include <opaque_fragment>\n'+fade);
   };
-  material.customProgramCacheKey=()=> 'tower-metal-vertical-fade-v1';return material;
+  material.customProgramCacheKey=()=>wood?'tower-timber-vertical-fade-v1':'tower-metal-vertical-fade-v1';return material;
 }
 
 export function applyRopeSway(material,clock){
@@ -41,7 +44,8 @@ export class UnderShelfRelics {
     let style=Math.floor(random()*6);if(style===this.previousStyle)style=(style+1+Math.floor(random()*5))%6;this.previousStyle=style;
     const v=(x,y,z)=>new THREE.Vector3(x,y,z),pick=values=>values[Math.floor(random()*values.length)];
     const wood=()=>new THREE.Color(pick(['#c59b71','#a98c72','#bf9d79','#9b8168','#d1b08a']));
-    const iron=()=>new THREE.Color(pick(['#ad624e','#4e9690','#5e819d','#bda05e','#8d778f','#a4afb2'])).lerp(new THREE.Color('#8b8982'),.40).multiplyScalar(.65+random()*.45);
+    // Dark patina carries the structure; occasional worn paint keeps the salvage character.
+    const iron=()=>{const painted=random()<.20;return new THREE.Color(pick(painted?['#896353','#52756e','#596c7d','#8a7853']:['#625e53','#535f55','#5b5d58','#675b4e'])).multiplyScalar(.95+random()*.35);};
     const add=(kind,position,quaternion,scale,color)=>{if(kind===3){scale.x*=1.5;scale.z*=1.5;}const part={group,moving,style,kind,local:new THREE.Matrix4().compose(position,quaternion,scale),color};this.parts[kind].push(part);return part;};
     const beam=(a,b,width=.18,depth=width,kind=0)=>{if(kind===0&&random()<.30)kind=1;const delta=b.clone().sub(a),part=add(kind,a.clone().add(b).multiplyScalar(.5),new THREE.Quaternion().setFromUnitVectors(up,delta.clone().normalize()),v(width,delta.length(),depth),kind===0?wood():kind===3?new THREE.Color('#b49a73'):iron());if(kind===3)part.wind={center:.5,span:1,phase:random()*Math.PI*2,amplitude:.035+random()*.04,axis:v(1,0,0)};return part;};
     const band=(p,width=.25)=>add(1,p,new THREE.Quaternion().setFromEuler(new THREE.Euler(0,random()*.3,random()*.12)),v(width,.09,.29),iron());
@@ -135,6 +139,7 @@ export class UnderShelfRelics {
     const grain=new THREE.DataTexture(data,size,size);grain.colorSpace=THREE.SRGBColorSpace;grain.wrapS=grain.wrapT=THREE.RepeatWrapping;grain.generateMipmaps=true;grain.minFilter=THREE.LinearMipmapLinearFilter;grain.needsUpdate=true;
     const materials=geometries.map((_,kind)=>applyTowerDepth(new THREE.MeshStandardMaterial({color:'#ffffff',map:kind===0||kind===3?grain:null,roughness:kind===0||kind===3?.97:.83,metalness:kind===0||kind===3?0:.38,side:kind===4?THREE.DoubleSide:THREE.FrontSide})));
     for(const kind of [1,2,4])applyMetalGradient(materials[kind],geometries[kind]);
+    applyMetalGradient(materials[0],geometries[0],true);
     applyRopeSway(materials[3],this.windTime);
     this.parts.forEach((parts,kind)=>{
       if(!parts.length)return;

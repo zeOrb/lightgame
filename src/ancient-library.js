@@ -6,7 +6,7 @@ import {createVisualRandom} from './random-manager.js';
 import {FLOOR_COUNT,TOWER_TOP} from './game.js';
 import {lanternSurfaces,lanternGlow} from './lantern-surfaces.js';
 
-const palette=['#74523f','#52605c','#564c65','#77464a','#8a7250','#435367','#65513e','#48544a'];
+const palette=['#615044','#525752','#56505b','#634e4c','#665944','#4c535d','#5c5044','#50564b'];
 export function libraryLayout(){
   const random=createVisualRandom('library-layout'),cases=[],books=[];
   for(const floor of FLOORS)for(let bay=0;bay<8;bay++){
@@ -60,15 +60,15 @@ export function spineAtlas(){
   const ctx=canvas.getContext('2d'),titles=['LUX','NOX','ASTRA','ARCANA','SILVA','SOL','UMBRA','HERBA'];
   for(let i=0;i<32;i++){
     const x=(i%8)*128,y=Math.floor(i/8)*128;
-    const gradient=ctx.createLinearGradient(x,0,x+128,0);gradient.addColorStop(0,'#181411');gradient.addColorStop(.15,palette[i%8]);gradient.addColorStop(.55,palette[i%8]);gradient.addColorStop(1,'#211a18');
+    const gradient=ctx.createLinearGradient(x,0,x+128,0);gradient.addColorStop(0,'#302a25');gradient.addColorStop(.15,palette[i%8]);gradient.addColorStop(.55,palette[i%8]);gradient.addColorStop(1,'#352d28');
     ctx.fillStyle=gradient;ctx.fillRect(x,y,128,128);
     for(let j=0;j<100;j++){ctx.fillStyle=random()<.5?'#ffffff0a':'#00000016';ctx.fillRect(x+random()*128,y+random()*128,1+random()*3,1);}
-    ctx.strokeStyle='#c9a66b99';ctx.lineWidth=1;ctx.strokeRect(x+12,y+7,104,114);
-    for(const dy of [14,21,99,106]){ctx.fillStyle='#25180f88';ctx.fillRect(x+4,y+dy+2,120,3);ctx.fillStyle='#c4a26b99';ctx.fillRect(x+5,y+dy,118,2);}
-    ctx.textAlign='center';ctx.fillStyle='#decb9999';ctx.font='bold 13px Georgia';ctx.fillText(titles[i%titles.length],x+64,y+49,94);
+    ctx.strokeStyle='#a38c663d';ctx.lineWidth=1;ctx.strokeRect(x+12,y+7,104,114);
+    for(const dy of [14,21,99,106]){ctx.fillStyle='#30251d55';ctx.fillRect(x+4,y+dy+2,120,3);ctx.fillStyle='#aa916345';ctx.fillRect(x+5,y+dy,118,2);}
+    ctx.textAlign='center';ctx.fillStyle='#b4a17c55';ctx.font='bold 13px Georgia';ctx.fillText(titles[i%titles.length],x+64,y+49,94);
     ctx.font='9px Georgia';ctx.fillText('•  '+(i+1)+'  •',x+64,y+68);
     ctx.beginPath();ctx.moveTo(x+64,y+75);ctx.lineTo(x+75,y+83);ctx.lineTo(x+64,y+91);ctx.lineTo(x+53,y+83);ctx.closePath();ctx.stroke();
-    for(let j=0;j<8;j++){ctx.strokeStyle='#d6bc8535';const yy=y+8+random()*112;ctx.beginPath();ctx.moveTo(x+6,yy);ctx.lineTo(x+12+random()*9,yy+random()*3);ctx.stroke();}
+    for(let j=0;j<8;j++){ctx.strokeStyle='#b5a07a20';const yy=y+8+random()*112;ctx.beginPath();ctx.moveTo(x+6,yy);ctx.lineTo(x+12+random()*9,yy+random()*3);ctx.stroke();}
   }
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;sharedSpineAtlas=texture;return texture;
 }
@@ -76,7 +76,7 @@ export function createAncientLibrary(scene,{minY=-Infinity,maxY=Infinity}={}){
   const source=sharedLayout??=libraryLayout(),layout=partitionLibraryLayout(source,minY,maxY),group=new THREE.Group();group.name='Ancient library';scene.add(group);
   const material=color=>applyTowerDepth(new THREE.MeshStandardMaterial({color,roughness:.85}));
   const oak=material('#493a30'),recess=material('#231f1d'),brass=material('#8d7854');brass.metalness=.45;
-  const leather=material('#5f4a3a'),pages=material('#a89c7d'),spines=material('#ffffff');spines.map=spineAtlas();
+  const leather=material('#5f4a3a'),pages=material('#81765f'),spines=material('#ffffff');spines.map=spineAtlas();
   // Continuous book-filled rear wall seals even the narrow gaps between cases.
   // The real windows and carved cases sit in front of this recessed layer.
   if(!sharedWallTexture){
