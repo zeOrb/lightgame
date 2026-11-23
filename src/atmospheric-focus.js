@@ -17,7 +17,7 @@ export class AtmosphericFocus {
     this.material=new THREE.ShaderMaterial({depthTest:true,depthWrite:true,depthFunc:THREE.AlwaysDepth,uniforms:{
       sceneColor:{value:this.target.texture},sceneDepth:{value:null},resolution:{value:new THREE.Vector2(1,1)},inverseProjection:{value:new THREE.Matrix4()},cameraWorld:{value:new THREE.Matrix4()},focusPoint:{value:new THREE.Vector3()},daylight:{value:1},arenaMode:{value:0},arenaFloorY:{value:0},arenaRadius:{value:0},blurPixels:{value:FOCUS_STYLE.blurPixels},backgroundDim:{value:FOCUS_STYLE.backgroundDim},backgroundSaturation:{value:FOCUS_STYLE.backgroundSaturation},
       blurVariant:{value:BLUR_VARIANTS[FOCUS_STYLE.blurVariant]},
-      aoSettings:{value:new THREE.Vector4(SSAO_STYLE.enabled?1:0,SSAO_STYLE.radius,SSAO_STYLE.strength,SSAO_STYLE.bias)},projectionScale:{value:new THREE.Vector2()},
+      aoSettings:{value:new THREE.Vector4(SSAO_STYLE.enabled?1:0,SSAO_STYLE.radius,SSAO_STYLE.strength,SSAO_STYLE.bias)},projectionScale:{value:new THREE.Vector2()},aoResolution:{value:new THREE.Vector2(1,1)},
     },vertexShader:'varying vec2 screenUV;void main(){screenUV=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:`
       uniform sampler2D sceneColor,sceneDepth;uniform vec2 resolution;uniform mat4 inverseProjection,cameraWorld;
       uniform vec3 focusPoint;uniform float daylight,arenaMode,arenaFloorY,arenaRadius,blurPixels,backgroundDim,backgroundSaturation,blurVariant;varying vec2 screenUV;
@@ -98,24 +98,29 @@ export class AtmosphericFocus {
       }`});
     this.aoTarget=new THREE.WebGLRenderTarget(1,1,{type:THREE.HalfFloatType,depthBuffer:false});
     this.material.uniforms.aoTexture={value:this.aoTarget.texture};
-    this.aoMaterial=new THREE.ShaderMaterial({depthTest:false,depthWrite:false,uniforms:this.material.uniforms,vertexShader:this.material.vertexShader,fragmentShader:`uniform sampler2D sceneDepth;uniform mat4 inverseProjection;uniform vec2 resolution,projectionScale;uniform vec4 aoSettings;varying vec2 screenUV;
+    this.aoMaterial=new THREE.ShaderMaterial({depthTest:false,depthWrite:false,uniforms:this.material.uniforms,vertexShader:this.material.vertexShader,fragmentShader:`uniform sampler2D sceneDepth;uniform mat4 inverseProjection;uniform vec2 resolution,aoResolution,projectionScale;uniform vec4 aoSettings;varying vec2 screenUV;
+      vec2 depthUV(vec2 uv){return (floor(clamp(uv,vec2(0.),vec2(1.)-.5/resolution)*resolution)+.5)/resolution;}
       vec3 aoView(vec2 uv,float d){vec4 p=inverseProjection*vec4(uv*2.-1.,d*2.-1.,1.);return p.xyz/p.w;}
-      float screenAO(vec3 center,float depth){
+      float screenAO(vec2 centerUV,vec3 center,float depth){
         if(aoSettings.x<.5||depth>.99999)return 1.;
-        vec2 texel=1./resolution;
-        vec3 left=center-aoView(screenUV-vec2(texel.x,0.),texture2D(sceneDepth,screenUV-vec2(texel.x,0.)).r);
-        vec3 right=aoView(screenUV+vec2(texel.x,0.),texture2D(sceneDepth,screenUV+vec2(texel.x,0.)).r)-center;
-        vec3 down=center-aoView(screenUV-vec2(0.,texel.y),texture2D(sceneDepth,screenUV-vec2(0.,texel.y)).r);
-        vec3 up=aoView(screenUV+vec2(0.,texel.y),texture2D(sceneDepth,screenUV+vec2(0.,texel.y)).r)-center;
-        vec3 normal=normalize(cross(dot(left,left)<dot(right,right)?left:right,dot(down,down)<dot(up,up)?down:up));
+        // Match the AO grid, rather than taking unstable sub-grid depth differences.
+        vec2 texel=1./aoResolution;
+        vec2 l=depthUV(centerUV-vec2(texel.x,0.)),r=depthUV(centerUV+vec2(texel.x,0.));
+        vec2 d=depthUV(centerUV-vec2(0.,texel.y)),u=depthUV(centerUV+vec2(0.,texel.y));
+        vec3 left=center-aoView(l,texture2D(sceneDepth,l).r);
+        vec3 right=aoView(r,texture2D(sceneDepth,r).r)-center;
+        vec3 down=center-aoView(d,texture2D(sceneDepth,d).r);
+        vec3 up=aoView(u,texture2D(sceneDepth,u).r)-center;
+        vec3 normal=cross(dot(left,left)<dot(right,right)?left:right,dot(down,down)<dot(up,up)?down:up);
+        float normalLength=length(normal);if(normalLength<1.e-7)return 1.;normal/=normalLength;
         if(dot(normal,-center)<0.)normal=-normal;
         vec2 footprint=min(vec2(.065),projectionScale*.5*aoSettings.y/max(.1,-center.z));
         float sum=0.;
         for(int i=0;i<24;i++){
           float r=sqrt((float(i)+.5)/24.),angle=float(i)*2.39996323;
-          vec2 uv=screenUV+vec2(cos(angle),sin(angle))*r*footprint;
+          vec2 uv=centerUV+vec2(cos(angle),sin(angle))*r*footprint;
           if(any(lessThan(uv,vec2(0.)))||any(greaterThan(uv,vec2(1.))))continue;
-          float sampleDepth=texture2D(sceneDepth,uv).r;if(sampleDepth>.99999)continue;
+          uv=depthUV(uv);float sampleDepth=texture2D(sceneDepth,uv).r;if(sampleDepth>.99999)continue;
           vec3 delta=aoView(uv,sampleDepth)-center;
           float distanceToSample=length(delta);
           float horizon=max(0.,dot(normal,delta)-aoSettings.w)/max(.01,distanceToSample);
@@ -125,7 +130,7 @@ export class AtmosphericFocus {
         return clamp(1.-sum/24.*aoSettings.z*2.2,.68,1.);
       }
 
-void main(){float d=texture2D(sceneDepth,screenUV).r;vec3 p=aoView(screenUV,d);gl_FragColor=vec4(screenAO(p,d),-p.z,0.,1.);}`});
+void main(){vec2 uv=depthUV(screenUV);float d=texture2D(sceneDepth,uv).r;vec3 p=aoView(uv,d);gl_FragColor=vec4(screenAO(uv,p,d),-p.z,0.,1.);}`});
     this.scene=new THREE.Scene();this.camera=new THREE.Camera();
     this.quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),this.material);this.quad.frustumCulled=false;this.scene.add(this.quad);
     this.antialias=new THREE.ShaderMaterial({uniforms:{...THREE.UniformsUtils.clone(FXAAShader.uniforms),solidDepth:{value:null},sunsetLUT:{value:createSunsetLUT()},sunsetLUTStrength:{value:SUNSET_LUT_STYLE.strength}},vertexShader:FXAAShader.vertexShader,fragmentShader:SUNSET_LUT_GLSL+'\nuniform sampler2D solidDepth;\n'+FXAAShader.fragmentShader.replace('gl_FragColor = ApplyFXAA( tDiffuse, resolution.xy, vUv );',`gl_FragColor = ApplyFXAA( tDiffuse, resolution.xy, vUv );
@@ -139,6 +144,7 @@ void main(){float d=texture2D(sceneDepth,screenUV).r;vec3 p=aoView(screenUV,d);g
     if(this.target.width!==this.size.x||this.target.height!==this.size.y){this.target.setSize(this.size.x,this.size.y);this.graded.setSize(this.size.x,this.size.y);this.aoTarget.setSize(Math.ceil(this.size.x/2),Math.ceil(this.size.y/2));}
     const previous=renderer.getRenderTarget(),previousAutoClear=renderer.autoClear,previousLayers=camera.layers.mask,previousBackground=scene.background,u=this.material.uniforms;
     u.sceneDepth.value=depthTexture;
+    u.aoResolution.value.set(this.aoTarget.width,this.aoTarget.height);
     u.projectionScale.value.set(camera.projectionMatrix.elements[0],camera.projectionMatrix.elements[5]);
     this.antialias.uniforms.tDiffuse.value=this.graded.texture;this.antialias.uniforms.solidDepth.value=depthTexture;this.antialias.uniforms.resolution.value.set(1/this.size.x,1/this.size.y);
     if(!this.lightsReady){scene.traverse(object=>{if(object.isLight)object.layers.enable(2);});this.lightsReady=true;}
