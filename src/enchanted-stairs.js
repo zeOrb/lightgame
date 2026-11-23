@@ -20,6 +20,7 @@ function weatherStairWood(material){
   material.customProgramCacheKey=()=>key+'-weathered-inner-edge-v1';return material;
 }
 function woodEdge(geometry,inner){geometry.setAttribute('woodInnerEdge',new THREE.Float32BufferAttribute(new Float32Array(geometry.attributes.position.count).fill(inner),1));}
+const previousProfiles=new WeakMap();
 
 export function createStairMaterials(){
   const texture=createOldWoodAtlas();
@@ -41,18 +42,36 @@ function gothicTread(inner,outer,a,profile){
   shape.absarc(0,0,outer,-a+.014,a-.014,false);
   const peak=a*profile.offset,left=-a*profile.left,right=a*profile.right;
   shape.lineTo(...point(outer-.18,a));shape.lineTo(...point(inner+profile.shoulder,a));
+  const frontStart=shape.curves.length;
   shape.lineTo(...point(inner+.18,right));
-  shape.quadraticCurveTo(...point(inner+.18,(right+peak)*.5),...point(inner-profile.projection,peak));
-  shape.quadraticCurveTo(...point(inner+.18,(left+peak)*.5),...point(inner+.18,left));
-  shape.lineTo(...point(inner+profile.shoulder,-a));shape.closePath();
+  if(profile.kind===0){
+    shape.quadraticCurveTo(...point(inner+.18,(right+peak)*.5),...point(inner-profile.projection,peak));
+    shape.quadraticCurveTo(...point(inner+.18,(left+peak)*.5),...point(inner+.18,left));
+  }else if(profile.kind===1){ // One broad rounded lobe, without repeated teeth.
+    shape.bezierCurveTo(...point(inner-.08,a*.52),...point(inner-profile.projection,peak+a*.22),...point(inner-profile.projection,peak));
+    shape.bezierCurveTo(...point(inner-profile.projection,peak-a*.22),...point(inner-.08,-a*.52),...point(inner+.18,left));
+  }else if(profile.kind===2){ // Broad oblique nose: a different silhouette, without a central tooth.
+    shape.lineTo(...point(inner-.10,a*.55));shape.lineTo(...point(inner-profile.projection,-a*.32));
+    shape.lineTo(...point(inner+.18,left));
+  }else{ // A nearly straight swept edge provides a quiet section between crests.
+    shape.bezierCurveTo(...point(inner+.04,a*.42),...point(inner+.02,-a*.36),...point(inner+.18,left));
+  }
+  shape.lineTo(...point(inner+profile.shoulder,-a));
+  const frontPath=new THREE.CurvePath();frontPath.curves=shape.curves.slice(frontStart);
+  const frontEdge=frontPath.getPoints(16).map(p=>new THREE.Vector3(p.x,-.01,-p.y));
+  shape.closePath();
   const g=new THREE.ExtrudeGeometry(shape,{depth:.3,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:2,curveSegments:12});g.rotateX(-Math.PI/2);
   const p=g.attributes.position;
-  for(let i=0;i<p.count;i++)if(p.getY(i)<.10){const r=Math.hypot(p.getX(i),p.getZ(i)),front=1-THREE.MathUtils.smoothstep(r,inner+.15,inner+1.1),tip=Math.max(0,1-Math.abs(p.getZ(i)-Math.sin(peak)*inner)/(inner*Math.sin(a)*profile.width));p.setY(i,p.getY(i)-front*(.10+profile.drop*tip));}
+  const peaks=[profile.offset];
+  for(let i=0;i<p.count;i++)if(p.getY(i)<.10){const r=Math.hypot(p.getX(i),p.getZ(i)),front=1-THREE.MathUtils.smoothstep(r,inner+.15,inner+1.1),tip=Math.max(0,...peaks.map(t=>1-Math.abs(p.getZ(i)-Math.sin(a*t)*inner)/(inner*Math.sin(a)*(profile.kind===0?profile.width:.50))));p.setY(i,p.getY(i)-front*(.10+profile.drop*tip));}
+  g.userData.gothicKind=profile.kind;
+  g.userData.frontEdge=frontEdge;
   g.computeVertexNormals();return g;
 }
 export function createEnchantedStep(parent,section,materials,random=createVisualRandom()){
   const inner=shelfInnerRadius(section),outer=SHELF_OUTER_RADIUS,a=SHELF_HALF_ANGLE;
-  const profile={offset:(random()<.5?-1:1)*(.14+random()*.34),left:.62+random()*.26,right:.62+random()*.26,shoulder:.30+random()*.36,projection:.12+random()*.32,drop:.25+random()*.34,width:.55+random()*.55};
+  let kind=Math.floor(random()*4);if(kind===previousProfiles.get(materials))kind=(kind+1+Math.floor(random()*3))%4;previousProfiles.set(materials,kind);
+  const profile={kind,offset:(random()<.5?-1:1)*(.14+random()*.34),left:.76+random()*.16,right:.76+random()*.16,shoulder:.25+random()*.24,projection:.08+random()*.17,drop:(kind===3?.03:.08)+random()*.12,width:.80+random()*.40};
   const collision=wedge(inner,outer,a,.3,.035),tread=gothicTread(inner,outer,a,profile);mapWoodPanel(tread,section,inner,outer,a);
   const floor=new THREE.Mesh(tread,materials.wood);floor.position.y=-.355;parent.add(floor);
   woodEdge(tread,inner);
@@ -80,13 +99,17 @@ export function createEnchantedStep(parent,section,materials,random=createVisual
   const metal=[],ribs=[];
   function line(points,radius=.013){metal.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),Math.max(8,points.length*3),radius,4,false));}
   // Recessed twin borders follow the curved tread rather than forming railings.
-  for(const r of [inner+.16,inner+.23,outer-.16,outer-.23]){
+  for(const inset of [.16,.23]){
+    const points=tread.userData.frontEdge.map(p=>{const r=Math.hypot(p.x,p.z);return new THREE.Vector3(p.x*(1+inset/r),-.01,p.z*(1+inset/r));});line(points);
+  }
+  for(const r of [outer-.16,outer-.23]){
     const points=Array.from({length:17},(_,i)=>{const t=-a+.012+(a*2-.024)*i/16;return new THREE.Vector3(Math.cos(t)*r,-.01,Math.sin(t)*r);});line(points);
   }
   for(const sign of [-1,1]){
     const t=sign*(a-.018),points=[inner+.25,outer-.25].map(r=>new THREE.Vector3(Math.cos(t)*r,-.01,Math.sin(t)*r));line(points,.01);
     // Acanthus-like scrolls at the inward nose, clear of the walking centre.
-    const scroll=Array.from({length:25},(_,i)=>{const t=i/24*Math.PI*2.2,r=.24*(1-i/30);return new THREE.Vector3(inner+.48+Math.cos(t)*r,-.005,sign*.55+Math.sin(t)*r);});line(scroll,.018);
+    const anchor=tread.userData.frontEdge.reduce((best,p)=>Math.abs(p.z-sign*.55)<Math.abs(best.z-sign*.55)?p:best,tread.userData.frontEdge[0]);
+    const scroll=Array.from({length:25},(_,i)=>{const t=i/24*Math.PI*2.2,r=.24*(1-i/30);return new THREE.Vector3(anchor.x+.40+Math.cos(t)*r,-.005,sign*.55+Math.sin(t)*r);});line(scroll,.018);
     const curve=new THREE.CubicBezierCurve3(new THREE.Vector3(inner+.3,-.39,sign*.67),new THREE.Vector3(inner+.65,-1.25,sign*.67),new THREE.Vector3(outer-1,-.95,sign*.67),new THREE.Vector3(outer-.35,-.4,sign*.67));
     ribs.push(new THREE.TubeGeometry(curve,18,.075,6,false));
   }

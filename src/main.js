@@ -825,7 +825,7 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
   arenas.updateRemnants(state==='paused'?0:dt);
   bossHitEffects.update(state==='paused'?0:realDt);
   if(state==='intro'||state==='lost'||state==='won')bossHitEffects.reset();
-  floorGates.update(state==='paused'?0:dt);
+  floorGates.update(state==='paused'?0:dt,rabbit.position);
   if(state!=='paused'&&flareAge<1.8){flareAge+=dt;flareBurst.update(flareAge);}
   $('phase-status').textContent=abilities.cooldowns.phasing>.05?tr("Phasing {seconds}s",{seconds:abilities.cooldowns.phasing.toFixed(1)}):'Phasing';
   const sunMoving=state==='playing'&&Math.abs(light-previousSunLight)>dt*.01;
@@ -986,6 +986,7 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
   phaseTrail.update(state==='paused'?0:dt,phaseTrailHead,state==='playing'&&phasingFrame&&!falling,camera,phaseTrailColor,!!rabbitState.dashPalette);
   if(state==='playing')shadowEffects.applyShake(camera);
   if(state==='playing')bossHitEffects.applyShake(camera);
+  if(state==='playing')floorGates.applyShake(camera);
   arenaCameraCutaway.update(arenas.active?.secret&&['ascent','dropping'].includes(arenas.active.stage)?null:arenas.active,camera,ARENA_RADIUS);
   windowLight.setArenaMask(arenaView,camera);
   towerMist.renderDepth(renderer,scene,camera);
