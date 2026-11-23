@@ -6,9 +6,11 @@ export function traceVitralPath(state,fromS,toS,lane,height,sampleZone){
 export const RabbitMode=Object.freeze({NORMAL:'normal',VITRAL:'vitral',FALLING:'falling'});
 export class RabbitState {
   constructor(upgrades={}){this.upgrades=upgrades;this.reset();}
-  reset(){this.mode=RabbitMode.NORMAL;this.zone=null;this.fall=null;this.vitralTime=0;this.pendingHeal=0;this.entryHealedZones=new Set();this.dashHealedZones=new Set();this.healPulse=0;this.lightCharge=0;this.chargeZone=null;}
+  reset(){this.mode=RabbitMode.NORMAL;this.zone=null;this.fall=null;this.vitralTime=0;this.pendingHeal=0;this.entryHealedZones=new Set();this.dashHealedZones=new Set();this.healPulse=0;this.lightCharge=0;this.chargeZone=null;this.dashCharge=0;this.dashChargeZone=null;}
+  get dashPalette(){return this.upgrades.dashEnabled&&this.upgrades.gleamDash&&this.dashCharge>0?this.dashChargeZone?.palette??null:null;}
   setVitral(zone,phasing=false,jumping=false){
     if(this.mode===RabbitMode.FALLING)return;
+    if(zone&&!zone.extinguished&&this.zone!==zone&&this.upgrades.dashEnabled&&this.upgrades.gleamDash){this.dashCharge=1.5;this.dashChargeZone={palette:zone.palette,lightStrength:1};}
     if(!zone||this.mode!==RabbitMode.VITRAL)this.vitralTime=0;
     const beforeHeal=this.pendingHeal;
     if(zone&&!zone.extinguished&&this.upgrades.rayEntryHeal&&!this.entryHealedZones.has(zone)){
@@ -26,6 +28,8 @@ export class RabbitState {
     const vitral=this.mode===RabbitMode.VITRAL;
     this.healPulse=Math.max(0,this.healPulse-dt);
     this.lightCharge=Math.max(0,this.lightCharge-dt);
+    this.dashCharge=Math.max(0,this.dashCharge-dt);
+    if(this.dashChargeZone)this.dashChargeZone.lightStrength=Math.min(1,this.dashCharge/.25);
     if(this.chargeZone)this.chargeZone.lightStrength=Math.min(1,this.lightCharge/.25);
     if(this.pendingHeal){light=clamp(light+this.pendingHeal,0,this.upgrades.maxHP??100);this.pendingHeal=0;this.healPulse=.65;}
     const next=lightStep(light,dt,{...this.upgrades,...(!passive?{drainScale:0}:{}),shadow,vitral:vitral&&!this.upgrades.rayEntryHeal,vitralTime:this.vitralTime});
@@ -33,6 +37,7 @@ export class RabbitState {
     return next;
   }
   startFall(position,outward,launched=true){
+    this.dashCharge=0;this.dashChargeZone=null;
     if(this.mode===RabbitMode.FALLING)return false;
     this.mode=RabbitMode.FALLING;this.zone=null;this.vitralTime=0;this.pendingHeal=0;this.healPulse=0;this.lightCharge=0;this.chargeZone=null;
     this.fall={x:position.x,y:position.y,z:position.z,startY:position.y,angle:Math.atan2(position.z,position.x),radius:Math.hypot(position.x,position.z),radialSpeed:(outward?1:-1)*(launched?13:6),vy:launched?3:-1,time:0,landTime:0,landed:false,wallHit:false,done:false,dissolve:0};return true;

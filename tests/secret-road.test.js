@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {SecretRoad} from '../src/secret-road.js';
 const points=Array.from({length:13},(_,i)=>new THREE.Vector3(Math.cos(i*.1)*15,10+i*.5,Math.sin(i*.1)*15));
+
+test('swept landing returns endpoint surface height in world space, including translated floor roots',()=>{
+ const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3),parent=new THREE.Group();parent.add(road.mesh);road.reveal(1);const localTop=road.heightAt(points[5]);parent.position.y=7;parent.rotation.y=.4;road.reveal(1);parent.updateMatrixWorld(true);
+ const before=parent.localToWorld(points[4].clone()),after=parent.localToWorld(points[5].clone());
+ const top=road.heightAt(after);assert.ok(Math.abs(top-localTop-7)<1e-6);
+ const landed=road.landing(before.y+.3,after.y-.3,after,before);
+ assert.ok(landed!==null);assert.ok(Math.abs(landed-top)<1e-6);
+ assert.ok(road.heightAt(before)<landed,'uphill sweep must not reuse the earlier lower contact height');
+});
 test('road has no vertical noise and a solid downward thickness',()=>{
  const road=new SecretRoad(points,new THREE.MeshBasicMaterial(),3);
  for(let i=0;i<road.segments;i++){const top=road.triangles[i*6];assert.ok(Math.abs(top[0].y-top[2].y)<1e-9);}

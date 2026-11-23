@@ -210,6 +210,25 @@
           }
         }
       ]
+    },
+    {
+      "id": "treasuryCombo",
+      "name": "Combo",
+      "nodes": [
+        {
+          "id": "unlockCombo",
+          "name": "Solar Rhythm",
+          "description": "Unlocks combos: chain varied actions to earn up to ×3 points from gems. Repeated actions give less; damage, falling or a long pause breaks the chain.",
+          "cost": 12,
+          "requires": "treasurySource",
+          "icon": "resonance",
+          "effects": {
+            "comboEnabled": {
+              "set": true
+            }
+          }
+        }
+      ]
     }
   ]
 }

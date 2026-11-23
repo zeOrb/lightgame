@@ -17,6 +17,7 @@ export class Abilities {
   land(){this.airJumpUsed=false;this.airDashesUsed=0;}
   resetAirJump(){this.airJumpUsed=false;}
   use(type,{falling=false,height=0,direction={x:0,z:1},distance=5.4,recoveryCancel=false}={}){
+    if(type===AbilityType.PHASING&&this.upgrades.dashEnabled===false)return null;
     const escape=type===AbilityType.PHASING&&recoveryCancel&&this.upgrades.damageDashCancel;
     if(falling||!AbilityInfo[type]||(!escape&&this.cooldowns[type]>0))return null;
     if(type===AbilityType.JUMP){if(height>.001){if(!this.upgrades.doubleJump||this.airJumpUsed)return null;this.airJumpUsed=true;}this.cooldowns.jump=AbilityInfo.jump.cooldown;return {velocity:JUMP_SPEED*(this.upgrades.jump??1),airJump:height>.001};}

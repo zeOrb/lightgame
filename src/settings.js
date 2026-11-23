@@ -1,7 +1,7 @@
 import {PAD_DEFAULTS} from './gamepad-input.js';
 import {gamepadIcon} from './gamepad-icons.js';
 import {normalizeSettings,assignBinding,canonicalKey,DEFAULT_BINDINGS,RESOLUTIONS} from './settings-store.js';
-import {translate,setLanguage,localizeDOM} from './i18n.js';
+import {translate,setLanguage,localizeDOM,tr} from './i18n.js';
 import './settings.css';
 import './gold-controls.css';
 const STORAGE='sunny.settings.v1';
@@ -12,6 +12,7 @@ export const mapGameKey=code=>canonicalKey(preferences,code);
 export const t=key=>translate(preferences.language,key);
 export function initializeSettings({onOpen,onClose,onChange}){
   let currentTab='game',returnFocus=null,capture=null,controlDevice='keyboard',padConnected=false;
+  let nativeGraphics=null;
   const root=document.createElement('section');root.id='settings';root.hidden=true;root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');
   document.body.append(root);
   if(window.sunnyDesktop){
@@ -37,7 +38,7 @@ export function initializeSettings({onOpen,onClose,onChange}){
     root.innerHTML=`<div class="settings-card"><h2>${t('settings')}</h2><div class="menu-divider"></div><nav role="tablist"></nav><div class="settings-content" role="tabpanel"></div><p class="settings-status" role="status"></p><div class="settings-actions"><button class="settings-apply">${t('apply')}</button><button class="settings-back">${t('backButton')}</button></div></div>`;
     root.setAttribute('aria-label',t('settings'));
     const tabs=root.querySelector('nav'),body=root.querySelector('.settings-content');
-    let displayMode=preferences.mode,displayResolution=preferences.resolution;
+    let displayMode=preferences.mode,displayResolution=preferences.resolution,displayVsync=preferences.vsync;
     for(const tab of ['game','graphics','sounds','controls']){const b=button('settings-tab-'+tab,tab,tabs);b.setAttribute('role','tab');b.setAttribute('aria-selected',String(tab===currentTab));b.onclick=()=>{capture=null;currentTab=tab;render();root.querySelector('#settings-tab-'+tab).focus();};}
     body.setAttribute('aria-labelledby','settings-tab-'+currentTab);
     const row=(label,control)=>{
@@ -67,11 +68,15 @@ export function initializeSettings({onOpen,onClose,onChange}){
       const resolution=select(RESOLUTIONS.map(v=>[v,v==='auto'?t('auto'):v.replace('x',' × ')]),preferences.resolution);
       row('mode',mode);row('resolution',resolution);if(!native)note(t('browser'));
       mode.onchange=()=>{displayMode=mode.value;};resolution.onchange=()=>{displayResolution=resolution.value;};
+      const vsync=select([['on',tr('On')],['off',tr('Off')]],native?(preferences.vsync?'on':'off'):'on');
+      vsync.disabled=!native||!nativeGraphics;row('VSync',vsync);
+      vsync.onchange=()=>{displayVsync=vsync.value==='on';};
+      note(native?tr('Changing VSync requires restarting the game.'):tr('VSync is controlled by the browser.'));
     }
     if(currentTab==='sounds'){
-      const range=document.createElement('input');range.type='range';range.min=0;range.max=100;range.value=Math.round(preferences.volume*100);row('volume',range);
+      const range=document.createElement('input');range.type='range';range.min=0;range.max=100;range.value=Math.round(preferences.volume*100);range.style.setProperty('--volume-progress',range.value+'%');row('volume',range);
       const value=document.createElement('output');value.textContent=range.value+'%';body.append(value);
-      range.oninput=()=>{preferences.volume=Number(range.value)/100;value.textContent=range.value+'%';persist();};
+      range.oninput=()=>{preferences.volume=Number(range.value)/100;range.style.setProperty('--volume-progress',range.value+'%');value.textContent=range.value+'%';persist();};
     }
     if(currentTab==='controls'){
       const device=select([['keyboard',t('keyboard')],['xbox','Xbox'],['playstation','PlayStation']],controlDevice);row('device',device);
@@ -102,13 +107,22 @@ export function initializeSettings({onOpen,onClose,onChange}){
         else if(displayMode==='fullscreen'&&!document.fullscreenElement)await document.documentElement.requestFullscreen();
         else if(displayMode==='windowed'&&document.fullscreenElement)await document.exitFullscreen();
         preferences.mode=displayMode;preferences.resolution=displayResolution;
+        if(window.sunnyDesktop?.setVsync){nativeGraphics=await window.sunnyDesktop.setVsync(displayVsync);preferences.vsync=nativeGraphics.vsync;}
       }
       persist();
       const bar=document.getElementById('desktop-bar');if(bar)bar.hidden=preferences.mode!=='windowed';
       root.querySelector('.settings-status').textContent=t('saved');
+      offerRestart();
     }catch{root.querySelector('.settings-status').textContent=t('failed');}finally{apply.disabled=false;}};
     root.querySelector('.settings-back').onclick=close;
     root.querySelector('.settings-card').scrollTop=scrollTop;
+    offerRestart();
+  }
+  function offerRestart(){
+    const existing=root.querySelector('.settings-restart');
+    if(currentTab!=='graphics'||!nativeGraphics?.restartRequired){existing?.remove();return;}
+    root.querySelector('.settings-status').textContent=tr('VSync saved. Restart the game to apply.');
+    if(!existing){const b=document.createElement('button');b.className='settings-restart';b.textContent=tr('Restart game');b.onclick=()=>window.sunnyDesktop.restart();root.querySelector('.settings-actions').prepend(b);}
   }
   function open(){returnFocus=document.activeElement;onOpen?.();root.hidden=false;render();root.querySelector('[role=tab][aria-selected=true]').focus();}
   introButton.onclick=pauseButton.onclick=open;
@@ -124,6 +138,9 @@ export function initializeSettings({onOpen,onClose,onChange}){
 
   },true);
   localize();onChange?.(preferences);
+  if(window.sunnyDesktop?.getGraphics)window.sunnyDesktop.getGraphics().then(value=>{
+    nativeGraphics=value;preferences.vsync=value.vsync;persist();if(!root.hidden)render();
+  }).catch(()=>{});
   if(window.sunnyDesktop)window.sunnyDesktop.setDisplay({mode:preferences.mode,resolution:preferences.resolution}).catch(()=>{});
   return {get isOpen(){return !root.hidden;},get isCapturing(){return !!capture;},close,captureRaw(control){
     if(!capture||control.device!=='keyboardMouse')return false;

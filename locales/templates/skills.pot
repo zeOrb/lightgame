@@ -101,6 +101,25 @@ msgid "Phasing"
 msgstr ""
 
 #: src/skill-tree.json
+msgid "Dash"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Unlocks a short directional dash on the ground and in the air."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Gleam Dash"
+msgstr ""
+
+#: src/skill-tree.json
+msgid ""
+"Cross stained-glass light to charge your dash with Gleam for 1.5 seconds. "
+"Charged dashes leave a colored trail and shatter defeated enemies into "
+"stained-glass light."
+msgstr ""
+
+#: src/skill-tree.json
 msgid "Short Shadow"
 msgstr ""
 
@@ -386,4 +405,24 @@ msgstr ""
 
 #: src/treasury-tree.json
 msgid "Adds amethysts to the gem pool."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Combo"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Solar Rhythm"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid ""
+"Unlocks combos: chain varied actions to earn up to ×3 points from gems. "
+"Repeated actions give less; damage, falling or a long pause breaks the chain."
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: dash
+msgctxt "dash"
+msgid "Dash"
 msgstr ""

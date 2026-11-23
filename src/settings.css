@@ -16,7 +16,14 @@
 #settings .settings-content{min-height:200px;text-align:left}
 #settings .settings-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:8px 0;border-bottom:1px solid #ffffff0c}
 #settings select{max-width:58%;padding:7px 12px;background:#181715;border:1px solid #bcb8b145;color:#e3e0d9;font:16px Georgia,serif}
-#settings input[type=range]{width:52%;accent-color:#c6bca4}
+#settings input[type=range]{appearance:none;-webkit-appearance:none;width:52%;height:48px;margin:0;background:transparent;cursor:pointer}
+#settings input[type=range]::-webkit-slider-runnable-track{height:3px;background:linear-gradient(to right,#c6bca4 var(--volume-progress,100%),#39362f var(--volume-progress,100%));border-radius:2px}
+#settings input[type=range]::-moz-range-track{height:3px;background:linear-gradient(to right,#c6bca4 var(--volume-progress,100%),#39362f var(--volume-progress,100%));border-radius:2px}
+#settings input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:23.8px;height:33.6px;margin-top:-11.5px;border:0;border-radius:0;background:transparent url('./suncatcher-icon.svg') center/contain no-repeat;filter:drop-shadow(0 0 4px #d5aa4840);transition:filter .28s ease-in-out}
+#settings input[type=range]::-moz-range-thumb{width:23.8px;height:33.6px;transform:translateY(3.85px);border:0;border-radius:0;background:transparent url('./suncatcher-icon.svg') center/contain no-repeat;filter:drop-shadow(0 0 4px #d5aa4840);transition:filter .28s ease-in-out}
+#settings input[type=range]:is(:hover,:focus-visible)::-webkit-slider-thumb{filter:drop-shadow(0 0 7px #dfb95e99)}
+#settings input[type=range]:is(:hover,:focus-visible)::-moz-range-thumb{filter:drop-shadow(0 0 7px #dfb95e99)}
+@media(prefers-reduced-motion:reduce){#settings input[type=range]::-webkit-slider-thumb{transition:none}#settings input[type=range]::-moz-range-thumb{transition:none}}
 #settings .settings-note,#settings .settings-status{font-size:14px;color:#aaa59b;line-height:1.5}
 #settings .settings-status{min-height:22px;margin:10px 0}
 #settings .settings-bindings{display:flex;gap:8px}

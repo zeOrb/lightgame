@@ -425,7 +425,7 @@ export class FloorArenas extends ArenaRun {
       else if(object.userData.beforeArenaFall!==undefined){object.visible=object.userData.beforeArenaFall;delete object.userData.beforeArenaFall;}
     }
   }
-  update(dt,time,{direction={x:0,z:0},dash=null,height=0,previousHeight=0,velocity=0,speed=4.8,flare=false,chargedPalette=null}={}){
+  update(dt,time,{direction={x:0,z:0},dash=null,height=0,previousHeight=0,velocity=0,speed=4.8,flare=false,chargedPalette=null,dashPalette=null}={}){
     const a=this.active;if(!a)return {};
     if(a.collapse)return this.updateCollapse(a,dt);
     this.hitCooldown=Math.max(0,this.hitCooldown-dt);
@@ -445,7 +445,7 @@ export class FloorArenas extends ArenaRun {
       if(a.stage==='fighting'){this.setCombatLook(a,true);for(const b of a.enemies)b.o.visible=true;}
       return {};
     }
-    const result={damage:0,kills:0,hits:0,bounce:0,phaseKill:false};
+    const result={damage:0,kills:0,hits:0,bounce:0,phaseKill:false,comboActions:[]};
     const before={...this.player};
     if(this.recoil){
       const r=this.recoil;r.age=Math.min(.46,r.age+dt);const t=Math.min(1,r.age/(.46*.8)),e=1-(1-t)**3;
@@ -486,15 +486,15 @@ export class FloorArenas extends ArenaRun {
       const stomp=!dash&&canStomp(a.y+previousHeight+.12,a.y+height+.12,b.lastTop??top,top,velocity,overlap);
       const jumpStrike=!dash&&b.boss&&risingJumpHits(previousHeight,height,velocity,overlap);
       if(dashHit||stomp||jumpStrike||(flare&&dist<3)){
-        const hit=this.hit(b,dashHit||flare?this.palette:chargedPalette);
+        const hit=this.hit(b,dashHit?dashPalette:flare?this.palette:chargedPalette);
         if(hit){
-          if(dashHit)flashBossOnDash(b);
+          if(dashHit&&dashPalette)flashBossOnDash(b);
           result.hits++;result.impact={x:b.o.position.x+dx/dist*.35,y:stomp?top:jumpStrike?a.y+height+.45:a.y+.95,z:b.o.position.z+dz/dist*.35};
-          result.impactPalette=dashHit||flare?this.palette:chargedPalette;
+          result.impactPalette=dashHit?dashPalette:flare?this.palette:chargedPalette;
           if(!b.dead){b.o.position.x-=dx/dist*b.stats.recoil;b.o.position.z-=dz/dist*b.stats.recoil;clampArena(b.o.position,ARENA_RADIUS-b.stats.edgeInset);}
-          if(stomp)result.bounce=Math.max(result.bounce,top-a.y+.03);
+          if(stomp){result.bounce=Math.max(result.bounce,top-a.y+.03);result.comboActions.push({action:'stomp',target:b});}
           if(jumpStrike){result.bounce=Math.max(result.bounce,height+.03);result.jumpRebound=true;}
-          if(b.dead){result.kills++;result.phaseKill||=dashHit;}
+          if(b.dead){result.kills++;result.phaseKill||=dashHit;if(dashHit)result.comboActions.push({action:'dashKill',target:b});}
         }
       }
       b.lastTop=top;

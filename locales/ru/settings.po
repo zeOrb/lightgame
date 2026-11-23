@@ -31,6 +31,10 @@ msgctxt "borderless"
 msgid "Borderless window"
 msgstr "Оконный без рамки"
 
+#: src/settings.js:74
+msgid "Changing VSync requires restarting the game."
+msgstr "Изменение VSync требует перезапуска игры."
+
 #: src/settings.js
 #. Stable UI key: padHint
 msgctxt "padHint"
@@ -54,12 +58,6 @@ msgstr "Управление"
 msgctxt "failed"
 msgid "Could not apply display mode."
 msgstr "Не удалось применить режим экрана."
-
-#: src/settings.js
-#. Stable UI key: dash
-msgctxt "dash"
-msgid "Dash"
-msgstr "Дэш"
 
 #: src/settings.js
 #. Stable UI key: device
@@ -157,6 +155,14 @@ msgctxt "padDisconnected"
 msgid "No controller detected"
 msgstr "Геймпад не обнаружен"
 
+#: src/settings.js:71
+msgid "Off"
+msgstr "Выкл."
+
+#: src/settings.js:71
+msgid "On"
+msgstr "Вкл."
+
 #: src/settings.js
 #. Stable UI key: pause
 msgctxt "pause"
@@ -198,6 +204,18 @@ msgstr "Сохранено"
 msgctxt "sounds"
 msgid "Sounds"
 msgstr "Звуки"
+
+#: src/settings.js:72
+msgid "VSync"
+msgstr "Вертикальная синхронизация"
+
+#: src/settings.js:74
+msgid "VSync is controlled by the browser."
+msgstr "В браузере вертикальной синхронизацией управляет браузер."
+
+#: src/settings.js:124
+msgid "VSync saved. Restart the game to apply."
+msgstr "VSync сохранён. Перезапустите игру для применения."
 
 #: src/settings.js
 #. Stable UI key: windowed

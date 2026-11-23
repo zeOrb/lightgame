@@ -1,8 +1,14 @@
 const {app,BrowserWindow,session,ipcMain,screen}=require('electron');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
+const {loadGraphics,saveGraphics,vsyncSwitches,relaunchArgs}=require('./graphics.cjs');
 
 app.setName('Sunny');
+const graphicsFile=path.join(app.getPath('userData'),'graphics.json');
+let graphics=loadGraphics(graphicsFile);
+const activeVsync=graphics.vsync;
+for(const name of vsyncSwitches(false))app.commandLine.removeSwitch(name);
+for(const name of vsyncSwitches(activeVsync))app.commandLine.appendSwitch(name);
 function openGame(){
   const entry=path.join(__dirname,'data','index.html');
   const entryURL=pathToFileURL(entry).href;
@@ -14,6 +20,16 @@ function openGame(){
   window.removeMenu();
   let windowBounds=null;
   const allowed=event=>event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame;
+  const graphicsState=()=>({...graphics,activeVsync,restartRequired:graphics.vsync!==activeVsync});
+  ipcMain.handle('sunny:graphics',event=>{if(!allowed(event))throw new Error('Invalid sender');return graphicsState();});
+  ipcMain.handle('sunny:vsync',(event,value)=>{
+    if(!allowed(event)||typeof value!=='boolean')throw new Error('Invalid VSync setting');
+    saveGraphics(graphicsFile,value);graphics={vsync:value};return graphicsState();
+  });
+  ipcMain.handle('sunny:restart',event=>{
+    if(!allowed(event))return;
+    app.relaunch({args:relaunchArgs(process.argv.slice(1))});app.quit();
+  });
   ipcMain.handle('sunny:focused',event=>allowed(event)&&window.isFocused());
   ipcMain.handle('sunny:toggle-fullscreen',event=>{if(allowed(event))window.setFullScreen(!window.isFullScreen());});
   for(const type of ['focus','blur'])window.on(type,()=>{

@@ -153,7 +153,7 @@ export class SecretRoad {
   heightAt(p){
     this.mesh.updateWorldMatrix(true,false);this.from.copy(p);this.mesh.worldToLocal(this.from);
     this.ray.origin.set(this.from.x,this.mesh.geometry.boundingSphere.center.y+this.mesh.geometry.boundingSphere.radius+1,this.from.z);this.ray.direction.set(0,-1,0);
-    for(let i=0;i<this.revealed*this.topTrianglesPerSegment;i++){const tri=this.triangles[i];if(this.ray.intersectTriangle(...tri,false,this.result))return this.result.y;}
+    for(let i=0;i<this.revealed*this.topTrianglesPerSegment;i++){const tri=this.triangles[i];if(this.ray.intersectTriangle(...tri,false,this.result))return this.mesh.localToWorld(this.result).y;}
     return null;
   }
   landing(beforeY,afterY,p,before){
@@ -161,6 +161,9 @@ export class SecretRoad {
     this.from.set(before.x,beforeY,before.z);this.mesh.worldToLocal(this.from);
     this.direction.set(p.x,afterY,p.z);this.mesh.worldToLocal(this.direction);this.direction.sub(this.from);const length=this.direction.length();if(length<1e-8)return null;
     this.ray.set(this.from,this.direction.divideScalar(length));let nearest=Infinity,y=null;
-    for(let i=0;i<this.revealed*this.topTrianglesPerSegment;i++){if(this.ray.intersectTriangle(...this.triangles[i],true,this.result)){const d=this.result.distanceTo(this.from);if(d<=length+1e-5&&d<nearest){nearest=d;y=this.result.y;}}}return y;
+    for(let i=0;i<this.revealed*this.topTrianglesPerSegment;i++){if(this.ray.intersectTriangle(...this.triangles[i],true,this.result)){const d=this.result.distanceTo(this.from);if(d<=length+1e-5&&d<nearest){nearest=d;y=this.mesh.localToWorld(this.result).y;}}}
+    // The caller keeps the movement endpoint's XZ. A swept contact can be behind
+    // it on a rising slope: using the contact Y there would embed the feet.
+    return y===null?null:this.heightAt(p)??y;
   }
 }

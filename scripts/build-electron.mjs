@@ -22,6 +22,7 @@ await mkdir(stage,{recursive:true});
 await cp(path.join(root,'dist'),path.join(stage,'data'),{recursive:true});
 await cp(path.join(root,'electron','main.cjs'),path.join(stage,'main.cjs'));
 await cp(path.join(root,'electron','preload.cjs'),path.join(stage,'preload.cjs'));
+await cp(path.join(root,'electron','graphics.cjs'),path.join(stage,'graphics.cjs'));
 await writeFile(path.join(stage,'package.json'),JSON.stringify({name:'sunny',productName:'Sunny',author:'Sunny',version:pkg.version,main:'main.cjs'},null,2));
 const [built]=await packager({dir:stage,out:destination,name:'Sunny',executableName:'Sunny',
   platform:'win32',arch:'x64',electronVersion:electron.version,asar:false,prune:false,

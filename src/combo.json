@@ -1,0 +1,8 @@
+{
+  "timeout": 5,
+  "groundGrace": 1.2,
+  "scorePerMultiplier": 4,
+  "maxMultiplier": 3,
+  "repeatWeights": [1, 0.5, 0],
+  "actions": {"airGem": 1, "stomp": 2, "dashKill": 2, "vitral": 2, "chest": 2}
+}

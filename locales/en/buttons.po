@@ -75,7 +75,7 @@ msgstr "Pause"
 msgid "Pause menu"
 msgstr "Pause menu"
 
-#: src/main.js:346
+#: src/main.js:349
 msgid "Preparing run…"
 msgstr "Preparing run…"
 
@@ -92,6 +92,10 @@ msgstr "Reset points and learned skills"
 #: index.html
 msgid "Reset skill tree · debug"
 msgstr "Reset skill tree · debug"
+
+#: src/settings.js:125
+msgid "Restart game"
+msgstr "Restart game"
 
 #: index.html
 msgid "Restart run"

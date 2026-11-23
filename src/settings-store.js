@@ -4,7 +4,7 @@ export const ACTION_CODES={left:'KeyA',right:'KeyD',forward:'KeyW',back:'KeyS',j
 export const RESOLUTIONS=['auto','1280x720','1600x900','1920x1080','2560x1440','3840x2160'];
 export function normalizeSettings(raw={}){
   if(!raw||typeof raw!=='object')raw={};
-  const result={language:raw.language==='en'?'en':'ru',mode:['windowed','borderless','fullscreen'].includes(raw.mode)?raw.mode:'windowed',resolution:RESOLUTIONS.includes(raw.resolution)?raw.resolution:'auto',volume:Number.isFinite(raw.volume)?Math.min(1,Math.max(0,raw.volume)):0,bindings:{}};
+  const result={vsync:raw.vsync!==false,language:raw.language==='en'?'en':'ru',mode:['windowed','borderless','fullscreen'].includes(raw.mode)?raw.mode:'windowed',resolution:RESOLUTIONS.includes(raw.resolution)?raw.resolution:'auto',volume:Number.isFinite(raw.volume)?Math.min(1,Math.max(0,raw.volume)):0,bindings:{}};
   const used=new Set();
   for(const [action,defaults] of Object.entries(DEFAULT_BINDINGS)){
     const list=Array.isArray(raw.bindings?.[action])?raw.bindings[action]:defaults;

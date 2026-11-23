@@ -1,5 +1,7 @@
 import {AbilityType} from './abilities.js';
 const approach=(v,target,rate,dt)=>v+Math.sign(target-v)*Math.min(Math.abs(target-v),rate*dt);
+// Height is stored relative to the smooth route; physical treads are stepped.
+export const heightAboveSurface=(height,routeY,surface)=>Math.max(0,surface?routeY+height-surface.y:height);
 export class PlatformerMotion {
   constructor(){this.reset();}
   reset(){this.rail=0;this.x=this.z=0;this.jumpBuffer=0;this.coyote=0;this.cuttable=false;this.skidding=false;this.didDoubleJump=false;}

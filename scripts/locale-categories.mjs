@@ -22,6 +22,7 @@ for(const file of ['skill-tree.json','treasury-tree.json']){
   }
 }
 const buttons=new Set(['addBinding','settings','backButton','apply','reset','start','resume','restart','menu',
+  'Restart game',
   "Preparing run…","☀ To the sun","Skill tree","Light tree","Next run →","Bestiary",
   "Close","Main menu","SUN","BUNNY","Actions","Start run","Reset points and learned skills",
   "Reset skill tree · debug","Boss fight · debug","Enable sound","Sound: off · debug",
@@ -31,6 +32,7 @@ export function categoryForEntry(entry){
   if(buttons.has(entry.msgctxt||entry.msgid))return 'buttons';
   if(entry.msgctxt?.startsWith('hud.'))return 'gameplay';
   if(entry.msgctxt)return 'settings';
+  if(entry.comments?.reference?.includes('src/settings.js'))return 'settings';
   if(entry.comments?.reference?.includes('src/bestiary.js')||entry.comments?.reference?.includes('src/enemies.json'))return 'bestiary';
   return 'gameplay';
 }

@@ -3,7 +3,30 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {SecretLevels,SECRET_ROAD_ASSIST} from '../src/secret-levels.js';
 import {PlatformerMotion} from '../src/platformer-motion.js';
+import {route} from '../src/game.js';
 const setup=()=>{const l=new SecretLevels(new THREE.Scene(),{carved:new THREE.MeshBasicMaterial()}),r=l.routes[0];l.reveal(r.s,1,0);return {l,r};};
+
+test('jump landing followed by running uphill never leaves feet below the road at low or high FPS',()=>{
+ const {l,r}=setup();let landings=0;
+ for(const fps of [20,30,60,144])for(const direction of [-1,1])for(const lane of [-.8,0,.8])for(const offset of [1,2,3,4]){
+  let s=r.s+offset,p=route(s,lane),top=r.road.heightAt(p);if(top===null)continue;
+  let height=top-p.y,velocity=13,landed=false;const motion=new PlatformerMotion();
+  for(let frame=0;frame<fps*2;frame++){
+   const dt=1/fps,before=route(s,lane),previousFoot=before.y+height,old=l.support(before,previousFoot);
+   s+=direction*1.6*dt;const after=route(s,lane);top=r.road.heightAt(after);if(top===null)break;
+   const surface=l.support(after,previousFoot,old&&velocity<=0?.52:0);
+   if(surface&&old&&velocity<=0){height=surface.y-after.y;velocity=0;}else if(old||height>.001)height=Math.max(0,previousFoot-after.y);
+   const ground=surface?surface.y-after.y:0,grounded=!!surface&&Math.abs(height-ground)<.03&&velocity<=0;
+   const step=motion.jumpStep(height-ground,velocity,dt,true);height=step.height+ground;velocity=step.velocity;
+   if(grounded&&velocity<=0){height=ground;velocity=0;}
+   const hit=grounded?null:l.land(previousFoot,after.y+height,velocity,after,before);
+   if(hit){height=hit.y-after.y;velocity=0;landed=true;landings++;}
+   if(grounded)landed=true;
+   if(landed)assert.ok(after.y+height>=top-1e-6,`fps=${fps}, direction=${direction}, lane=${lane}, frame=${frame}`);
+  }
+ }
+ assert.ok(landings>20,'exercise actual swept jump landings, not only standing support');
+});
 test('landing only reports the top surface without activating an arena or moving the player',()=>{
  const {l,r}=setup(),p=r.points[0].clone().add(new THREE.Vector3(.25,0,.15)),before=p.clone();
  const hit=l.land(p.y+.2,p.y-.1,-3,p);assert.ok(hit);assert.equal(hit.y,r.points[0].y);assert.equal(l.active,null);assert.deepEqual(p,before);assert.equal(r.used,false);

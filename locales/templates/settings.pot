@@ -27,6 +27,10 @@ msgctxt "borderless"
 msgid "Borderless window"
 msgstr ""
 
+#: src/settings.js:74
+msgid "Changing VSync requires restarting the game."
+msgstr ""
+
 #: src/settings.js
 #. Stable UI key: padHint
 msgctxt "padHint"
@@ -49,12 +53,6 @@ msgstr ""
 #. Stable UI key: failed
 msgctxt "failed"
 msgid "Could not apply display mode."
-msgstr ""
-
-#: src/settings.js
-#. Stable UI key: dash
-msgctxt "dash"
-msgid "Dash"
 msgstr ""
 
 #: src/settings.js
@@ -153,6 +151,14 @@ msgctxt "padDisconnected"
 msgid "No controller detected"
 msgstr ""
 
+#: src/settings.js:71
+msgid "Off"
+msgstr ""
+
+#: src/settings.js:71
+msgid "On"
+msgstr ""
+
 #: src/settings.js
 #. Stable UI key: pause
 msgctxt "pause"
@@ -193,6 +199,18 @@ msgstr ""
 #. Stable UI key: sounds
 msgctxt "sounds"
 msgid "Sounds"
+msgstr ""
+
+#: src/settings.js:72
+msgid "VSync"
+msgstr ""
+
+#: src/settings.js:74
+msgid "VSync is controlled by the browser."
+msgstr ""
+
+#: src/settings.js:124
+msgid "VSync saved. Restart the game to apply."
 msgstr ""
 
 #: src/settings.js

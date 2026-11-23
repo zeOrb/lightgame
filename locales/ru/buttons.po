@@ -76,7 +76,7 @@ msgstr "Пауза"
 msgid "Pause menu"
 msgstr "Меню паузы"
 
-#: src/main.js:346
+#: src/main.js:349
 msgid "Preparing run…"
 msgstr "Готовим забег…"
 
@@ -93,6 +93,10 @@ msgstr "Обнулить очки и изученные навыки"
 #: index.html
 msgid "Reset skill tree · debug"
 msgstr "Сбросить древо навыков · debug"
+
+#: src/settings.js:125
+msgid "Restart game"
+msgstr "Перезапустить игру"
 
 #: index.html
 msgid "Restart run"

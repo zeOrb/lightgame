@@ -11,11 +11,15 @@ msgstr ""
 msgid "3D magical tower"
 msgstr ""
 
-#: src/main.js:464
+#: src/combo-hud.js:12
+msgid "Air gem"
+msgstr ""
+
+#: src/main.js:469
 msgid "Arena"
 msgstr ""
 
-#: src/main.js:464
+#: src/main.js:469
 msgid "Arena cleared"
 msgstr ""
 
@@ -35,8 +39,16 @@ msgstr ""
 msgid "CRYSTAL AWAKENED"
 msgstr ""
 
-#: src/main.js:713
+#: src/combo-hud.js:12
+msgid "Chest break"
+msgstr ""
+
+#: src/main.js:721
 msgid "Controls reversed"
+msgstr ""
+
+#: src/combo-hud.js:12
+msgid "Dash kill"
 msgstr ""
 
 #: src/threats.js:5
@@ -47,15 +59,15 @@ msgstr ""
 msgid "Eclipse Bell · jump over it or pass through with Phasing."
 msgstr ""
 
-#: src/main.js:714
+#: src/main.js:722
 msgid "Entering floor {floor}"
 msgstr ""
 
-#: src/main.js:363
+#: src/main.js:367
 msgid "Falling"
 msgstr ""
 
-#: src/main.js:714
+#: src/main.js:722
 msgid "Final arch · the crystal is close"
 msgstr ""
 
@@ -67,7 +79,7 @@ msgstr ""
 msgid "Floor 12 / 12"
 msgstr ""
 
-#: src/main.js:417
+#: src/main.js:421
 msgid "Floor {floor} / {total}"
 msgstr ""
 
@@ -95,11 +107,11 @@ msgstr ""
 msgid "Glints: 0"
 msgstr ""
 
-#: src/main.js:464
+#: src/main.js:469
 msgid "Guardian · {hp} / {maxHP} · Enemies: {count}"
 msgstr ""
 
-#: src/main.js:713
+#: src/main.js:721
 msgid "In the sunset light"
 msgstr ""
 
@@ -119,7 +131,7 @@ msgstr ""
 msgid "LEARNED"
 msgstr ""
 
-#: src/main.js:715
+#: src/main.js:723
 msgid "Last Spark · light restored!"
 msgstr ""
 
@@ -131,7 +143,7 @@ msgstr ""
 msgid "Left"
 msgstr ""
 
-#: src/main.js:91
+#: src/main.js:93
 msgid "Open the game in a browser with hardware acceleration enabled."
 msgstr ""
 
@@ -139,7 +151,7 @@ msgstr ""
 msgid "PATH TO THE CRYSTAL"
 msgstr ""
 
-#: src/main.js:820
+#: src/main.js:830
 msgid "Phasing {seconds}s"
 msgstr ""
 
@@ -165,7 +177,7 @@ msgstr ""
 msgid "RUN ENDED"
 msgstr ""
 
-#: src/main.js:660
+#: src/main.js:666
 msgid "Refraction! Controls reversed for 2.5 seconds"
 msgstr ""
 
@@ -189,15 +201,15 @@ msgstr ""
 msgid "Shadow begins below 30% Light"
 msgstr ""
 
-#: src/main.js:404
+#: src/main.js:408
 msgid "Shadow begins below {threshold}% Light"
 msgstr ""
 
-#: src/main.js:683
+#: src/main.js:690
 msgid "Shadow dispelled!"
 msgstr ""
 
-#: src/main.js:713
+#: src/main.js:721
 msgid "Shadow drains your light!"
 msgstr ""
 
@@ -205,7 +217,7 @@ msgstr ""
 msgid "Shadow threshold: 30% Light"
 msgstr ""
 
-#: src/main.js:713
+#: src/main.js:721
 msgid "Slowed by refraction"
 msgstr ""
 
@@ -213,20 +225,28 @@ msgstr ""
 msgid "Space"
 msgstr ""
 
-#: src/main.js:713
+#: src/main.js:721
 msgid "Stained glass · +{amount}/s"
 msgstr ""
 
-#: src/main.js:713
+#: src/main.js:721
 msgid "Stained glass · burst healing"
 msgstr ""
 
-#: src/main.js:677
+#: src/main.js:684
 msgid "Stained-glass breakthrough · shadow dispelled!"
 msgstr ""
 
-#: src/main.js:702
+#: src/combo-hud.js:12
+msgid "Stained-glass crossing"
+msgstr ""
+
+#: src/main.js:709
 msgid "Stained-glass light · healing accelerates while you stay in the light"
+msgstr ""
+
+#: src/combo-hud.js:12
+msgid "Stomp"
 msgstr ""
 
 #: index.html
@@ -237,19 +257,19 @@ msgstr ""
 msgid "Sunlight skill tree"
 msgstr ""
 
-#: src/main.js:638
+#: src/main.js:644
 msgid "The bell knocked you off the shelf…"
 msgstr ""
 
-#: src/main.js:544
+#: src/main.js:549
 msgid "The shelf is moving! It carries you inward — watch the edges."
 msgstr ""
 
-#: src/main.js:644
+#: src/main.js:650
 msgid "There is no shelf beneath your paws…"
 msgstr ""
 
-#: src/main.js:660
+#: src/main.js:666
 msgid "Thick light · slowed for 3 seconds"
 msgstr ""
 
@@ -261,7 +281,7 @@ msgstr ""
 msgid "VICTORY +{points}"
 msgstr ""
 
-#: src/main.js:91
+#: src/main.js:93
 msgid "WebGL required"
 msgstr ""
 
@@ -273,7 +293,7 @@ msgstr ""
 msgid "[Sunny: level issue corrected]"
 msgstr ""
 
-#: src/main.js:406
+#: src/main.js:410
 msgid "along the spiral"
 msgstr ""
 
@@ -327,7 +347,7 @@ msgstr ""
 msgid "stained glass"
 msgstr ""
 
-#: src/main.js:640
+#: src/main.js:646
 msgid "{name} · −{damage} Light"
 msgstr ""
 

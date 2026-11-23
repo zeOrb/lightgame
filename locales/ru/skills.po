@@ -106,6 +106,28 @@ msgid "Phasing"
 msgstr ""
 
 #: src/skill-tree.json
+msgid "Dash"
+msgstr "Дэш"
+
+#: src/skill-tree.json
+msgid "Unlocks a short directional dash on the ground and in the air."
+msgstr "Открывает короткий направленный дэш на земле и в воздухе."
+
+#: src/skill-tree.json
+msgid "Gleam Dash"
+msgstr "Сияющий дэш"
+
+#: src/skill-tree.json
+msgid ""
+"Cross stained-glass light to charge your dash with Gleam for 1.5 seconds. "
+"Charged dashes leave a colored trail and shatter defeated enemies into "
+"stained-glass light."
+msgstr ""
+"Пересечение света витража заряжает дэш эффектом Gleam на 1,5 секунды. "
+"Заряженный дэш оставляет цветной след и разбивает поверженных врагов "
+"витражным светом."
+
+#: src/skill-tree.json
 msgid "Short Shadow"
 msgstr "Короткая тень"
 
@@ -401,3 +423,25 @@ msgstr "Аметист"
 #: src/treasury-tree.json
 msgid "Adds amethysts to the gem pool."
 msgstr "Добавляет аметист в пул камней."
+
+#: src/treasury-tree.json
+msgid "Combo"
+msgstr "Комбо"
+
+#: src/treasury-tree.json
+msgid "Solar Rhythm"
+msgstr "Солнечный ритм"
+
+#: src/treasury-tree.json
+msgid ""
+"Unlocks combos: chain varied actions to earn up to ×3 points from gems. "
+"Repeated actions give less; damage, falling or a long pause breaks the chain."
+msgstr ""
+"Открывает комбо: сочетай разные действия, чтобы получать до ×3 очков за "
+"камни. Повторы дают меньше; урон, падение или долгая пауза обрывают цепочку."
+
+#: src/settings.js
+#. Stable UI key: dash
+msgctxt "dash"
+msgid "Dash"
+msgstr "Дэш"
