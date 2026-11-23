@@ -1,4 +1,16 @@
-const ru={addBinding:'Добавить',device:'Устройство',keyboard:'Клавиатура',padPress:'Нажмите кнопку или отклоните стик',padHint:'Подключите геймпад и нажмите любую кнопку. Esc — отмена.',padConnected:'Геймпад подключён',padDisconnected:'Геймпад не обнаружен',settings:'Настройки',game:'Игра',graphics:'Графика',sounds:'Звуки',controls:'Управление',language:'Язык',resolution:'Разрешение',mode:'Режим экрана',windowed:'Оконный',borderless:'Оконный без рамки',fullscreen:'Полноэкранный',auto:'По размеру окна',volume:'Общая громкость',backButton:'Назад',apply:'Применить',reset:'Сбросить управление',left:'Влево',right:'Вправо',forward:'Вперёд',back:'Назад',jump:'Прыжок',dash:'Дэш',flare:'Вспышка',pause:'Пауза',press:'Нажмите клавишу…',cancel:'Esc — отмена',browser:'В браузере режим без рамки недоступен. Разрешение задаёт размер рендера.',failed:'Не удалось применить режим экрана.',start:'Начать забег',resume:'Продолжить',restart:'Начать заново',menu:'В главное меню',saved:'Сохранено',languageNote:'Перевод меню и настроек. Игровые тексты пока на русском.'};
-const en={addBinding:'Add',device:'Device',keyboard:'Keyboard',padPress:'Press a button or move a stick',padHint:'Connect a controller and press a button. Esc — cancel.',padConnected:'Controller connected',padDisconnected:'No controller detected',settings:'Settings',game:'Game',graphics:'Graphics',sounds:'Sounds',controls:'Controls',language:'Language',resolution:'Resolution',mode:'Display mode',windowed:'Windowed',borderless:'Borderless window',fullscreen:'Fullscreen',auto:'Match window',volume:'Master volume',backButton:'Back',apply:'Apply',reset:'Reset controls',left:'Left',right:'Right',forward:'Forward',back:'Back',jump:'Jump',dash:'Dash',flare:'Flare',pause:'Pause',press:'Press a key…',cancel:'Esc — cancel',browser:'Borderless mode is unavailable in the browser. Resolution sets the render size.',failed:'Could not apply display mode.',start:'Start run',resume:'Resume',restart:'Restart run',menu:'Main menu',saved:'Saved',languageNote:'Menus and settings are translated. Gameplay text is currently in Russian.'};
-export const messages={ru,en};
-export const translate=(language,key)=>messages[language]?.[key]??ru[key]??key;
+import catalogs from './locales.generated.json' with {type:'json'};
+export const messages=catalogs;
+export const translate=(language,key,values={})=>(messages[language]?.[key]??messages.ru[key]??messages.en[key]??key).replace(/\{(\w+)\}/g,(match,name)=>Object.hasOwn(values,name)?String(values[name]):match);
+let language='ru';
+const listeners=new Set();
+export const tr=(key,values)=>translate(language,key,values);
+export const getLanguage=()=>language;
+export const onLanguageChange=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
+export function setLanguage(value){
+  const next=Object.hasOwn(messages,value)?value:'ru';if(next===language)return;
+  language=next;for(const listener of listeners)listener(language);
+}
+export function localizeDOM(root=document){
+  for(const element of root.querySelectorAll('[data-i18n]'))element.textContent=tr(element.dataset.i18n);
+  for(const attribute of ['aria-label','title','content'])for(const element of root.querySelectorAll(`[data-i18n-${attribute}]`))element.setAttribute(attribute,tr(element.getAttribute(`data-i18n-${attribute}`)));
+}

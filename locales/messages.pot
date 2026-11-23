@@ -1,0 +1,1156 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Sunny 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/main.js:91
+msgid "Нужен WebGL"
+msgstr ""
+
+#: src/main.js:91
+msgid "Открой игру в браузере с аппаратным ускорением."
+msgstr ""
+
+#: src/main.js:346
+msgid "Готовим забег…"
+msgstr ""
+
+#: src/main.js:363
+msgid "Падение"
+msgstr ""
+
+#: src/main.js:406
+msgid "по спирали"
+msgstr ""
+
+#: src/main.js:404
+msgid "Тень начинается ниже {threshold}% Света"
+msgstr ""
+
+#: index.html
+msgid "по арене"
+msgstr ""
+
+#: src/main.js:417
+msgid "Этаж {floor} / {total}"
+msgstr ""
+
+#: src/main.js:464
+msgid "Арена пройдена"
+msgstr ""
+
+#: src/main.js:464
+msgid "Страж · {hp} / {maxHP} · Врагов: {count}"
+msgstr ""
+
+#: src/main.js:464
+msgid "Арена"
+msgstr ""
+
+#: src/main.js:544
+msgid "Полка сдвигается! Она несёт тебя к центру — следи за краями."
+msgstr ""
+
+#: src/main.js:638
+msgid "Колокол сбил тебя с полки…"
+msgstr ""
+
+#: src/main.js:640
+msgid "{name} · −{damage} света"
+msgstr ""
+
+#: src/main.js:644
+msgid "Под лапами больше нет полки…"
+msgstr ""
+
+#: src/main.js:660
+msgid "Преломление! Управление отражено на 2,5 секунды"
+msgstr ""
+
+#: src/main.js:660
+msgid "Густой свет · замедление на 3 секунды"
+msgstr ""
+
+#: src/main.js:677
+msgid "Витражный прорыв · тень рассеяна!"
+msgstr ""
+
+#: src/main.js:683
+msgid "Тень рассеяна!"
+msgstr ""
+
+#: src/main.js:702
+msgid "Свет витража · лечение ускоряется, пока ты в свете"
+msgstr ""
+
+#: src/main.js:713
+msgid "Тень забирает свет!"
+msgstr ""
+
+#: src/main.js:713
+msgid "Витраж · импульсное лечение"
+msgstr ""
+
+#: src/main.js:713
+msgid "Витраж · +{amount}/с"
+msgstr ""
+
+#: src/main.js:713
+msgid "Управление отражено"
+msgstr ""
+
+#: src/main.js:713
+msgid "Преломление замедляет"
+msgstr ""
+
+#: src/main.js:713
+msgid "В свете заката"
+msgstr ""
+
+#: src/main.js:714
+msgid "Последняя арка · кристалл рядом"
+msgstr ""
+
+#: src/main.js:714
+msgid "Переход на этаж {floor}"
+msgstr ""
+
+#: src/main.js:715
+msgid "Последний огонёк · свет вернулся!"
+msgstr ""
+
+#: src/main.js:820
+msgid "Phasing {seconds}с"
+msgstr ""
+
+#: src/skill-tree.js:156
+msgid "Древо солнечного света"
+msgstr ""
+
+#: src/skill-tree.js:32
+msgid "☀ К солнцу"
+msgstr ""
+
+#: src/skill-tree.js:154
+msgid "Древо навыков"
+msgstr ""
+
+#: src/skill-tree.js:157
+msgid "Древо света"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Сокровищница"
+msgstr ""
+
+#: src/skill-tree.js:155
+msgid "КРИСТАЛЛ ПРОБУЖДЁН"
+msgstr ""
+
+#: src/skill-tree.js:155
+msgid "ЗАБЕГ ЗАВЕРШЁН"
+msgstr ""
+
+#: src/skill-tree.js:155
+msgid "СОБРАНО {count}"
+msgstr ""
+
+#: src/skill-tree.js:155
+msgid "ПОБЕДА +{points}"
+msgstr ""
+
+#: src/skill-tree.js
+msgid "Следующий забег →"
+msgstr ""
+
+#: src/skill-tree.js:161
+msgid "✦ {points} очк."
+msgstr ""
+
+#: src/skill-tree.js:162
+msgid "ИЗУЧЕНО"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Источник"
+msgstr ""
+
+#: src/skill-tree.js:174
+msgid "Изучи «{skill}»"
+msgstr ""
+
+#: src/skill-tree.js:175
+msgid "Нужно очков: {cost} · сейчас {points}"
+msgstr ""
+
+#: src/skill-tree.js:178
+msgid "✦ Изучено"
+msgstr ""
+
+#: src/skill-tree.js:178
+msgid "✦ {cost} · Нажми на навык"
+msgstr ""
+
+#: src/bestiary.js
+msgid "Бестиарий"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Здоровье"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Масштаб"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Высота прыжкового попадания"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Дальность слежения"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Скорость слежения"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Частота прыжков"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Высота прыжка"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Блокировка пути (секции)"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Радиус поперёк полки"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Попадание сверху (секции)"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Попадание сверху поперёк"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Контакт вдоль пути (секции)"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Высота контакта"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Радиус контакта"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Урон"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Скорость преследования"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Скорость рывка"
+msgstr ""
+
+#: src/bestiary.js:55
+msgid "Коллайдер"
+msgstr ""
+
+#: src/bestiary.js:55
+msgid "Сфера · R {radius}"
+msgstr ""
+
+#: src/bestiary.js:56
+msgid "Красный контур — зона контактного урона"
+msgstr ""
+
+#: src/shard-counter.js:39
+msgid "Очки прогрессии: {points}"
+msgstr ""
+
+#: src/shard-counter.js:10
+msgid "Собрано бликов: {count}"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "витраж"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "лут"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "враг"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "тень"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "сундук"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "бутылка"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "книга"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "пружинящая площадка"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "опасность"
+msgstr ""
+
+#: src/level-diagnostics.js:4
+msgid "Этаж «{floor}»: {category} №{index}, секция {from} → {to}."
+msgstr ""
+
+#: src/level-diagnostics.js:14
+msgid "Ошибки размещения исправлены: {count}"
+msgstr ""
+
+#: src/level-diagnostics.js:11
+msgid "[Sunny: исправлена ошибка уровня]"
+msgstr ""
+
+#: src/level-diagnostics.js:14
+msgid "Закрыть"
+msgstr ""
+
+#: src/level-diagnostics.js:15
+msgid "Автоматические исправления уровня"
+msgstr ""
+
+#: src/threats.js:5
+msgid "Колокол затмения"
+msgstr ""
+
+#: src/threats.js:5
+msgid "Колокол затмения · перепрыгни или пройди сквозь него с Phasing."
+msgstr ""
+
+#: src/threats.js:6
+msgid "Чернильная волна"
+msgstr ""
+
+#: src/threats.js:6
+msgid "Чернильная волна · перепрыгни расширяющееся кольцо."
+msgstr ""
+
+#: src/threats.js:7
+msgid "Стеклянные шипы"
+msgstr ""
+
+#: src/threats.js:7
+msgid "Стеклянные шипы · дождись спада, перепрыгни или используй Phasing."
+msgstr ""
+
+#: index.html
+msgid ""
+"Сохрани последний луч заката. Трёхмерная игра о солнечном зайчике в "
+"магической башне."
+msgstr ""
+
+#: index.html
+msgid "Солнечный зайчик · Башня последнего света"
+msgstr ""
+
+#: index.html
+msgid "Трёхмерная магическая башня"
+msgstr ""
+
+#: index.html
+msgid "Главное меню"
+msgstr ""
+
+#: index.html
+msgid "СОЛНЕЧНЫЙ"
+msgstr ""
+
+#: index.html
+msgid "ЗАЙЧИК"
+msgstr ""
+
+#: index.html
+msgid "Действия"
+msgstr ""
+
+#: index.html
+msgid "Начать забег"
+msgstr ""
+
+#: index.html
+msgid "Обнулить очки и изученные навыки"
+msgstr ""
+
+#: index.html
+msgid "Сбросить древо навыков · debug"
+msgstr ""
+
+#: index.html
+msgid "Бой с боссом · debug"
+msgstr ""
+
+#: index.html
+msgid "Включить звук"
+msgstr ""
+
+#: index.html
+msgid "Звук: выкл. · debug"
+msgstr ""
+
+#: index.html
+msgid "ТВОЙ СВЕТ"
+msgstr ""
+
+#: index.html
+msgid "Порог тени: 30% Света"
+msgstr ""
+
+#: index.html
+msgid "Тень начинается ниже 30% Света"
+msgstr ""
+
+#: index.html
+msgid "ПУТЬ К КРИСТАЛЛУ"
+msgstr ""
+
+#: index.html
+msgid "Этаж 12 / 12"
+msgstr ""
+
+#: index.html
+msgid "Блики: 0"
+msgstr ""
+
+#: index.html
+msgid "Пауза"
+msgstr ""
+
+#: index.html
+msgid "Меню паузы"
+msgstr ""
+
+#: index.html
+msgid "Продолжить"
+msgstr ""
+
+#: index.html
+msgid "Начать заново"
+msgstr ""
+
+#: index.html
+msgid "В главное меню"
+msgstr ""
+
+#: index.html
+msgid "Пробел"
+msgstr ""
+
+#: index.html
+msgid "прыжок"
+msgstr ""
+
+#: index.html
+msgid "Вспышка"
+msgstr ""
+
+#: index.html
+msgid "пауза"
+msgstr ""
+
+#: index.html
+msgid "ЛОВЕЦ ЗАКАТА"
+msgstr ""
+
+#: index.html
+msgid "Влево"
+msgstr ""
+
+#: index.html
+msgid "Вправо"
+msgstr ""
+
+#: index.html
+msgid "Вперёд"
+msgstr ""
+
+#: index.html
+msgid "Назад"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Солнечная вспышка"
+msgstr ""
+
+#: index.html
+msgid "Прыжок"
+msgstr ""
+
+#: src/skill-tree.js
+msgid "ИСТОЧНИК"
+msgstr ""
+
+#: src/bestiary.js
+msgid "Вернуться в меню · Esc"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Открывает шесть ветвей древа света."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Жизнь"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Тёплое сердце"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Максимальный свет +25 HP."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Ядро солнца"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Ещё +25 максимального HP."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Долгий закат"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Пассивный расход света меньше на 18%."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Янтарная кожа"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Тени и удары снимают на 25% меньше света."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Движение"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Быстрые лапки"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Скорость движения по спирали +15%."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Высокий прыжок"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Начальная сила прыжка +15%."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Сквозь траву"
+msgstr ""
+
+#: src/skill-tree.json
+msgid ""
+"Позволяет проходить сквозь секретные травяные дороги снизу и выпрыгивать на "
+"них."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Двойной прыжок"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Пробел в воздухе: один дополнительный прыжок."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Ясный луч"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Замедление и инверсия от склянок длятся вдвое меньше."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Короткая тень"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Перезарядка Phasing на 25% быстрее."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Длинный луч"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Дальность Phasing +20%."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Свет из тени"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Убийство дэшем восстанавливает 10 HP."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Резонанс"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Каждое убийство дэшем сокращает его перезарядку на 0,5 с."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Свет"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Полные осколки"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Осколки восстанавливают на 12 HP больше."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Притяжение"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Дальность подбора осколков увеличена."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Цветение света"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Лечение витража ускоряется на 30%."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Новая способность E: уничтожает тени в радиусе 3 м. Кулдаун 8 с."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Башня"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Выше башня"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Следующий забег: ещё 2 этажа с полками и угрозами."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Бесконечная спираль"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Ещё 2 этажа: всего 16."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Созвездие бликов"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Осколки встречаются чаще: каждые 4 секции вместо 5."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Последний огонёк"
+msgstr ""
+
+#: src/skill-tree.json
+msgid ""
+"Один раз за забег при исчерпании HP возвращает 30% света. Не спасает от "
+"падения."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Солнечные лучи"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Тёплые лучи"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Лечение в лучах витража ускоряется на 50%."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Мягкий рассвет"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Пассивное лечение в витражах ещё на 50% быстрее."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Полуденный свет"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Глоток солнца"
+msgstr ""
+
+#: src/skill-tree.json
+msgid ""
+"Вместо пассивного лечения: пересечение витража восстанавливает 25% "
+"максимального света. Каждый витраж срабатывает один раз за забег и гаснет за "
+"0,5 с."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Солнечный подскок"
+msgstr ""
+
+#: src/skill-tree.json
+msgid ""
+"Прыжок через неиспользованный витраж даёт ещё 25% максимального света, всего "
+"50%. Витраж гаснет."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Солнечный прорыв"
+msgstr ""
+
+#: src/skill-tree.json
+msgid ""
+"Дэш через неиспользованный витраж даёт ещё 25% максимального света за дэш. "
+"Вместе с пересечением — 50%, с прыжком — до 75%. Витраж гаснет."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Открывает улучшения добычи камней."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Ценность осколков"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Грани света 1"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Очки за драгоценные камни и осколки босса: ×2."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Грани света 2"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Очки за драгоценные камни и осколки босса: ×4."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Грани света 3"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Очки за драгоценные камни и осколки босса: ×8."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Грани света 4"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Очки за драгоценные камни и осколки босса: ×16."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Грани света 5"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Очки за драгоценные камни и осколки босса: ×32."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Россыпь"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Россыпь 2"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "На тайле может появиться до 2 камней."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Россыпь 3"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "На тайле может появиться до 3 камней."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Россыпь 4"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "На тайле может появиться до 4 камней."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Россыпь 5"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "На тайле может появиться до 5 камней."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Драгоценные камни"
+msgstr ""
+
+#: src/collectibles.json
+msgid "Изумруд"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Добавляет изумруд в пул камней."
+msgstr ""
+
+#: src/collectibles.json
+msgid "Сапфир"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Добавляет сапфир в пул камней."
+msgstr ""
+
+#: src/collectibles.json
+msgid "Топаз"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Добавляет топаз в пул камней."
+msgstr ""
+
+#: src/collectibles.json
+msgid "Аметист"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Добавляет аметист в пул камней."
+msgstr ""
+
+#: src/enemies.json
+msgid "Тень"
+msgstr ""
+
+#: src/enemies.json
+msgid "Теневая кошка"
+msgstr ""
+
+#: src/enemies.json
+msgid "Теневая лиса"
+msgstr ""
+
+#: src/enemies.json
+msgid "Теневой заяц"
+msgstr ""
+
+#: src/enemies.json
+msgid "Теневой жнец"
+msgstr ""
+
+#: src/collectibles.json
+msgid "Рубин"
+msgstr ""
+
+#: src/floors.json
+msgid "Верхний ярус"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: addBinding
+msgctxt "addBinding"
+msgid "Add"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: device
+msgctxt "device"
+msgid "Device"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: keyboard
+msgctxt "keyboard"
+msgid "Keyboard"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: padPress
+msgctxt "padPress"
+msgid "Press a button or move a stick"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: padHint
+msgctxt "padHint"
+msgid "Connect a controller and press a button. Esc — cancel."
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: padConnected
+msgctxt "padConnected"
+msgid "Controller connected"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: padDisconnected
+msgctxt "padDisconnected"
+msgid "No controller detected"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: settings
+msgctxt "settings"
+msgid "Settings"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: game
+msgctxt "game"
+msgid "Game"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: graphics
+msgctxt "graphics"
+msgid "Graphics"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: sounds
+msgctxt "sounds"
+msgid "Sounds"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: controls
+msgctxt "controls"
+msgid "Controls"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: language
+msgctxt "language"
+msgid "Language"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: resolution
+msgctxt "resolution"
+msgid "Resolution"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: mode
+msgctxt "mode"
+msgid "Display mode"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: windowed
+msgctxt "windowed"
+msgid "Windowed"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: borderless
+msgctxt "borderless"
+msgid "Borderless window"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: fullscreen
+msgctxt "fullscreen"
+msgid "Fullscreen"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: auto
+msgctxt "auto"
+msgid "Match window"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: volume
+msgctxt "volume"
+msgid "Master volume"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: backButton
+msgctxt "backButton"
+msgid "Back"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: apply
+msgctxt "apply"
+msgid "Apply"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: reset
+msgctxt "reset"
+msgid "Reset controls"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: left
+msgctxt "left"
+msgid "Left"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: right
+msgctxt "right"
+msgid "Right"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: forward
+msgctxt "forward"
+msgid "Forward"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: back
+msgctxt "back"
+msgid "Back"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: jump
+msgctxt "jump"
+msgid "Jump"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: dash
+msgctxt "dash"
+msgid "Dash"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: flare
+msgctxt "flare"
+msgid "Flare"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: pause
+msgctxt "pause"
+msgid "Pause"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: press
+msgctxt "press"
+msgid "Press a key…"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: cancel
+msgctxt "cancel"
+msgid "Esc — cancel"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: browser
+msgctxt "browser"
+msgid ""
+"Borderless mode is unavailable in the browser. Resolution sets the render "
+"size."
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: failed
+msgctxt "failed"
+msgid "Could not apply display mode."
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: start
+msgctxt "start"
+msgid "Start run"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: resume
+msgctxt "resume"
+msgid "Resume"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: restart
+msgctxt "restart"
+msgid "Restart run"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: menu
+msgctxt "menu"
+msgid "Main menu"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: saved
+msgctxt "saved"
+msgid "Saved"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: languageNote
+msgctxt "languageNote"
+msgid ""
+"Menus and settings are translated. Gameplay text is currently in Russian."
+msgstr ""

@@ -56,3 +56,5 @@ body:has(#world.is-paused) :is(#touch,body>footer,#toast,body>header){filter:gra
 #modal button:hover::before,#modal button:hover::after,#modal button:focus-visible::before,#modal button:focus-visible::after{opacity:.9}
 @media(max-height:480px){#modal h2{font-size:38px}#modal .menu-divider{margin:7px 0 12px;height:28px}#modal .menu-actions{gap:3px}}
 @media(prefers-reduced-motion:reduce){#modal .modal-card{animation:none}#modal button,#modal button::before,#modal button::after{transition:none}}
+
+#intro h1 .title-first{display:inline;margin:0;font:inherit;letter-spacing:inherit;color:inherit;text-shadow:inherit}

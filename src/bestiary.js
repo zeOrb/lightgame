@@ -1,3 +1,4 @@
+import {tr,onLanguageChange,localizeDOM} from './i18n.js';
 import * as THREE from 'three';
 import {ENEMY_CONFIG} from './enemy-config.js';
 import {createEnemy} from './enemy-factory.js';
@@ -9,10 +10,10 @@ import {bestiaryFog} from './bestiary-fog.js';
 import './bestiary.css';
 
 export function initializeBestiary(){
-  const trigger=document.createElement('button');trigger.textContent='Бестиарий';trigger.className='text-button';
+  const trigger=document.createElement('button');trigger.textContent=tr('Бестиарий');trigger.dataset.i18n='Бестиарий';trigger.className='text-button';
   document.getElementById('start').after(trigger);
   const panel=document.createElement('section');panel.id='bestiary';panel.hidden=true;
-  panel.setAttribute('aria-label','Бестиарий');panel.innerHTML='<header><h1>Бестиарий</h1><button type="button">Вернуться в меню · Esc</button></header><div class="bestiary-stage"></div><div class="bestiary-name" aria-live="polite"></div>';
+  panel.setAttribute('aria-label',tr('Бестиарий'));panel.innerHTML='<header><h1 data-i18n="Бестиарий">Бестиарий</h1><button type="button" data-i18n="Вернуться в меню · Esc">Вернуться в меню · Esc</button></header><div class="bestiary-stage"></div><div class="bestiary-name" aria-live="polite"></div>';
   document.body.append(panel);
   const stage=panel.querySelector('.bestiary-stage'),label=panel.querySelector('.bestiary-name'),back=panel.querySelector('button');
   const statsCard=document.createElement('aside');statsCard.className='bestiary-stats';statsCard.hidden=true;panel.append(statsCard);
@@ -48,11 +49,11 @@ export function initializeBestiary(){
     if(hovered===exhibit)return;hovered=exhibit;
     for(const entry of exhibits)entry.collision.visible=entry===exhibit;
     statsCard.hidden=!exhibit;if(!exhibit)return;
-    const title=document.createElement('h2');title.textContent=exhibit.enemy.definition.name;
+    const title=document.createElement('h2');title.textContent=tr(exhibit.enemy.definition.name);
     const rows=document.createElement('dl');
     const names={hp:'Здоровье',scale:'Масштаб',stompTop:'Высота прыжкового попадания',trackRange:'Дальность слежения',trackRate:'Скорость слежения',hopSpeed:'Частота прыжков',hopHeight:'Высота прыжка',blockSection:'Блокировка пути (секции)',laneRadius:'Радиус поперёк полки',stompSection:'Попадание сверху (секции)',stompLaneRadius:'Попадание сверху поперёк',contactSection:'Контакт вдоль пути (секции)',contactHeight:'Высота контакта',contactRadius:'Радиус контакта',damage:'Урон',chaseSpeed:'Скорость преследования',chargeSpeed:'Скорость рывка'};
-    for(const [key,value] of Object.entries(exhibit.enemy.stats)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key==='collider'?'Коллайдер':names[key]??key;dd.textContent=key==='collider'?`Сфера · R ${value.radius}`:Array.isArray(value)?value.join(' × '):String(value);rows.append(dt,dd);}
-    const caption=document.createElement('p');caption.textContent='Красный контур — зона контактного урона';statsCard.replaceChildren(title,caption,rows);
+    for(const [key,value] of Object.entries(exhibit.enemy.stats)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key==='collider'?tr('Коллайдер'):tr(names[key]??key);dd.textContent=key==='collider'?tr('Сфера · R {radius}',{radius:value.radius}):Array.isArray(value)?value.join(' × '):String(value);rows.append(dt,dd);}
+    const caption=document.createElement('p');caption.textContent=tr('Красный контур — зона контактного урона');statsCard.replaceChildren(title,caption,rows);
   }
   function frame(now){if(!active)return;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
     fog.update(dt);
@@ -60,7 +61,7 @@ export function initializeBestiary(){
     position=THREE.MathUtils.damp(position,target,9,dt);
     camera.position.set(position,3.2,8.6+Math.max(0,1-camera.aspect)*3);camera.lookAt(position,.95,0);
     for(const {pivot,enemy} of exhibits){pivot.rotation.y=time*.24;animateShadowBeast(enemy,time,0);}
-    const index=Math.round(position/spacing);label.textContent=definitions[index].name;
+    const index=Math.round(position/spacing);label.textContent=tr(definitions[index].name);
     scene.updateMatrixWorld();camera.updateMatrixWorld();
     if(!statsCard.matches(':hover')){if(pointerInside&&drag===null){raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(exhibits.map(entry=>entry.pick),false)[0];showStats(hit?exhibits.find(entry=>entry.pick===hit.object):null);}else showStats(null);}
     renderer.render(scene,camera);requestAnimationFrame(frame);
@@ -79,5 +80,7 @@ export function initializeBestiary(){
     if(ui.has('cancel')||ui.has('submit')||ui.has('menu'))close();
     else if(ui.has('left'))move(-spacing);else if(ui.has('right'))move(spacing);
   });
+  onLanguageChange(()=>{localizeDOM(panel);panel.setAttribute('aria-label',tr('Бестиарий'));const exhibit=hovered;hovered=null;if(exhibit)showStats(exhibit);});
+  localizeDOM(panel);
   window.addEventListener('resize',resize);
 }

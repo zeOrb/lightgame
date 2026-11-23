@@ -1,12 +1,13 @@
 import {PAD_DEFAULTS} from './gamepad-input.js';
 import {gamepadIcon} from './gamepad-icons.js';
 import {normalizeSettings,assignBinding,canonicalKey,DEFAULT_BINDINGS,RESOLUTIONS} from './settings-store.js';
-import {translate} from './i18n.js';
+import {translate,setLanguage,localizeDOM} from './i18n.js';
 import './settings.css';
 import './gold-controls.css';
 const STORAGE='sunny.settings.v1';
 let raw;try{raw=JSON.parse(localStorage.getItem(STORAGE)||'{}');}catch{}
 export const preferences=normalizeSettings(raw);
+setLanguage(preferences.language);
 export const mapGameKey=code=>canonicalKey(preferences,code);
 export const t=key=>translate(preferences.language,key);
 export function initializeSettings({onOpen,onClose,onChange}){
@@ -23,6 +24,7 @@ export function initializeSettings({onOpen,onClose,onChange}){
   const introButton=button('intro-settings','settings',document.querySelector('#intro .menu-actions'));
   const pauseButton=button('pause-settings','settings',document.querySelector('#modal .menu-actions'));
   const localize=()=>{
+    setLanguage(preferences.language);localizeDOM();
     document.documentElement.lang=preferences.language;
     for(const [id,key] of Object.entries({start:'start',resume:'resume',restart:'restart','main-menu':'menu','intro-settings':'settings','pause-settings':'settings'}))document.getElementById(id).textContent=t(key);
   };
