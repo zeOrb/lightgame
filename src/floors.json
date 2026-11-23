@@ -9,7 +9,13 @@
   },
   "defaults": {
     "placementRules": [
-      {"between": ["windows", "windows"], "minDistance": 2}
+      {
+        "between": [
+          "windows",
+          "windows"
+        ],
+        "minDistance": 2
+      }
     ],
     "steps": {
       "mode": "generated",
@@ -102,7 +108,7 @@
   "floors": [
     {
       "id": "arrival",
-      "name": "Верхний ярус",
+      "name": "Upper tier",
       "rotationYDegrees": 0,
       "enemies": {
         "count": 0

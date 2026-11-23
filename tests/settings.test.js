@@ -14,5 +14,5 @@ test('settings validate damaged storage and keep keyboard controls isolated',()=
 });
 test('English localization has all Russian settings keys and a fallback',()=>{
   assert.deepEqual(Object.keys(messages.en).sort(),Object.keys(messages.ru).sort());
-  assert.equal(translate('xx','settings'),'Настройки');
+  assert.equal(translate('xx','settings'),'Settings');
 });

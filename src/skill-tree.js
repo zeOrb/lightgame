@@ -1,4 +1,4 @@
-import {tr,onLanguageChange,localizeDOM} from './i18n.js';
+import {tr,onLanguageChange,localizeDOM,skillDescription} from './i18n.js';
 import {SKILLS,progression,isSkillVisible,isSkillPreview,SKILL_MAP_SIZE} from './progression.js';
 import {TreeViewport,treeKeyboardDelta,PanTail,SmoothTreeZoom} from './tree-viewport.js';
 import {PixelSkillArt,skillPosition} from './pixel-skill-art.js';
@@ -9,8 +9,8 @@ import {directionalTarget} from './menu-gamepad-navigation.js';
 export class SkillTree {
   constructor(onNext){
     this.treeId='light';this.onNext=onNext;this.selected=null;this.hovered=null;this.navKeys=new Set();this.panTail=new PanTail();this.smoothZoom=new SmoothTreeZoom();this.dragging=false;
-    this.element=document.createElement('section');this.element.id='skill-tree';this.element.hidden=true;this.element.setAttribute('role','dialog');this.element.setAttribute('aria-modal','true');this.element.setAttribute('aria-label',tr('Древо солнечного света'));
-    this.element.innerHTML=`<header class="tree-header"><div><small id="tree-outcome"></small><h2>Древо света</h2></div><strong id="tree-points"></strong><button id="tree-next" class="primary" data-i18n="Следующий забег →">Следующий забег →</button></header><div class="tree-body"><div class="tree-scroll"><div class="tree-map"><div class="tree-root"><span>☀</span><small data-i18n="ИСТОЧНИК">ИСТОЧНИК</small></div></div></div><aside class="tree-detail"><small id="tree-branch"></small><h3 id="tree-name"></h3><p id="tree-description"></p><p id="tree-requirement"></p><span id="tree-buy" class="primary" role="status"></span><small>Улучшения вступят в силу в следующем забеге.<br>Неиспользованные очки сохраняются.</small></aside></div>`;
+    this.element=document.createElement('section');this.element.id='skill-tree';this.element.hidden=true;this.element.setAttribute('role','dialog');this.element.setAttribute('aria-modal','true');this.element.setAttribute('aria-label',tr("Sunlight skill tree"));
+    this.element.innerHTML=`<header class="tree-header"><div><small id="tree-outcome"></small><h2>Light tree</h2></div><strong id="tree-points"></strong><button id="tree-next" class="primary" data-i18n="Next run →">Next run →</button></header><div class="tree-body"><div class="tree-scroll"><div class="tree-map"><div class="tree-root"><span>☀</span><small data-i18n="SOURCE">SOURCE</small></div></div></div><aside class="tree-detail"><small id="tree-branch"></small><h3 id="tree-name"></h3><p id="tree-description"></p><p id="tree-requirement"></p><span id="tree-buy" class="primary" role="status"></span><small>Улучшения вступят в силу в следующем забеге.<br>Неиспользованные очки сохраняются.</small></aside></div>`;
     document.body.append(this.element);this.map=this.element.querySelector('.tree-map');this.buttons=new Map();
     this.map.style.width=this.map.style.height=SKILL_MAP_SIZE+'px';
     const root=this.map.querySelector('.tree-root');root.style.left=root.style.top=SKILL_MAP_SIZE/2+'px';root.hidden=true;
@@ -29,9 +29,9 @@ export class SkillTree {
     this.viewport=this.element.querySelector('.tree-scroll');this.camera=new TreeViewport(SKILL_MAP_SIZE/2);
     this.comets=new SkillComets(this.viewport);
     this.sky=new StarParallax(this.viewport,createSkillStarfield());this.art.onFrame=dt=>{if(this.smoothZoom.step(this.camera,dt))this.applyCamera();if(this.rootRevealUntil&&this.art.time>this.rootRevealUntil){this.element.classList.remove('is-source-awakening');this.rootRevealUntil=0;}const moving=this.updateKeyboard(dt);if(!moving&&!this.dragging){const tail=this.panTail.step(dt);if(Math.abs(tail.x)+Math.abs(tail.y)>.001)this.panView(tail.x,tail.y);}this.sky.update(dt);this.comets.update(dt,this.sky.motion);};this.bindNavigation();
-    const center=document.createElement('button');center.className='text-button';center.textContent=tr('☀ К солнцу');center.dataset.i18n='☀ К солнцу';center.onclick=()=>this.center();this.element.querySelector('.tree-header').insertBefore(center,this.element.querySelector('#tree-next'));
-    const tabs=document.createElement('nav');tabs.className='tree-tabs';tabs.setAttribute('aria-label',tr('Древо навыков'));
-    for(const [id,title] of [['light','Древо света'],['treasury','Сокровищница']]){const tab=document.createElement('button');tab.className='text-button';tab.textContent=tr(title);tab.dataset.i18n=title;tab.dataset.tree=id;tab.onclick=()=>{this.treeId=id;this.selected=this.hovered=null;this.art.rootId=id==='light'?'source':'treasurySource';this.element.querySelector('h2').textContent=tr(title);this.element.classList.remove('is-source-awakening');this.render();this.center();};tabs.append(tab);}this.element.querySelector('.tree-header').after(tabs);
+    const center=document.createElement('button');center.className='text-button';center.textContent=tr("☀ To the sun");center.dataset.i18n="☀ To the sun";center.onclick=()=>this.center();this.element.querySelector('.tree-header').insertBefore(center,this.element.querySelector('#tree-next'));
+    const tabs=document.createElement('nav');tabs.className='tree-tabs';tabs.setAttribute('aria-label',tr("Skill tree"));
+    for(const [id,title] of [['light',"Light tree"],['treasury',"Treasury"]]){const tab=document.createElement('button');tab.className='text-button';tab.textContent=tr(title);tab.dataset.i18n=title;tab.dataset.tree=id;tab.onclick=()=>{this.treeId=id;this.selected=this.hovered=null;this.art.rootId=id==='light'?'source':'treasurySource';this.element.querySelector('h2').textContent=tr(title);this.element.classList.remove('is-source-awakening');this.render();this.center();};tabs.append(tab);}this.element.querySelector('.tree-header').after(tabs);
     onLanguageChange(()=>this.render());
     this.render();
     this.element.querySelector('#tree-next').onclick=()=>{this.navKeys.clear();this.art.stop();this.onNext();};
@@ -146,20 +146,20 @@ export class SkillTree {
     this.comets.reset();
     this.navKeys.clear();
     this.selected=null;this.hovered=null;this.rootRevealUntil=0;this.element.classList.remove('is-source-awakening');
-    this.outcome={won,collected,victoryBonus};this.element.hidden=false;this.element.querySelector('#tree-outcome').textContent=tr(won?'КРИСТАЛЛ ПРОБУЖДЁН':'ЗАБЕГ ЗАВЕРШЁН')+' · '+tr('СОБРАНО {count}',{count:collected})+(victoryBonus?' · '+tr('ПОБЕДА +{points}',{points:victoryBonus}):'');
+    this.outcome={won,collected,victoryBonus};this.element.hidden=false;this.element.querySelector('#tree-outcome').textContent=tr(won?"CRYSTAL AWAKENED":"RUN ENDED")+' · '+tr("COLLECTED {count}",{count:collected})+(victoryBonus?' · '+tr("VICTORY +{points}",{points:victoryBonus}):'');
     this.render();this.center();this.art.start();this.element.querySelector('#tree-next').focus();
   }
   render(){
     localizeDOM(this.element);
-    this.element.querySelector('.tree-tabs').setAttribute('aria-label',tr('Древо навыков'));
-    if(this.outcome){const {won,collected,victoryBonus}=this.outcome;this.element.querySelector('#tree-outcome').textContent=tr(won?'КРИСТАЛЛ ПРОБУЖДЁН':'ЗАБЕГ ЗАВЕРШЁН')+' · '+tr('СОБРАНО {count}',{count:collected})+(victoryBonus?' · '+tr('ПОБЕДА +{points}',{points:victoryBonus}):'');}
-    this.element.setAttribute('aria-label',tr('Древо солнечного света'));
-    this.element.querySelector('h2').textContent=tr(this.treeId==='light'?'Древо света':'Сокровищница');
-    this.element.querySelector('#tree-next').textContent=tr('Следующий забег →');
+    this.element.querySelector('.tree-tabs').setAttribute('aria-label',tr("Skill tree"));
+    if(this.outcome){const {won,collected,victoryBonus}=this.outcome;this.element.querySelector('#tree-outcome').textContent=tr(won?"CRYSTAL AWAKENED":"RUN ENDED")+' · '+tr("COLLECTED {count}",{count:collected})+(victoryBonus?' · '+tr("VICTORY +{points}",{points:victoryBonus}):'');}
+    this.element.setAttribute('aria-label',tr("Sunlight skill tree"));
+    this.element.querySelector('h2').textContent=tr(this.treeId==='light'?"Light tree":"Treasury");
+    this.element.querySelector('#tree-next').textContent=tr("Next run →");
     for(const skill of SKILLS){const button=this.buttons.get(skill.id);button.querySelector('b').textContent=tr(skill.name);button.setAttribute('aria-label',tr(skill.name));}
     for(const tab of this.element.querySelectorAll('[data-tree]'))tab.setAttribute('aria-pressed',String(tab.dataset.tree===this.treeId));
-    this.element.querySelector('#tree-points').textContent=tr('✦ {points} очк.',{points:progression.state.points});
-    for(const skill of SKILLS){const owned=progression.state.owned.includes(skill.id),ready=progression.canBuy(skill.id),visible=isSkillVisible(progression.state,skill.id),preview=isSkillPreview(progression.state,skill.id),button=this.buttons.get(skill.id);button.hidden=skill.treeId!==this.treeId||(!visible&&!preview);button.dataset.status=owned?'owned':preview?'preview':ready?'ready':'locked';button.setAttribute('aria-pressed',String(this.selected===skill.id));button.querySelector('small').hidden=!owned||skill.id==='treasurySource';button.querySelector('small').textContent=owned?tr('ИЗУЧЕНО'):'';}
+    this.element.querySelector('#tree-points').textContent=tr("✦ {points} pts.",{points:progression.state.points});
+    for(const skill of SKILLS){const owned=progression.state.owned.includes(skill.id),ready=progression.canBuy(skill.id),visible=isSkillVisible(progression.state,skill.id),preview=isSkillPreview(progression.state,skill.id),button=this.buttons.get(skill.id);button.hidden=skill.treeId!==this.treeId||(!visible&&!preview);button.dataset.status=owned?'owned':preview?'preview':ready?'ready':'locked';button.setAttribute('aria-pressed',String(this.selected===skill.id));button.querySelector('small').hidden=!owned||skill.id==='treasurySource';button.querySelector('small').textContent=owned?tr("LEARNED"):'';}
     this.art.sync(SKILLS.map(skill=>{const button=this.buttons.get(skill.id);return {id:skill.id,status:button.hidden?'hidden':button.dataset.status,selected:this.selected===skill.id,unaffordable:!progression.state.owned.includes(skill.id)&&progression.state.points<skill.cost};}));
     this.renderDetail();
   }
@@ -169,13 +169,13 @@ export class SkillTree {
     this.detail.classList.toggle('is-visible',!!selected);this.detail.classList.toggle('is-pinned',!!this.selected);this.detail.setAttribute('aria-hidden',String(!selected));
     if(!selected)return;
     const owned=progression.state.owned.includes(selected.id);
-    this.element.querySelector('#tree-name').textContent=tr(selected.name);this.element.querySelector('#tree-branch').textContent=selected.isRoot?tr('Источник'):tr(selected.branch)+' · '+(selected.tier+1)+'/'+selected.tiers;this.element.querySelector('#tree-description').textContent=isSkillPreview(progression.state,selected.id)?'???':tr(selected.description);
+    this.element.querySelector('#tree-name').textContent=tr(selected.name);this.element.querySelector('#tree-branch').textContent=selected.isRoot?tr("Source"):tr(selected.branch)+' · '+(selected.tier+1)+'/'+selected.tiers;this.element.querySelector('#tree-description').textContent=isSkillPreview(progression.state,selected.id)?'???':skillDescription(selected);
     const conditions=[];
-    if(selected.requires&&!progression.state.owned.includes(selected.requires))conditions.push(tr('Изучи «{skill}»',{skill:tr(SKILLS.find(s=>s.id===selected.requires).name)}));
-    if(!owned&&progression.state.points<selected.cost)conditions.push(tr('Нужно очков: {cost} · сейчас {points}',{cost:selected.cost,points:progression.state.points}));
+    if(selected.requires&&!progression.state.owned.includes(selected.requires))conditions.push(tr("Learn “{skill}”",{skill:tr(SKILLS.find(s=>s.id===selected.requires).name)}));
+    if(!owned&&progression.state.points<selected.cost)conditions.push(tr("Points required: {cost} · available: {points}",{cost:selected.cost,points:progression.state.points}));
     this.element.querySelector('#tree-requirement').textContent='';
     buy.dataset.requirement=String(conditions.length>0);
-    buy.textContent=owned?tr('✦ Изучено'):conditions.length?conditions.join(' · '):tr('✦ {cost} · Нажми на навык',{cost:selected.cost});
+    buy.textContent=owned?tr("✦ Learned"):conditions.length?conditions.join(' · '):tr("✦ {cost} · Select this skill",{cost:selected.cost});
     this.positionDetail();
   }
 }

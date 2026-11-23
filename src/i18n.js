@@ -1,9 +1,10 @@
 import catalogs from './locales.generated.json' with {type:'json'};
 export const messages=catalogs;
-export const translate=(language,key,values={})=>(messages[language]?.[key]??messages.ru[key]??messages.en[key]??key).replace(/\{(\w+)\}/g,(match,name)=>Object.hasOwn(values,name)?String(values[name]):match);
+export const translate=(language,key,values={})=>(messages[language]?.[key]??messages.en[key]??key).replace(/\{(\w+)\}/g,(match,name)=>Object.hasOwn(values,name)?String(values[name]):match);
 let language='ru';
 const listeners=new Set();
 export const tr=(key,values)=>translate(language,key,values);
+export const skillDescription=skill=>tr(Object.hasOwn(messages.en,`skill.${skill.id}.description`)?`skill.${skill.id}.description`:skill.description);
 export const getLanguage=()=>language;
 export const onLanguageChange=listener=>{listeners.add(listener);return()=>listeners.delete(listener);};
 export function setLanguage(value){

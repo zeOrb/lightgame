@@ -1,0 +1,110 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Sunny 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Sunny-Category: Bestiary\n"
+"X-Source-Language: en\n"
+
+#: src/bestiary.js:54
+msgid "Charge speed"
+msgstr "Charge speed"
+
+#: src/bestiary.js:54
+msgid "Chase speed"
+msgstr "Chase speed"
+
+#: src/bestiary.js:55
+msgid "Collider"
+msgstr "Collider"
+
+#: src/bestiary.js:54
+msgid "Contact along the path (sections)"
+msgstr "Contact along the path (sections)"
+
+#: src/bestiary.js:54
+msgid "Contact height"
+msgstr "Contact height"
+
+#: src/bestiary.js:54
+msgid "Contact radius"
+msgstr "Contact radius"
+
+#: src/bestiary.js:54
+msgid "Damage"
+msgstr "Damage"
+
+#: src/bestiary.js:54
+msgid "Health"
+msgstr "Health"
+
+#: src/bestiary.js:54
+msgid "Hop frequency"
+msgstr "Hop frequency"
+
+#: src/bestiary.js:54
+msgid "Jump height"
+msgstr "Jump height"
+
+#: src/bestiary.js:54
+msgid "Path blocking (sections)"
+msgstr "Path blocking (sections)"
+
+#: src/bestiary.js:54
+msgid "Radius across the shelf"
+msgstr "Radius across the shelf"
+
+#: src/bestiary.js:56
+msgid "Red outline: contact damage area"
+msgstr "Red outline: contact damage area"
+
+#: src/bestiary.js:54
+msgid "Scale"
+msgstr "Scale"
+
+#: src/enemies.json
+msgid "Shadow"
+msgstr "Shadow"
+
+#: src/enemies.json
+msgid "Shadow Cat"
+msgstr "Shadow Cat"
+
+#: src/enemies.json
+msgid "Shadow Fox"
+msgstr "Shadow Fox"
+
+#: src/enemies.json
+msgid "Shadow Hare"
+msgstr "Shadow Hare"
+
+#: src/enemies.json
+msgid "Shadow Reaper"
+msgstr "Shadow Reaper"
+
+#: src/bestiary.js:55
+msgid "Sphere · R {radius}"
+msgstr "Sphere · R {radius}"
+
+#: src/bestiary.js:54
+msgid "Stomp hit (sections)"
+msgstr "Stomp hit (sections)"
+
+#: src/bestiary.js:54
+msgid "Stomp hit across the shelf"
+msgstr "Stomp hit across the shelf"
+
+#: src/bestiary.js:54
+msgid "Stomp hit height"
+msgstr "Stomp hit height"
+
+#: src/bestiary.js:54
+msgid "Tracking range"
+msgstr "Tracking range"
+
+#: src/bestiary.js:54
+msgid "Tracking speed"
+msgstr "Tracking speed"

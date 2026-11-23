@@ -1,0 +1,111 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Sunny 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+"X-Sunny-Category: Bestiary\n"
+"X-Source-Language: en\n"
+
+#: src/bestiary.js:54
+msgid "Charge speed"
+msgstr "Скорость рывка"
+
+#: src/bestiary.js:54
+msgid "Chase speed"
+msgstr "Скорость преследования"
+
+#: src/bestiary.js:55
+msgid "Collider"
+msgstr "Коллайдер"
+
+#: src/bestiary.js:54
+msgid "Contact along the path (sections)"
+msgstr "Контакт вдоль пути (секции)"
+
+#: src/bestiary.js:54
+msgid "Contact height"
+msgstr "Высота контакта"
+
+#: src/bestiary.js:54
+msgid "Contact radius"
+msgstr "Радиус контакта"
+
+#: src/bestiary.js:54
+msgid "Damage"
+msgstr "Урон"
+
+#: src/bestiary.js:54
+msgid "Health"
+msgstr "Здоровье"
+
+#: src/bestiary.js:54
+msgid "Hop frequency"
+msgstr "Частота прыжков"
+
+#: src/bestiary.js:54
+msgid "Jump height"
+msgstr "Высота прыжка"
+
+#: src/bestiary.js:54
+msgid "Path blocking (sections)"
+msgstr "Блокировка пути (секции)"
+
+#: src/bestiary.js:54
+msgid "Radius across the shelf"
+msgstr "Радиус поперёк полки"
+
+#: src/bestiary.js:56
+msgid "Red outline: contact damage area"
+msgstr "Красный контур — зона контактного урона"
+
+#: src/bestiary.js:54
+msgid "Scale"
+msgstr "Масштаб"
+
+#: src/enemies.json
+msgid "Shadow"
+msgstr "Тень"
+
+#: src/enemies.json
+msgid "Shadow Cat"
+msgstr "Теневая кошка"
+
+#: src/enemies.json
+msgid "Shadow Fox"
+msgstr "Теневая лиса"
+
+#: src/enemies.json
+msgid "Shadow Hare"
+msgstr "Теневой заяц"
+
+#: src/enemies.json
+msgid "Shadow Reaper"
+msgstr "Теневой жнец"
+
+#: src/bestiary.js:55
+msgid "Sphere · R {radius}"
+msgstr "Сфера · R {radius}"
+
+#: src/bestiary.js:54
+msgid "Stomp hit (sections)"
+msgstr "Попадание сверху (секции)"
+
+#: src/bestiary.js:54
+msgid "Stomp hit across the shelf"
+msgstr "Попадание сверху поперёк"
+
+#: src/bestiary.js:54
+msgid "Stomp hit height"
+msgstr "Высота прыжкового попадания"
+
+#: src/bestiary.js:54
+msgid "Tracking range"
+msgstr "Дальность слежения"
+
+#: src/bestiary.js:54
+msgid "Tracking speed"
+msgstr "Скорость слежения"

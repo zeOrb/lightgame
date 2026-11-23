@@ -1,0 +1,108 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Sunny 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Sunny-Category: Bestiary\n"
+"X-Source-Language: en\n"
+
+#: src/bestiary.js:54
+msgid "Charge speed"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Chase speed"
+msgstr ""
+
+#: src/bestiary.js:55
+msgid "Collider"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Contact along the path (sections)"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Contact height"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Contact radius"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Damage"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Health"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Hop frequency"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Jump height"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Path blocking (sections)"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Radius across the shelf"
+msgstr ""
+
+#: src/bestiary.js:56
+msgid "Red outline: contact damage area"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Scale"
+msgstr ""
+
+#: src/enemies.json
+msgid "Shadow"
+msgstr ""
+
+#: src/enemies.json
+msgid "Shadow Cat"
+msgstr ""
+
+#: src/enemies.json
+msgid "Shadow Fox"
+msgstr ""
+
+#: src/enemies.json
+msgid "Shadow Hare"
+msgstr ""
+
+#: src/enemies.json
+msgid "Shadow Reaper"
+msgstr ""
+
+#: src/bestiary.js:55
+msgid "Sphere · R {radius}"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Stomp hit (sections)"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Stomp hit across the shelf"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Stomp hit height"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Tracking range"
+msgstr ""
+
+#: src/bestiary.js:54
+msgid "Tracking speed"
+msgstr ""

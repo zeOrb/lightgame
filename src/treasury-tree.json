@@ -1,8 +1,8 @@
 {
   "root": {
     "id": "treasurySource",
-    "name": "Сокровищница",
-    "description": "Открывает улучшения добычи камней.",
+    "name": "Treasury",
+    "description": "Unlocks gem loot upgrades.",
     "cost": 1,
     "requires": null,
     "icon": "treasury",
@@ -11,12 +11,12 @@
   "branches": [
     {
       "id": "treasuryMultiplier",
-      "name": "Ценность осколков",
+      "name": "Shard Value",
       "nodes": [
         {
           "id": "shardMultiplier2",
-          "name": "Грани света 1",
-          "description": "Очки за драгоценные камни и осколки босса: ×2.",
+          "name": "Facets of Light 1",
+          "description": "Points from gems and boss shards: ×2.",
           "cost": 8,
           "requires": "treasurySource",
           "icon": "shard-heal",
@@ -31,8 +31,8 @@
         },
         {
           "id": "shardMultiplier4",
-          "name": "Грани света 2",
-          "description": "Очки за драгоценные камни и осколки босса: ×4.",
+          "name": "Facets of Light 2",
+          "description": "Points from gems and boss shards: ×4.",
           "cost": 24,
           "requires": "shardMultiplier2",
           "icon": "shard-heal",
@@ -47,8 +47,8 @@
         },
         {
           "id": "shardMultiplier8",
-          "name": "Грани света 3",
-          "description": "Очки за драгоценные камни и осколки босса: ×8.",
+          "name": "Facets of Light 3",
+          "description": "Points from gems and boss shards: ×8.",
           "cost": 64,
           "requires": "shardMultiplier4",
           "icon": "shard-heal",
@@ -63,8 +63,8 @@
         },
         {
           "id": "shardMultiplier16",
-          "name": "Грани света 4",
-          "description": "Очки за драгоценные камни и осколки босса: ×16.",
+          "name": "Facets of Light 4",
+          "description": "Points from gems and boss shards: ×16.",
           "cost": 160,
           "requires": "shardMultiplier8",
           "icon": "shard-heal",
@@ -79,8 +79,8 @@
         },
         {
           "id": "shardMultiplier32",
-          "name": "Грани света 5",
-          "description": "Очки за драгоценные камни и осколки босса: ×32.",
+          "name": "Facets of Light 5",
+          "description": "Points from gems and boss shards: ×32.",
           "cost": 384,
           "requires": "shardMultiplier16",
           "icon": "shard-heal",
@@ -97,12 +97,12 @@
     },
     {
       "id": "treasuryCount",
-      "name": "Россыпь",
+      "name": "Gem Scatter",
       "nodes": [
         {
           "id": "gemCount2",
-          "name": "Россыпь 2",
-          "description": "На тайле может появиться до 2 камней.",
+          "name": "Gem Scatter 2",
+          "description": "Up to 2 gems can appear on a tile.",
           "cost": 6,
           "requires": "treasurySource",
           "icon": "constellation",
@@ -114,8 +114,8 @@
         },
         {
           "id": "gemCount3",
-          "name": "Россыпь 3",
-          "description": "На тайле может появиться до 3 камней.",
+          "name": "Gem Scatter 3",
+          "description": "Up to 3 gems can appear on a tile.",
           "cost": 18,
           "requires": "gemCount2",
           "icon": "constellation",
@@ -127,8 +127,8 @@
         },
         {
           "id": "gemCount4",
-          "name": "Россыпь 4",
-          "description": "На тайле может появиться до 4 камней.",
+          "name": "Gem Scatter 4",
+          "description": "Up to 4 gems can appear on a tile.",
           "cost": 48,
           "requires": "gemCount3",
           "icon": "constellation",
@@ -140,8 +140,8 @@
         },
         {
           "id": "gemCount5",
-          "name": "Россыпь 5",
-          "description": "На тайле может появиться до 5 камней.",
+          "name": "Gem Scatter 5",
+          "description": "Up to 5 gems can appear on a tile.",
           "cost": 120,
           "requires": "gemCount4",
           "icon": "constellation",
@@ -155,12 +155,12 @@
     },
     {
       "id": "treasuryTypes",
-      "name": "Драгоценные камни",
+      "name": "Gems",
       "nodes": [
         {
           "id": "unlockGememerald",
-          "name": "Изумруд",
-          "description": "Добавляет изумруд в пул камней.",
+          "name": "Emerald",
+          "description": "Adds emeralds to the gem pool.",
           "cost": 8,
           "requires": "treasurySource",
           "icon": "shard-heal",
@@ -172,8 +172,8 @@
         },
         {
           "id": "unlockGemsapphire",
-          "name": "Сапфир",
-          "description": "Добавляет сапфир в пул камней.",
+          "name": "Sapphire",
+          "description": "Adds sapphires to the gem pool.",
           "cost": 24,
           "requires": "unlockGememerald",
           "icon": "shard-heal",
@@ -185,8 +185,8 @@
         },
         {
           "id": "unlockGemtopaz",
-          "name": "Топаз",
-          "description": "Добавляет топаз в пул камней.",
+          "name": "Topaz",
+          "description": "Adds topazes to the gem pool.",
           "cost": 64,
           "requires": "unlockGemsapphire",
           "icon": "shard-heal",
@@ -198,8 +198,8 @@
         },
         {
           "id": "unlockGemamethyst",
-          "name": "Аметист",
-          "description": "Добавляет аметист в пул камней.",
+          "name": "Amethyst",
+          "description": "Adds amethysts to the gem pool.",
           "cost": 160,
           "requires": "unlockGemtopaz",
           "icon": "shard-heal",

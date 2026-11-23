@@ -7,7 +7,7 @@ export function compileSkillTree(config){
   for(const [key,value] of Object.entries(config.baseStats))if(typeof value!=='boolean'&&!Number.isFinite(value))fail('некорректный baseStats.'+key);
   if(!Array.isArray(config.branches)||!config.branches.length)fail('branches должен содержать хотя бы одну ветку');
   const ids=new Set(),branchIds=new Set();
-  const branches=config.root?[{id:'source',name:'Источник',nodes:[config.root],isRoot:true},...config.branches]:config.branches;
+  const branches=config.root?[{id:'source',name:config.root.name,nodes:[config.root],isRoot:true},...config.branches]:config.branches;
   const skills=branches.flatMap((branch,index)=>{
     const ray=index-(config.root?1:0);
     if(!text(branch.id)||branchIds.has(branch.id))fail('повторяющийся или пустой id ветки: '+branch.id);

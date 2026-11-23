@@ -22,7 +22,9 @@ export function initializeSettings({onOpen,onClose,onChange}){
   const persist=()=>{try{localStorage.setItem(STORAGE,JSON.stringify(preferences));}catch{}onChange?.(preferences);};
   const button=(id,label,parent)=>{const b=document.createElement('button');b.id=id;b.textContent=t(label);b.type='button';parent.append(b);return b;};
   const introButton=button('intro-settings','settings',document.querySelector('#intro .menu-actions'));
+  document.getElementById('start').after(introButton);
   const pauseButton=button('pause-settings','settings',document.querySelector('#modal .menu-actions'));
+  document.getElementById('main-menu').before(pauseButton);
   const localize=()=>{
     setLanguage(preferences.language);localizeDOM();
     document.documentElement.lang=preferences.language;

@@ -8,7 +8,7 @@
   "variants": [
     {
       "id": "ruby",
-      "name": "Рубин",
+      "name": "Ruby",
       "color": "#ed354e",
       "textColor": "#ff8b99",
       "light": 26,
@@ -19,7 +19,7 @@
     },
     {
       "id": "emerald",
-      "name": "Изумруд",
+      "name": "Emerald",
       "color": "#38db72",
       "textColor": "#83ffaf",
       "light": 12,
@@ -30,7 +30,7 @@
     },
     {
       "id": "sapphire",
-      "name": "Сапфир",
+      "name": "Sapphire",
       "color": "#38bdff",
       "textColor": "#8edfff",
       "light": 36,
@@ -41,7 +41,7 @@
     },
     {
       "id": "topaz",
-      "name": "Топаз",
+      "name": "Topaz",
       "color": "#ffd746",
       "textColor": "#fff09a",
       "light": 18,
@@ -52,7 +52,7 @@
     },
     {
       "id": "amethyst",
-      "name": "Аметист",
+      "name": "Amethyst",
       "color": "#b76bfa",
       "textColor": "#d8a4ff",
       "light": 50,

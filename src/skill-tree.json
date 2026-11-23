@@ -1,8 +1,8 @@
 {
   "root": {
     "id": "source",
-    "name": "Источник",
-    "description": "Открывает шесть ветвей древа света.",
+    "name": "Source",
+    "description": "Unlocks the six branches of the Light tree.",
     "cost": 1,
     "requires": null,
     "icon": "sun-core",
@@ -42,12 +42,12 @@
   "branches": [
     {
       "id": "life",
-      "name": "Жизнь",
+      "name": "Life",
       "nodes": [
         {
           "id": "heart",
-          "name": "Тёплое сердце",
-          "description": "Максимальный свет +25 HP.",
+          "name": "Warm Heart",
+          "description": "Maximum Light +25 HP.",
           "cost": 4,
           "requires": "source",
           "icon": "heart",
@@ -59,8 +59,8 @@
         },
         {
           "id": "heart2",
-          "name": "Ядро солнца",
-          "description": "Ещё +25 максимального HP.",
+          "name": "Sun Core",
+          "description": "Another +25 maximum HP.",
           "cost": 9,
           "requires": "heart",
           "icon": "sun-core",
@@ -72,8 +72,8 @@
         },
         {
           "id": "lasting",
-          "name": "Долгий закат",
-          "description": "Пассивный расход света меньше на 18%.",
+          "name": "Long Sunset",
+          "description": "Passive Light drain reduced by 18%.",
           "cost": 18,
           "requires": "heart2",
           "icon": "hourglass",
@@ -85,8 +85,8 @@
         },
         {
           "id": "shade",
-          "name": "Янтарная кожа",
-          "description": "Тени и удары снимают на 25% меньше света.",
+          "name": "Amber Skin",
+          "description": "Shadows and hits drain 25% less Light.",
           "cost": 30,
           "requires": "lasting",
           "icon": "shield",
@@ -100,12 +100,12 @@
     },
     {
       "id": "movement",
-      "name": "Движение",
+      "name": "Movement",
       "nodes": [
         {
           "id": "speed",
-          "name": "Быстрые лапки",
-          "description": "Скорость движения по спирали +15%.",
+          "name": "Quick Paws",
+          "description": "Movement speed along the spiral +15%.",
           "cost": 4,
           "requires": "source",
           "icon": "paw",
@@ -117,8 +117,8 @@
         },
         {
           "id": "jump",
-          "name": "Высокий прыжок",
-          "description": "Начальная сила прыжка +15%.",
+          "name": "High Jump",
+          "description": "Initial jump force +15%.",
           "cost": 9,
           "requires": "speed",
           "icon": "jump",
@@ -130,8 +130,8 @@
         },
         {
           "id": "secretSlip",
-          "name": "Сквозь траву",
-          "description": "Позволяет проходить сквозь секретные травяные дороги снизу и выпрыгивать на них.",
+          "name": "Through the Grass",
+          "description": "Allows you to pass through secret grassy paths from below and leap onto them.",
           "cost": 12,
           "requires": "jump",
           "icon": "grass-slip",
@@ -143,8 +143,8 @@
         },
         {
           "id": "double",
-          "name": "Двойной прыжок",
-          "description": "Пробел в воздухе: один дополнительный прыжок.",
+          "name": "Double Jump",
+          "description": "Press Jump in midair for one extra jump.",
           "cost": 24,
           "requires": "jump",
           "icon": "double-jump",
@@ -156,8 +156,8 @@
         },
         {
           "id": "clarity",
-          "name": "Ясный луч",
-          "description": "Замедление и инверсия от склянок длятся вдвое меньше.",
+          "name": "Clear Ray",
+          "description": "Slow and reversed controls from bottles last half as long.",
           "cost": 18,
           "requires": "double",
           "icon": "clarity",
@@ -175,8 +175,8 @@
       "nodes": [
         {
           "id": "phaseCool",
-          "name": "Короткая тень",
-          "description": "Перезарядка Phasing на 25% быстрее.",
+          "name": "Short Shadow",
+          "description": "Phasing cooldown recovers 25% faster.",
           "cost": 4,
           "requires": "source",
           "icon": "dash-clock",
@@ -188,8 +188,8 @@
         },
         {
           "id": "phaseReach",
-          "name": "Длинный луч",
-          "description": "Дальность Phasing +20%.",
+          "name": "Long Ray",
+          "description": "Phasing distance +20%.",
           "cost": 9,
           "requires": "phaseCool",
           "icon": "long-dash",
@@ -201,8 +201,8 @@
         },
         {
           "id": "phaseHeal",
-          "name": "Свет из тени",
-          "description": "Убийство дэшем восстанавливает 10 HP.",
+          "name": "Light from Shadow",
+          "description": "Dash kills restore 10 HP.",
           "cost": 18,
           "requires": "phaseReach",
           "icon": "dash-heal",
@@ -214,8 +214,8 @@
         },
         {
           "id": "resonance",
-          "name": "Резонанс",
-          "description": "Каждое убийство дэшем сокращает его перезарядку на 0,5 с.",
+          "name": "Resonance",
+          "description": "Each dash kill reduces its cooldown by 0.5 s.",
           "cost": 30,
           "requires": "phaseHeal",
           "icon": "resonance",
@@ -229,12 +229,12 @@
     },
     {
       "id": "light",
-      "name": "Свет",
+      "name": "Light",
       "nodes": [
         {
           "id": "shard",
-          "name": "Полные осколки",
-          "description": "Осколки восстанавливают на 12 HP больше.",
+          "name": "Full Shards",
+          "description": "Shards restore 12 more HP.",
           "cost": 4,
           "requires": "source",
           "icon": "shard-heal",
@@ -246,8 +246,8 @@
         },
         {
           "id": "magnet",
-          "name": "Притяжение",
-          "description": "Дальность подбора осколков увеличена.",
+          "name": "Attraction",
+          "description": "Increases shard pickup range.",
           "cost": 9,
           "requires": "shard",
           "icon": "magnet",
@@ -259,8 +259,8 @@
         },
         {
           "id": "regen",
-          "name": "Цветение света",
-          "description": "Лечение витража ускоряется на 30%.",
+          "name": "Light Bloom",
+          "description": "Stained-glass healing is 30% faster.",
           "cost": 18,
           "requires": "magnet",
           "icon": "bloom",
@@ -272,8 +272,8 @@
         },
         {
           "id": "flare",
-          "name": "Солнечная вспышка",
-          "description": "Новая способность E: уничтожает тени в радиусе 3 м. Кулдаун 8 с.",
+          "name": "Solar Flare",
+          "description": "New Flare ability: destroys shadows within 3 m. Cooldown: 8 s.",
           "cost": 36,
           "requires": "regen",
           "icon": "flare",
@@ -287,12 +287,12 @@
     },
     {
       "id": "tower",
-      "name": "Башня",
+      "name": "Tower",
       "nodes": [
         {
           "id": "floors",
-          "name": "Выше башня",
-          "description": "Следующий забег: ещё 2 этажа с полками и угрозами.",
+          "name": "Taller Tower",
+          "description": "Next run: 2 more floors with shelves and hazards.",
           "cost": 4,
           "requires": "source",
           "icon": "tower",
@@ -304,8 +304,8 @@
         },
         {
           "id": "floors2",
-          "name": "Бесконечная спираль",
-          "description": "Ещё 2 этажа: всего 16.",
+          "name": "Endless Spiral",
+          "description": "2 more floors: 16 in total.",
           "cost": 10,
           "requires": "floors",
           "icon": "spiral",
@@ -317,8 +317,8 @@
         },
         {
           "id": "abundance",
-          "name": "Созвездие бликов",
-          "description": "Осколки встречаются чаще: каждые 4 секции вместо 5.",
+          "name": "Glint Constellation",
+          "description": "Shards appear more often: every 4 sections instead of 5.",
           "cost": 20,
           "requires": "floors2",
           "icon": "constellation",
@@ -330,8 +330,8 @@
         },
         {
           "id": "lastLight",
-          "name": "Последний огонёк",
-          "description": "Один раз за забег при исчерпании HP возвращает 30% света. Не спасает от падения.",
+          "name": "Last Spark",
+          "description": "Once per run, restores 30% Light when HP runs out. Does not prevent falls.",
           "cost": 38,
           "requires": "abundance",
           "icon": "flame",
@@ -345,12 +345,12 @@
     },
     {
       "id": "rays",
-      "name": "Солнечные лучи",
+      "name": "Sun Rays",
       "nodes": [
         {
           "id": "rayRegen",
-          "name": "Тёплые лучи",
-          "description": "Лечение в лучах витража ускоряется на 50%.",
+          "name": "Warm Rays",
+          "description": "Healing in stained-glass rays is 50% faster.",
           "cost": 4,
           "requires": "source",
           "icon": "healing-rays",
@@ -362,8 +362,8 @@
         },
         {
           "id": "rayPassive",
-          "name": "Мягкий рассвет",
-          "description": "Пассивное лечение в витражах ещё на 50% быстрее.",
+          "name": "Soft Dawn",
+          "description": "Passive stained-glass healing is another 50% faster.",
           "cost": 10,
           "requires": "rayRegen",
           "icon": "healing-rays",
@@ -379,8 +379,8 @@
         },
         {
           "id": "rayPassivePlus",
-          "name": "Полуденный свет",
-          "description": "Пассивное лечение в витражах ещё на 50% быстрее.",
+          "name": "Noon Light",
+          "description": "Passive stained-glass healing is another 50% faster.",
           "cost": 24,
           "requires": "rayPassive",
           "icon": "healing-rays",
@@ -396,8 +396,8 @@
         },
         {
           "id": "rayEntry",
-          "name": "Глоток солнца",
-          "description": "Вместо пассивного лечения: пересечение витража восстанавливает 25% максимального света. Каждый витраж срабатывает один раз за забег и гаснет за 0,5 с.",
+          "name": "Sip of Sunlight",
+          "description": "Replaces passive healing: crossing stained glass restores 25% of maximum Light. Each window triggers once per run and fades over 0.5 s.",
           "cost": 12,
           "requires": "rayRegen",
           "icon": "window-heal",
@@ -413,8 +413,8 @@
         },
         {
           "id": "rayJump",
-          "name": "Солнечный подскок",
-          "description": "Прыжок через неиспользованный витраж даёт ещё 25% максимального света, всего 50%. Витраж гаснет.",
+          "name": "Solar Hop",
+          "description": "Jumping through unused stained glass restores an extra 25% of maximum Light, for 50% total. The window goes dark.",
           "cost": 18,
           "requires": "rayEntry",
           "icon": "window-heal",
@@ -430,8 +430,8 @@
         },
         {
           "id": "rayDash",
-          "name": "Солнечный прорыв",
-          "description": "Дэш через неиспользованный витраж даёт ещё 25% максимального света за дэш. Вместе с пересечением — 50%, с прыжком — до 75%. Витраж гаснет.",
+          "name": "Solar Breakthrough",
+          "description": "Dashing through unused stained glass restores an extra 25% of maximum Light. With crossing: 50%; with a jump: up to 75%. The window goes dark.",
           "cost": 30,
           "requires": "rayJump",
           "icon": "window-dash",

@@ -1,0 +1,344 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Sunny 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Sunny-Category: Игровые сообщения и HUD\n"
+"X-Source-Language: en\n"
+
+#: index.html
+msgid "3D magical tower"
+msgstr ""
+
+#: src/main.js:464
+msgid "Arena"
+msgstr ""
+
+#: src/main.js:464
+msgid "Arena cleared"
+msgstr ""
+
+#: src/level-diagnostics.js:15
+msgid "Automatic level corrections"
+msgstr ""
+
+#: index.html
+msgid "Back"
+msgstr ""
+
+#: src/skill-tree.js:155
+msgid "COLLECTED {count}"
+msgstr ""
+
+#: src/skill-tree.js:155
+msgid "CRYSTAL AWAKENED"
+msgstr ""
+
+#: src/main.js:713
+msgid "Controls reversed"
+msgstr ""
+
+#: src/threats.js:5
+msgid "Eclipse Bell"
+msgstr ""
+
+#: src/threats.js:5
+msgid "Eclipse Bell · jump over it or pass through with Phasing."
+msgstr ""
+
+#: src/main.js:714
+msgid "Entering floor {floor}"
+msgstr ""
+
+#: src/main.js:363
+msgid "Falling"
+msgstr ""
+
+#: src/main.js:714
+msgid "Final arch · the crystal is close"
+msgstr ""
+
+#: index.html
+msgid "Flare"
+msgstr ""
+
+#: index.html
+msgid "Floor 12 / 12"
+msgstr ""
+
+#: src/main.js:417
+msgid "Floor {floor} / {total}"
+msgstr ""
+
+#: src/level-diagnostics.js:4
+msgid "Floor “{floor}”: {category} #{index}, section {from} → {to}."
+msgstr ""
+
+#: index.html
+msgid "Forward"
+msgstr ""
+
+#: src/threats.js:7
+msgid "Glass Spikes"
+msgstr ""
+
+#: src/threats.js:7
+msgid "Glass Spikes · wait for them to retract, jump over, or use Phasing."
+msgstr ""
+
+#: src/shard-counter.js:10
+msgid "Glints collected: {count}"
+msgstr ""
+
+#: index.html
+msgid "Glints: 0"
+msgstr ""
+
+#: src/main.js:464
+msgid "Guardian · {hp} / {maxHP} · Enemies: {count}"
+msgstr ""
+
+#: src/main.js:713
+msgid "In the sunset light"
+msgstr ""
+
+#: src/threats.js:6
+msgid "Ink Wave"
+msgstr ""
+
+#: src/threats.js:6
+msgid "Ink Wave · jump over the expanding ring."
+msgstr ""
+
+#: index.html
+msgid "Jump"
+msgstr ""
+
+#: src/skill-tree.js:162
+msgid "LEARNED"
+msgstr ""
+
+#: src/main.js:715
+msgid "Last Spark · light restored!"
+msgstr ""
+
+#: src/skill-tree.js:174
+msgid "Learn “{skill}”"
+msgstr ""
+
+#: index.html
+msgid "Left"
+msgstr ""
+
+#: src/main.js:91
+msgid "Open the game in a browser with hardware acceleration enabled."
+msgstr ""
+
+#: index.html
+msgid "PATH TO THE CRYSTAL"
+msgstr ""
+
+#: src/main.js:820
+msgid "Phasing {seconds}s"
+msgstr ""
+
+#: src/level-diagnostics.js:14
+msgid "Placement issues corrected: {count}"
+msgstr ""
+
+#: src/skill-tree.js:175
+msgid "Points required: {cost} · available: {points}"
+msgstr ""
+
+#: index.html
+msgid ""
+"Preserve the last ray of sunset. A 3D game about a sun bunny in a magical "
+"tower."
+msgstr ""
+
+#: src/shard-counter.js:39
+msgid "Progression points: {points}"
+msgstr ""
+
+#: src/skill-tree.js:155
+msgid "RUN ENDED"
+msgstr ""
+
+#: src/main.js:660
+msgid "Refraction! Controls reversed for 2.5 seconds"
+msgstr ""
+
+#: index.html
+msgid "Right"
+msgstr ""
+
+#: src/collectibles.json
+msgid "Ruby"
+msgstr ""
+
+#: src/skill-tree.js
+msgid "SOURCE"
+msgstr ""
+
+#: index.html
+msgid "SUNCATCHER"
+msgstr ""
+
+#: index.html
+msgid "Shadow begins below 30% Light"
+msgstr ""
+
+#: src/main.js:404
+msgid "Shadow begins below {threshold}% Light"
+msgstr ""
+
+#: src/main.js:683
+msgid "Shadow dispelled!"
+msgstr ""
+
+#: src/main.js:713
+msgid "Shadow drains your light!"
+msgstr ""
+
+#: index.html
+msgid "Shadow threshold: 30% Light"
+msgstr ""
+
+#: src/main.js:713
+msgid "Slowed by refraction"
+msgstr ""
+
+#: index.html
+msgid "Space"
+msgstr ""
+
+#: src/main.js:713
+msgid "Stained glass · +{amount}/s"
+msgstr ""
+
+#: src/main.js:713
+msgid "Stained glass · burst healing"
+msgstr ""
+
+#: src/main.js:677
+msgid "Stained-glass breakthrough · shadow dispelled!"
+msgstr ""
+
+#: src/main.js:702
+msgid "Stained-glass light · healing accelerates while you stay in the light"
+msgstr ""
+
+#: index.html
+msgid "Sun Bunny · Tower of the Last Light"
+msgstr ""
+
+#: src/skill-tree.js:156
+msgid "Sunlight skill tree"
+msgstr ""
+
+#: src/main.js:638
+msgid "The bell knocked you off the shelf…"
+msgstr ""
+
+#: src/main.js:544
+msgid "The shelf is moving! It carries you inward — watch the edges."
+msgstr ""
+
+#: src/main.js:644
+msgid "There is no shelf beneath your paws…"
+msgstr ""
+
+#: src/main.js:660
+msgid "Thick light · slowed for 3 seconds"
+msgstr ""
+
+#: src/floors.json
+msgid "Upper tier"
+msgstr ""
+
+#: src/skill-tree.js:155
+msgid "VICTORY +{points}"
+msgstr ""
+
+#: src/main.js:91
+msgid "WebGL required"
+msgstr ""
+
+#: index.html
+msgid "YOUR LIGHT"
+msgstr ""
+
+#: src/level-diagnostics.js:11
+msgid "[Sunny: level issue corrected]"
+msgstr ""
+
+#: src/main.js:406
+msgid "along the spiral"
+msgstr ""
+
+#: index.html
+msgid "around the arena"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "book"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "bottle"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "chest"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "enemy"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "hazard"
+msgstr ""
+
+#: index.html
+msgctxt "hud.jump"
+msgid "jump"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "loot"
+msgstr ""
+
+#: index.html
+msgctxt "hud.pause"
+msgid "pause"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "shadow"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "springboard"
+msgstr ""
+
+#: src/level-diagnostics.js:2
+msgid "stained glass"
+msgstr ""
+
+#: src/main.js:640
+msgid "{name} · −{damage} Light"
+msgstr ""
+
+#: src/skill-tree.js:178
+msgid "✦ Learned"
+msgstr ""
+
+#: src/skill-tree.js:178
+msgid "✦ {cost} · Select this skill"
+msgstr ""
+
+#: src/skill-tree.js:161
+msgid "✦ {points} pts."
+msgstr ""

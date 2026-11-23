@@ -59,27 +59,35 @@
   "enemies": [
     {
       "id": "wolf",
-      "name": "Тень",
+      "name": "Shadow",
       "model": "wolf",
       "profile": "animal",
       "stats": {
         "stompTop": 1.69,
-        "collider": {"type": "sphere", "radius": 0.78, "centerY": 0.91}
+        "collider": {
+          "type": "sphere",
+          "radius": 0.78,
+          "centerY": 0.91
+        }
       }
     },
     {
       "id": "cat",
-      "name": "Теневая кошка",
+      "name": "Shadow Cat",
       "model": "cat",
       "profile": "animal",
       "stats": {
         "stompTop": 1.72,
-        "collider": {"type": "sphere", "radius": 0.86, "centerY": 0.86}
+        "collider": {
+          "type": "sphere",
+          "radius": 0.86,
+          "centerY": 0.86
+        }
       }
     },
     {
       "id": "fox",
-      "name": "Теневая лиса",
+      "name": "Shadow Fox",
       "model": "fox",
       "profile": "animal",
       "stats": {
@@ -88,7 +96,7 @@
     },
     {
       "id": "hare",
-      "name": "Теневой заяц",
+      "name": "Shadow Hare",
       "model": "hare",
       "profile": "animal",
       "stats": {
@@ -97,7 +105,7 @@
     },
     {
       "id": "reaper",
-      "name": "Теневой жнец",
+      "name": "Shadow Reaper",
       "model": "reaper",
       "profile": "boss",
       "stats": {}

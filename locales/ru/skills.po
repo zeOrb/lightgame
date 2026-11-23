@@ -1,0 +1,403 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Sunny 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+"X-Sunny-Category: Навыки: названия и описания\n"
+"X-Source-Language: en\n"
+
+#: src/skill-tree.json
+msgid "Source"
+msgstr "Источник"
+
+#: src/skill-tree.json
+msgid "Unlocks the six branches of the Light tree."
+msgstr "Открывает шесть ветвей древа света."
+
+#: src/skill-tree.json
+msgid "Life"
+msgstr "Жизнь"
+
+#: src/skill-tree.json
+msgid "Warm Heart"
+msgstr "Тёплое сердце"
+
+#: src/skill-tree.json
+msgid "Maximum Light +25 HP."
+msgstr "Максимальный свет +25 HP."
+
+#: src/skill-tree.json
+msgid "Sun Core"
+msgstr "Ядро солнца"
+
+#: src/skill-tree.json
+msgid "Another +25 maximum HP."
+msgstr "Ещё +25 максимального HP."
+
+#: src/skill-tree.json
+msgid "Long Sunset"
+msgstr "Долгий закат"
+
+#: src/skill-tree.json
+msgid "Passive Light drain reduced by 18%."
+msgstr "Пассивный расход света меньше на 18%."
+
+#: src/skill-tree.json
+msgid "Amber Skin"
+msgstr "Янтарная кожа"
+
+#: src/skill-tree.json
+msgid "Shadows and hits drain 25% less Light."
+msgstr "Тени и удары снимают на 25% меньше света."
+
+#: src/skill-tree.json
+msgid "Movement"
+msgstr "Движение"
+
+#: src/skill-tree.json
+msgid "Quick Paws"
+msgstr "Быстрые лапки"
+
+#: src/skill-tree.json
+msgid "Movement speed along the spiral +15%."
+msgstr "Скорость движения по спирали +15%."
+
+#: src/skill-tree.json
+msgid "High Jump"
+msgstr "Высокий прыжок"
+
+#: src/skill-tree.json
+msgid "Initial jump force +15%."
+msgstr "Начальная сила прыжка +15%."
+
+#: src/skill-tree.json
+msgid "Through the Grass"
+msgstr "Сквозь траву"
+
+#: src/skill-tree.json
+msgid ""
+"Allows you to pass through secret grassy paths from below and leap onto them."
+msgstr ""
+"Позволяет проходить сквозь секретные травяные дороги снизу и выпрыгивать на "
+"них."
+
+#: src/skill-tree.json
+msgid "Double Jump"
+msgstr "Двойной прыжок"
+
+#: src/skill-tree.json
+msgid "Press Jump in midair for one extra jump."
+msgstr "Пробел в воздухе: один дополнительный прыжок."
+
+#: src/skill-tree.json
+msgid "Clear Ray"
+msgstr "Ясный луч"
+
+#: src/skill-tree.json
+msgid "Slow and reversed controls from bottles last half as long."
+msgstr "Замедление и инверсия от склянок длятся вдвое меньше."
+
+#: src/skill-tree.json
+msgid "Phasing"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Short Shadow"
+msgstr "Короткая тень"
+
+#: src/skill-tree.json
+msgid "Phasing cooldown recovers 25% faster."
+msgstr "Перезарядка Phasing на 25% быстрее."
+
+#: src/skill-tree.json
+msgid "Long Ray"
+msgstr "Длинный луч"
+
+#: src/skill-tree.json
+msgid "Phasing distance +20%."
+msgstr "Дальность Phasing +20%."
+
+#: src/skill-tree.json
+msgid "Light from Shadow"
+msgstr "Свет из тени"
+
+#: src/skill-tree.json
+msgid "Dash kills restore 10 HP."
+msgstr "Убийство дэшем восстанавливает 10 HP."
+
+#: src/skill-tree.json
+msgid "Resonance"
+msgstr "Резонанс"
+
+#: src/skill-tree.json
+msgid "Each dash kill reduces its cooldown by 0.5 s."
+msgstr "Каждое убийство дэшем сокращает его перезарядку на 0,5 с."
+
+#: src/skill-tree.json
+msgid "Light"
+msgstr "Свет"
+
+#: src/skill-tree.json
+msgid "Full Shards"
+msgstr "Полные осколки"
+
+#: src/skill-tree.json
+msgid "Shards restore 12 more HP."
+msgstr "Осколки восстанавливают на 12 HP больше."
+
+#: src/skill-tree.json
+msgid "Attraction"
+msgstr "Притяжение"
+
+#: src/skill-tree.json
+msgid "Increases shard pickup range."
+msgstr "Дальность подбора осколков увеличена."
+
+#: src/skill-tree.json
+msgid "Light Bloom"
+msgstr "Цветение света"
+
+#: src/skill-tree.json
+msgid "Stained-glass healing is 30% faster."
+msgstr "Лечение витража ускоряется на 30%."
+
+#: src/skill-tree.json
+msgid "Solar Flare"
+msgstr "Солнечная вспышка"
+
+#: src/skill-tree.json
+msgid "New Flare ability: destroys shadows within 3 m. Cooldown: 8 s."
+msgstr "Новая способность E: уничтожает тени в радиусе 3 м. Кулдаун 8 с."
+
+#: src/skill-tree.json
+msgid "Tower"
+msgstr "Башня"
+
+#: src/skill-tree.json
+msgid "Taller Tower"
+msgstr "Выше башня"
+
+#: src/skill-tree.json
+msgid "Next run: 2 more floors with shelves and hazards."
+msgstr "Следующий забег: ещё 2 этажа с полками и угрозами."
+
+#: src/skill-tree.json
+msgid "Endless Spiral"
+msgstr "Бесконечная спираль"
+
+#: src/skill-tree.json
+msgid "2 more floors: 16 in total."
+msgstr "Ещё 2 этажа: всего 16."
+
+#: src/skill-tree.json
+msgid "Glint Constellation"
+msgstr "Созвездие бликов"
+
+#: src/skill-tree.json
+msgid "Shards appear more often: every 4 sections instead of 5."
+msgstr "Осколки встречаются чаще: каждые 4 секции вместо 5."
+
+#: src/skill-tree.json
+msgid "Last Spark"
+msgstr "Последний огонёк"
+
+#: src/skill-tree.json
+msgid ""
+"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
+msgstr ""
+"Один раз за забег при исчерпании HP возвращает 30% света. Не спасает от "
+"падения."
+
+#: src/skill-tree.json
+msgid "Sun Rays"
+msgstr "Солнечные лучи"
+
+#: src/skill-tree.json
+msgid "Warm Rays"
+msgstr "Тёплые лучи"
+
+#: src/skill-tree.json
+msgid "Healing in stained-glass rays is 50% faster."
+msgstr "Лечение в лучах витража ускоряется на 50%."
+
+#: src/skill-tree.json
+msgid "Soft Dawn"
+msgstr "Мягкий рассвет"
+
+#: src/skill-tree.json
+msgid "Passive stained-glass healing is another 50% faster."
+msgstr "Пассивное лечение в витражах ещё на 50% быстрее."
+
+#: src/skill-tree.json
+msgid "Noon Light"
+msgstr "Полуденный свет"
+
+#: src/skill-tree.json
+msgctxt "skill.rayPassivePlus.description"
+msgid "Passive stained-glass healing is another 50% faster."
+msgstr "Пассивное лечение в витражах ещё на 50% быстрее."
+
+#: src/skill-tree.json
+msgid "Sip of Sunlight"
+msgstr "Глоток солнца"
+
+#: src/skill-tree.json
+msgid ""
+"Replaces passive healing: crossing stained glass restores 25% of maximum "
+"Light. Each window triggers once per run and fades over 0.5 s."
+msgstr ""
+"Вместо пассивного лечения: пересечение витража восстанавливает 25% "
+"максимального света. Каждый витраж срабатывает один раз за забег и гаснет за "
+"0,5 с."
+
+#: src/skill-tree.json
+msgid "Solar Hop"
+msgstr "Солнечный подскок"
+
+#: src/skill-tree.json
+msgid ""
+"Jumping through unused stained glass restores an extra 25% of maximum Light, "
+"for 50% total. The window goes dark."
+msgstr ""
+"Прыжок через неиспользованный витраж даёт ещё 25% максимального света, всего "
+"50%. Витраж гаснет."
+
+#: src/skill-tree.json
+msgid "Solar Breakthrough"
+msgstr "Солнечный прорыв"
+
+#: src/skill-tree.json
+msgid ""
+"Dashing through unused stained glass restores an extra 25% of maximum Light. "
+"With crossing: 50%; with a jump: up to 75%. The window goes dark."
+msgstr ""
+"Дэш через неиспользованный витраж даёт ещё 25% максимального света за дэш. "
+"Вместе с пересечением — 50%, с прыжком — до 75%. Витраж гаснет."
+
+#: src/treasury-tree.json
+msgid "Treasury"
+msgstr "Сокровищница"
+
+#: src/treasury-tree.json
+msgid "Unlocks gem loot upgrades."
+msgstr "Открывает улучшения добычи камней."
+
+#: src/treasury-tree.json
+msgid "Shard Value"
+msgstr "Ценность осколков"
+
+#: src/treasury-tree.json
+msgid "Facets of Light 1"
+msgstr "Грани света 1"
+
+#: src/treasury-tree.json
+msgid "Points from gems and boss shards: ×2."
+msgstr "Очки за драгоценные камни и осколки босса: ×2."
+
+#: src/treasury-tree.json
+msgid "Facets of Light 2"
+msgstr "Грани света 2"
+
+#: src/treasury-tree.json
+msgid "Points from gems and boss shards: ×4."
+msgstr "Очки за драгоценные камни и осколки босса: ×4."
+
+#: src/treasury-tree.json
+msgid "Facets of Light 3"
+msgstr "Грани света 3"
+
+#: src/treasury-tree.json
+msgid "Points from gems and boss shards: ×8."
+msgstr "Очки за драгоценные камни и осколки босса: ×8."
+
+#: src/treasury-tree.json
+msgid "Facets of Light 4"
+msgstr "Грани света 4"
+
+#: src/treasury-tree.json
+msgid "Points from gems and boss shards: ×16."
+msgstr "Очки за драгоценные камни и осколки босса: ×16."
+
+#: src/treasury-tree.json
+msgid "Facets of Light 5"
+msgstr "Грани света 5"
+
+#: src/treasury-tree.json
+msgid "Points from gems and boss shards: ×32."
+msgstr "Очки за драгоценные камни и осколки босса: ×32."
+
+#: src/treasury-tree.json
+msgid "Gem Scatter"
+msgstr "Россыпь"
+
+#: src/treasury-tree.json
+msgid "Gem Scatter 2"
+msgstr "Россыпь 2"
+
+#: src/treasury-tree.json
+msgid "Up to 2 gems can appear on a tile."
+msgstr "На тайле может появиться до 2 камней."
+
+#: src/treasury-tree.json
+msgid "Gem Scatter 3"
+msgstr "Россыпь 3"
+
+#: src/treasury-tree.json
+msgid "Up to 3 gems can appear on a tile."
+msgstr "На тайле может появиться до 3 камней."
+
+#: src/treasury-tree.json
+msgid "Gem Scatter 4"
+msgstr "Россыпь 4"
+
+#: src/treasury-tree.json
+msgid "Up to 4 gems can appear on a tile."
+msgstr "На тайле может появиться до 4 камней."
+
+#: src/treasury-tree.json
+msgid "Gem Scatter 5"
+msgstr "Россыпь 5"
+
+#: src/treasury-tree.json
+msgid "Up to 5 gems can appear on a tile."
+msgstr "На тайле может появиться до 5 камней."
+
+#: src/treasury-tree.json
+msgid "Gems"
+msgstr "Драгоценные камни"
+
+#: src/collectibles.json
+msgid "Emerald"
+msgstr "Изумруд"
+
+#: src/treasury-tree.json
+msgid "Adds emeralds to the gem pool."
+msgstr "Добавляет изумруд в пул камней."
+
+#: src/collectibles.json
+msgid "Sapphire"
+msgstr "Сапфир"
+
+#: src/treasury-tree.json
+msgid "Adds sapphires to the gem pool."
+msgstr "Добавляет сапфир в пул камней."
+
+#: src/collectibles.json
+msgid "Topaz"
+msgstr "Топаз"
+
+#: src/treasury-tree.json
+msgid "Adds topazes to the gem pool."
+msgstr "Добавляет топаз в пул камней."
+
+#: src/collectibles.json
+msgid "Amethyst"
+msgstr "Аметист"
+
+#: src/treasury-tree.json
+msgid "Adds amethysts to the gem pool."
+msgstr "Добавляет аметист в пул камней."

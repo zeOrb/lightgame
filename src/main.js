@@ -88,7 +88,7 @@ scene.background = new THREE.Color('#000000');
 scene.fog = new THREE.FogExp2('#303849', .015);
 let renderer;
 try { renderer = new THREE.WebGLRenderer({ canvas: $('world'), antialias: true, powerPreference: 'high-performance' }); }
-catch { $('intro').innerHTML = `<h1>${tr('Нужен WebGL')}</h1><p>${tr('Открой игру в браузере с аппаратным ускорением.')}</p>`; throw new Error('WebGL unavailable'); }
+catch { $('intro').innerHTML = `<h1>${tr("WebGL required")}</h1><p>${tr("Open the game in a browser with hardware acceleration enabled.")}</p>`; throw new Error('WebGL unavailable'); }
 renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
 renderer.setSize(innerWidth, innerHeight);
 renderer.setClearColor('#000000',1);
@@ -343,7 +343,7 @@ const shelfTravel=new ShelfTravel();
 const playerRoute=(s,lane=0)=>shelfTravel.position(s,lane);
 initializeMainMenu();
 const keys=new Set();const inputManager=new InputManager();let inputDevices;let jumpQueued=false;let audio=null,masterAudio=null,muted=preferences.volume===0;
-const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent=tr('Готовим забег…');fadeToNextRun(()=>location.assign(nextRunURL(location.href)));});
+const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent=tr("Preparing run…");fadeToNextRun(()=>location.assign(nextRunURL(location.href)));});
 function ensureAudio(){audio??=new (window.AudioContext||window.webkitAudioContext)();if(!masterAudio){masterAudio=audio.createGain();masterAudio.gain.value=preferences.volume;masterAudio.connect(audio.destination);}audio.resume();return masterAudio;}
 function tone(freq=660,length=.15){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(freq,audio.currentTime);gain.gain.setValueAtTime(.055,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+length);osc.connect(gain);gain.connect(ensureAudio());osc.start();osc.stop(audio.currentTime+length);}
 function vitralAbsorbSound(){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();playVitralAbsorb(audio,ensureAudio());}
@@ -360,9 +360,9 @@ function beginRabbitFall(outward,message,launched=true){
   const p=playerRoute(s,lane);rabbitState.startFall({x:p.x,y:p.y+.12+height,z:p.z},outward,launched);
   rabbitAnimation.reset();rabbit.rotation.z=0;
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
-  abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent=tr('Падение');
+  abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent=tr("Falling");
 }
-function reset(){secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent=tr('по спирали');for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function reset(){secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent=tr("along the spiral");for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
 function start({boss=false}={}){frameClock.reset();skillTree.element.hidden=true;reset();if(boss&&arenas.arenas.length){const a=arenas.arenas[0];s=a.s;arenas.enter(a.s-.01,a.s,route(a.s));}state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';$('world').classList.add('is-paused');keys.clear();inputDevices?.clear();inputManager.clear();showModal('',t('pause'),'',t('resume'));$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('world').classList.remove('is-paused');$('modal').hidden=true;}}
@@ -401,9 +401,9 @@ onLanguageChange(()=>{localizeDOM();if(state==='paused')$('modal-title').textCon
 
 function updateHUD(dt=0){
   $('hud').style.setProperty('--hud-scale',Math.min(1,Math.max(.35,(innerWidth-56)/320))); 
-  const marker=document.querySelector('.shadow-threshold');marker.parentElement.style.setProperty('--shadow-threshold',SHADOW_LIGHT_THRESHOLD+'%');marker.title=tr('Тень начинается ниже {threshold}% Света',{threshold:SHADOW_LIGHT_THRESHOLD});marker.setAttribute('aria-label',marker.title);
+  const marker=document.querySelector('.shadow-threshold');marker.parentElement.style.setProperty('--shadow-threshold',SHADOW_LIGHT_THRESHOLD+'%');marker.title=tr("Shadow begins below {threshold}% Light",{threshold:SHADOW_LIGHT_THRESHOLD});marker.setAttribute('aria-label',marker.title);
   lightBarRecovery.update(light,RUN_UPGRADES.maxHP,dt);
-  $('arena-controls').hidden=!arenas.active;$('movement-mode').textContent=arenas.active?tr('по арене'):tr('по спирали');
+  $('arena-controls').hidden=!arenas.active;$('movement-mode').textContent=arenas.active?tr("around the arena"):tr("along the spiral");
   for(const button of document.querySelectorAll('.arena-touch'))button.hidden=!arenas.active;
   const lightPercent=clamp(light/RUN_UPGRADES.maxHP*100,0,100);
   $('light-value').innerHTML=Math.ceil(lightPercent)+'<small>%</small>';$('light-value').title=Math.ceil(light)+' / '+RUN_UPGRADES.maxHP+' HP';
@@ -414,7 +414,7 @@ function updateHUD(dt=0){
   lightFill.parentElement.style.setProperty('--sun-px',lightFill.parentElement.clientWidth*barPercent/100+'px');
   lightFill.parentElement.style.setProperty('--shadow-cut',lightFill.parentElement.clientWidth*SHADOW_LIGHT_THRESHOLD/100+'px');
   lightFill.parentElement.style.setProperty('--sun-power',light>0?'1':'0');
-  $('progress').style.width=s/END*100+'%';$('floor').textContent=tr('Этаж {floor} / {total}',{floor:floorAt(s),total:FLOOR_COUNT});
+  $('progress').style.width=s/END*100+'%';$('floor').textContent=tr("Floor {floor} / {total}",{floor:floorAt(s),total:FLOOR_COUNT});
 }
 function updateArena(dt){
   time+=dt;invert=slow=0;
@@ -458,10 +458,10 @@ function updateArena(dt){
   if(result.reward){scene.attach(result.reward);pickupEffects.collect(result.reward,()=>{if(state!=='playing'&&state!=='won')return;healFromShard();collected++;const previousPoints=progression.state.points;progression.award(result.rewardPoints*RUN_UPGRADES.shardPointsMultiplier);shardCounter.add(progression.state.points-previousPoints);tone(1200,.3);updateHUD(0);},pickupSpace(s));height=velocity=0;abilities.phase=null;}
   if(result.returning)phasingFrame=true;
   if(result.teleported){landingCamera.reset();shelfTravel.reset();s=result.returnedS;lane=result.returnedLane??0;height=velocity=0;abilities.phase=null;phasingFrame=false;cameraNeedsReset=true;floorGates.arriveAt(s);}
-  if(result.cleared){tone(1046,.35);toast(tr('Арена пройдена'));}
+  if(result.cleared){tone(1046,.35);toast(tr("Arena cleared"));}
   shadowEffects.setDamage(false);
   const boss=active.enemies.find(b=>b.boss);
-  $('effect').textContent=active.cleared?tr('Арена пройдена'):boss?tr('Страж · {hp} / {maxHP} · Врагов: {count}',{hp:Math.max(0,boss.hp),maxHP:boss.maxHP,count:active.living}):tr('Арена');
+  $('effect').textContent=active.cleared?tr("Arena cleared"):boss?tr("Guardian · {hp} / {maxHP} · Enemies: {count}",{hp:Math.max(0,boss.hp),maxHP:boss.maxHP,count:active.living}):tr("Arena");
   if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;light=RUN_UPGRADES.maxHP*.3;}
   if(light<=0)finish(false);
   if(result.returnedS!==undefined&&!result.teleported){
@@ -541,7 +541,7 @@ function update(dt){
   time+=dt;invert=Math.max(0,invert-dt);slow=Math.max(0,slow-dt);
   updateThreats(threats,time);
   if(passenger){const carried=carryPlatformPassenger(passenger,s,lane,previousOffset);s=carried.s;lane=carried.lane;}
-  for(const platform of movingPlatforms)if(platform.warning&&!platform.notified&&Math.abs(s-platform.s)<2){platform.notified=true;toast(tr('Полка сдвигается! Она несёт тебя к центру — следи за краями.'));tone(240,.12);}
+  for(const platform of movingPlatforms)if(platform.warning&&!platform.notified&&Math.abs(s-platform.s)<2){platform.notified=true;toast(tr("The shelf is moving! It carries you inward — watch the edges."));tone(240,.12);}
   const forward=damageInputLocked?0:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
   const direction=invert>0?-1:1;
   if(forward)railFacing=Math.sign(forward*direction);
@@ -635,13 +635,13 @@ function update(dt){
   const threatHit=phasingFrame||rescueInvul>0?null:consumeThreatHit(threats,{s,lane,height},time);
   if(threatHit){
     if(threatHit.type===ThreatType.PENDULUM){
-      beginRabbitFall(Math.cos((time+threatHit.phase)*Math.PI*2/3.6)>0,tr('Колокол сбил тебя с полки…'));return;
+      beginRabbitFall(Math.cos((time+threatHit.phase)*Math.PI*2/3.6)>0,tr("The bell knocked you off the shelf…"));return;
     }
-    light=Math.max(0,light-ThreatInfo[threatHit.type].damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(170,.15);toast(tr('{name} · −{damage} света',{name:tr(ThreatInfo[threatHit.type].name),damage:ThreatInfo[threatHit.type].damage}));
+    light=Math.max(0,light-ThreatInfo[threatHit.type].damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(170,.15);toast(tr("{name} · −{damage} Light",{name:tr(ThreatInfo[threatHit.type].name),damage:ThreatInfo[threatHit.type].damage}));
   }
   let inShadow=false;
   for(const h of hazards){const p=route(h.s,h.lane),player=playerRoute(s,lane);if(Math.hypot(player.x-p.x,player.z-p.z)<1.12&&Math.abs(player.y+height-p.y)<.8&&height<.8)inShadow=true;}
-  if(!phasingFrame&&abilities.gravityDelay<=0&&!surface&&!hasShelfSupport(threats,s,lane,playerRoute(s,lane))&&height===0&&velocity<=0&&motion.coyote<=0){beginRabbitFall(lane>2.5,tr('Под лапами больше нет полки…'),false);return;}
+  if(!phasingFrame&&abilities.gravityDelay<=0&&!surface&&!hasShelfSupport(threats,s,lane,playerRoute(s,lane))&&height===0&&velocity<=0&&motion.coyote<=0){beginRabbitFall(lane>2.5,tr("There is no shelf beneath your paws…"),false);return;}
   for(const c of chests){
     if(c.broken)continue;
     const chestFoot=playerRoute(s,lane).y+height+.12;
@@ -657,7 +657,7 @@ function update(dt){
     }
   }
   for(const g of glints)if(!g.taken&&g.s>Math.min(beforeMoveS,s)-RUN_UPGRADES.magnet&&g.s<Math.max(beforeMoveS,s)+RUN_UPGRADES.magnet&&Math.abs(lane-g.lane)<1.15&&height<1.8){if(!g.collect())continue;rabbitAnimation.pickup();const amount=g.lightValue(RUN_UPGRADES.shardHeal);pickupEffects.collect(g.o,()=>{if(state!=='playing'&&state!=='won')return;healFromShard(amount);collected++;const previousPoints=progression.state.points;progression.award(g.definition.points*RUN_UPGRADES.shardPointsMultiplier);shardCounter.add(progression.state.points-previousPoints,g.definition.textColor);tone(800+collected%4*90);updateHUD(0);},pickupSpace(g.s));}
-  for(const b of bottles){b.cooldown=Math.max(0,b.cooldown-dt);if(!phasingFrame&&Math.abs(s-b.s)<.65&&Math.abs(lane-b.lane)<.7&&height<1&&b.cooldown===0){b.cooldown=7;if(b.s%2){invert=2.5*RUN_UPGRADES.potionScale;toast(tr('Преломление! Управление отражено на 2,5 секунды'));}else{slow=3*RUN_UPGRADES.potionScale;toast(tr('Густой свет · замедление на 3 секунды'));}tone(270,.2);}}
+  for(const b of bottles){b.cooldown=Math.max(0,b.cooldown-dt);if(!phasingFrame&&Math.abs(s-b.s)<.65&&Math.abs(lane-b.lane)<.7&&height<1&&b.cooldown===0){b.cooldown=7;if(b.s%2){invert=2.5*RUN_UPGRADES.potionScale;toast(tr("Refraction! Controls reversed for 2.5 seconds"));}else{slow=3*RUN_UPGRADES.potionScale;toast(tr("Thick light · slowed for 3 seconds"));}tone(270,.2);}}
   for(const b of beasts){
     if(b.dead){animateBeastDeath(b,dt);continue;}
     b.hurt=Math.max(0,b.hurt-dt);
@@ -674,13 +674,13 @@ function update(dt){
     if(phasingFrame&&phaseHitsTarget({x:beforeMove.x,y:previousFoot+.33,z:beforeMove.z},{x:afterMove.x,y:afterMove.y+height+.45,z:afterMove.z},{x:p.x,y:contactCenterY,z:p.z},sphereCollider?sphereCollider.radius+.30:1.05)){
       if(!damageEnemy(b,currentVitralZone?.palette??glassGlowPalette))continue;
       light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.phaseHeal);if(RUN_UPGRADES.resonance)abilities.cooldowns.phasing=Math.max(0,abilities.cooldowns.phasing-.5);
-      tone(640,.2);toast(tr('Витражный прорыв · тень рассеяна!'));continue;
+      tone(640,.2);toast(tr("Stained-glass breakthrough · shadow dispelled!"));continue;
     }
     const top=p.y+leap*b.stats.hopHeight+b.stompTop,foot=playerRoute(s,lane).y+height+.12;
     const overlaps=sphereCollider?Math.hypot(afterMove.x-p.x,afterMove.z-p.z)<sphereCollider.radius:Math.abs(s-b.s)<b.stats.stompSection&&Math.abs(lane-b.lane)<b.stats.stompLaneRadius;
     if(!phasingFrame&&canStomp(previousFoot,foot,b.lastTop??top,top,velocity,overlaps)){
       const killed=damageEnemy(b,(rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null)??currentVitralZone?.palette??(vitralGlow.strength>.01?vitralGlow.palette:null));height=Math.max(height,top-playerRoute(s,lane).y+.03);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;abilities.resetAirJump();
-      tone(360,.25);if(killed)toast(tr('Тень рассеяна!'));continue;
+      tone(360,.25);if(killed)toast(tr("Shadow dispelled!"));continue;
     }
     b.lastTop=top;
     const bodyContact=sphereCollider?Math.hypot(afterMove.x-p.x,afterMove.y+height+.45-contactCenterY,afterMove.z-p.z)<=sphereCollider.radius+.30:Math.abs(s-b.s)<b.stats.contactSection&&Math.abs(lane-b.lane)<b.stats.laneRadius&&height<b.stats.contactHeight;
@@ -699,7 +699,7 @@ function update(dt){
   }
   if(phasingFrame&&RUN_UPGRADES.rayEntryHeal)traceVitralPath(rabbitState,beforeMoveS,s,lane,height,(point,h)=>windowLight.sampleLight(new THREE.Vector3(point.x,point.y,point.z),h));
   currentVitralZone=windowLight.sampleLight(new THREE.Vector3(lightPosition.x,lightPosition.y,lightPosition.z),height);
-  if(currentVitralZone&&!wasInVitral){if(!RUN_UPGRADES.rayEntryHeal)tone(1100,.3);toast(tr('Свет витража · лечение ускоряется, пока ты в свете'));}
+  if(currentVitralZone&&!wasInVitral){if(!RUN_UPGRADES.rayEntryHeal)tone(1100,.3);toast(tr("Stained-glass light · healing accelerates while you stay in the light"));}
   rabbitState.setVitral(currentVitralZone,phasingFrame,height>.025||velocity>0);
   if(phasingFrame||rescueInvul>0)inShadow=false;
   const absorbedVitral=rabbitState.pendingHeal>0;
@@ -710,9 +710,9 @@ function update(dt){
     if(currentVitralZone?.extinguished&&currentVitralZone.lightStrength<=0){currentVitralZone=null;rabbitState.setVitral(null);if(rabbitState.lightCharge<=0)vitralGlow.reset();}
   }
   shadowEffects.setDamage(inShadow);
-  $('effect').textContent=inShadow?tr('Тень забирает свет!'):currentVitralZone?(RUN_UPGRADES.rayEntryHeal?tr('Витраж · импульсное лечение'):tr('Витраж · +{amount}/с',{amount:(Math.min(50,rabbitState.vitralTime*12.5)*RUN_UPGRADES.regen).toFixed(0)})):invert>0?tr('Управление отражено'):slow>0?tr('Преломление замедляет'):tr('В свете заката');
-  if(height<3.8){const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){tone(880,.35);toast(gate.plank===END?tr('Последняя арка · кристалл рядом'):tr('Переход на этаж {floor}',{floor:gate.nextFloor}));}}
-  if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;rescueInvul=1;light=RUN_UPGRADES.maxHP*.3;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+.5,afterMove.z),glassGlowPalette);toast(tr('Последний огонёк · свет вернулся!'));}
+  $('effect').textContent=inShadow?tr("Shadow drains your light!"):currentVitralZone?(RUN_UPGRADES.rayEntryHeal?tr("Stained glass · burst healing"):tr("Stained glass · +{amount}/s",{amount:(Math.min(50,rabbitState.vitralTime*12.5)*RUN_UPGRADES.regen).toFixed(0)})):invert>0?tr("Controls reversed"):slow>0?tr("Slowed by refraction"):tr("In the sunset light");
+  if(height<3.8){const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){tone(880,.35);toast(gate.plank===END?tr("Final arch · the crystal is close"):tr("Entering floor {floor}",{floor:gate.nextFloor}));}}
+  if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;rescueInvul=1;light=RUN_UPGRADES.maxHP*.3;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+.5,afterMove.z),glassGlowPalette);toast(tr("Last Spark · light restored!"));}
   if(light<=0)finish(false);else if(s>=END-.1)finish(true);
   updateHUD(dt);
 }
@@ -817,7 +817,7 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
   if(state==='intro'||state==='lost'||state==='won')bossHitEffects.reset();
   floorGates.update(state==='paused'?0:dt);
   if(state!=='paused'&&flareAge<1.8){flareAge+=dt;flareBurst.update(flareAge);}
-  $('phase-status').textContent=abilities.cooldowns.phasing>.05?tr('Phasing {seconds}с',{seconds:abilities.cooldowns.phasing.toFixed(1)}):'Phasing';
+  $('phase-status').textContent=abilities.cooldowns.phasing>.05?tr("Phasing {seconds}s",{seconds:abilities.cooldowns.phasing.toFixed(1)}):'Phasing';
   const sunMoving=state==='playing'&&Math.abs(light-previousSunLight)>dt*.01;
   previousSunLight=light;
   sunMotion=THREE.MathUtils.damp(sunMotion,sunMoving?1:0,sunMoving?7:9,dt);

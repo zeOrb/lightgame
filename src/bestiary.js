@@ -10,10 +10,10 @@ import {bestiaryFog} from './bestiary-fog.js';
 import './bestiary.css';
 
 export function initializeBestiary(){
-  const trigger=document.createElement('button');trigger.textContent=tr('Бестиарий');trigger.dataset.i18n='Бестиарий';trigger.className='text-button';
+  const trigger=document.createElement('button');trigger.textContent=tr("Bestiary");trigger.dataset.i18n="Bestiary";trigger.className='text-button';
   document.getElementById('start').after(trigger);
   const panel=document.createElement('section');panel.id='bestiary';panel.hidden=true;
-  panel.setAttribute('aria-label',tr('Бестиарий'));panel.innerHTML='<header><h1 data-i18n="Бестиарий">Бестиарий</h1><button type="button" data-i18n="Вернуться в меню · Esc">Вернуться в меню · Esc</button></header><div class="bestiary-stage"></div><div class="bestiary-name" aria-live="polite"></div>';
+  panel.setAttribute('aria-label',tr("Bestiary"));panel.innerHTML='<header><h1 data-i18n="Bestiary">Bestiary</h1><button type="button" data-i18n="Back to menu · Esc">Back to menu · Esc</button></header><div class="bestiary-stage"></div><div class="bestiary-name" aria-live="polite"></div>';
   document.body.append(panel);
   const stage=panel.querySelector('.bestiary-stage'),label=panel.querySelector('.bestiary-name'),back=panel.querySelector('button');
   const statsCard=document.createElement('aside');statsCard.className='bestiary-stats';statsCard.hidden=true;panel.append(statsCard);
@@ -51,9 +51,9 @@ export function initializeBestiary(){
     statsCard.hidden=!exhibit;if(!exhibit)return;
     const title=document.createElement('h2');title.textContent=tr(exhibit.enemy.definition.name);
     const rows=document.createElement('dl');
-    const names={hp:'Здоровье',scale:'Масштаб',stompTop:'Высота прыжкового попадания',trackRange:'Дальность слежения',trackRate:'Скорость слежения',hopSpeed:'Частота прыжков',hopHeight:'Высота прыжка',blockSection:'Блокировка пути (секции)',laneRadius:'Радиус поперёк полки',stompSection:'Попадание сверху (секции)',stompLaneRadius:'Попадание сверху поперёк',contactSection:'Контакт вдоль пути (секции)',contactHeight:'Высота контакта',contactRadius:'Радиус контакта',damage:'Урон',chaseSpeed:'Скорость преследования',chargeSpeed:'Скорость рывка'};
-    for(const [key,value] of Object.entries(exhibit.enemy.stats)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key==='collider'?tr('Коллайдер'):tr(names[key]??key);dd.textContent=key==='collider'?tr('Сфера · R {radius}',{radius:value.radius}):Array.isArray(value)?value.join(' × '):String(value);rows.append(dt,dd);}
-    const caption=document.createElement('p');caption.textContent=tr('Красный контур — зона контактного урона');statsCard.replaceChildren(title,caption,rows);
+    const names={hp:"Health",scale:"Scale",stompTop:"Stomp hit height",trackRange:"Tracking range",trackRate:"Tracking speed",hopSpeed:"Hop frequency",hopHeight:"Jump height",blockSection:"Path blocking (sections)",laneRadius:"Radius across the shelf",stompSection:"Stomp hit (sections)",stompLaneRadius:"Stomp hit across the shelf",contactSection:"Contact along the path (sections)",contactHeight:"Contact height",contactRadius:"Contact radius",damage:"Damage",chaseSpeed:"Chase speed",chargeSpeed:"Charge speed"};
+    for(const [key,value] of Object.entries(exhibit.enemy.stats)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key==='collider'?tr("Collider"):tr(names[key]??key);dd.textContent=key==='collider'?tr("Sphere · R {radius}",{radius:value.radius}):Array.isArray(value)?value.join(' × '):String(value);rows.append(dt,dd);}
+    const caption=document.createElement('p');caption.textContent=tr("Red outline: contact damage area");statsCard.replaceChildren(title,caption,rows);
   }
   function frame(now){if(!active)return;const dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
     fog.update(dt);
@@ -80,7 +80,7 @@ export function initializeBestiary(){
     if(ui.has('cancel')||ui.has('submit')||ui.has('menu'))close();
     else if(ui.has('left'))move(-spacing);else if(ui.has('right'))move(spacing);
   });
-  onLanguageChange(()=>{localizeDOM(panel);panel.setAttribute('aria-label',tr('Бестиарий'));const exhibit=hovered;hovered=null;if(exhibit)showStats(exhibit);});
+  onLanguageChange(()=>{localizeDOM(panel);panel.setAttribute('aria-label',tr("Bestiary"));const exhibit=hovered;hovered=null;if(exhibit)showStats(exhibit);});
   localizeDOM(panel);
   window.addEventListener('resize',resize);
 }

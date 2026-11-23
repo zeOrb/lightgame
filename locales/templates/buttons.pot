@@ -1,0 +1,154 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Sunny 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Sunny-Category: Кнопки и меню\n"
+"X-Source-Language: en\n"
+
+#: index.html
+msgid "Actions"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: addBinding
+msgctxt "addBinding"
+msgid "Add"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: apply
+msgctxt "apply"
+msgid "Apply"
+msgstr ""
+
+#: index.html
+msgid "BUNNY"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: backButton
+msgctxt "backButton"
+msgid "Back"
+msgstr ""
+
+#: src/bestiary.js
+msgid "Back to menu · Esc"
+msgstr ""
+
+#: src/bestiary.js
+msgid "Bestiary"
+msgstr ""
+
+#: index.html
+msgid "Boss fight · debug"
+msgstr ""
+
+#: src/level-diagnostics.js:14
+msgid "Close"
+msgstr ""
+
+#: index.html
+msgid "Enable sound"
+msgstr ""
+
+#: src/skill-tree.js:157
+msgid "Light tree"
+msgstr ""
+
+#: index.html
+msgid "Main menu"
+msgstr ""
+
+#: src/skill-tree.js
+msgid "Next run →"
+msgstr ""
+
+#: index.html
+msgid "Pause"
+msgstr ""
+
+#: index.html
+msgid "Pause menu"
+msgstr ""
+
+#: src/main.js:346
+msgid "Preparing run…"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: reset
+msgctxt "reset"
+msgid "Reset controls"
+msgstr ""
+
+#: index.html
+msgid "Reset points and learned skills"
+msgstr ""
+
+#: index.html
+msgid "Reset skill tree · debug"
+msgstr ""
+
+#: index.html
+msgid "Restart run"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: restart
+msgctxt "restart"
+msgid "Restart run"
+msgstr ""
+
+#: index.html
+msgid "Resume"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: resume
+msgctxt "resume"
+msgid "Resume"
+msgstr ""
+
+#: index.html
+msgid "Return to main menu"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: menu
+msgctxt "menu"
+msgid "Return to main menu"
+msgstr ""
+
+#: index.html
+msgid "SUN"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: settings
+msgctxt "settings"
+msgid "Settings"
+msgstr ""
+
+#: src/skill-tree.js:154
+msgid "Skill tree"
+msgstr ""
+
+#: index.html
+msgid "Sound: off · debug"
+msgstr ""
+
+#: index.html
+msgid "Start run"
+msgstr ""
+
+#: src/settings.js
+#. Stable UI key: start
+msgctxt "start"
+msgid "Start run"
+msgstr ""
+
+#: src/skill-tree.js:32
+msgid "☀ To the sun"
+msgstr ""
