@@ -819,7 +819,7 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
   secretLevels.reveal(s,state==='playing'?dt:0,visualTime);
   threatVisuals.update(time);
   arenaShelfVisibility.update(arenas.active?.secret&&['ascent','dropping'].includes(arenas.active.stage)?null:arenas.active);
-  shelfRelics.updateDynamic();
+  shelfRelics.updateDynamic();shelfRelics.updateWind(state==='paused'?0:realDt);
   springboards.update(state==='paused'?0:dt,time);
   floatingParchment.update(state==='paused'?0:dt,arenaView);
   arenas.updateRemnants(state==='paused'?0:dt);
