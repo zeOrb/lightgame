@@ -21,8 +21,8 @@
 #settings .settings-status{min-height:22px;margin:10px 0}
 #settings .settings-bindings{display:flex;gap:8px}
 #settings .settings-bindings button{min-width:95px;min-height:0;padding:4px 10px;font-size:15px;border:1px solid #bcb8b12b}
-#settings .settings-bindings .gamepad-binding{width:42px;height:28px;min-width:42px;padding:5px;border:1px solid #bcb8b16b;border-radius:0;display:grid;place-items:center}
-#settings .gamepad-binding img{width:30px;height:30px;object-fit:contain;pointer-events:none}
+#settings .settings-bindings .gamepad-binding{box-sizing:border-box;flex:0 0 42px;width:42px;height:42px;min-width:42px;padding:5px;border:1px solid #bcb8b16b;border-radius:0;display:grid;place-items:center;line-height:1}
+#settings .gamepad-binding img{display:block;width:30px;height:30px;margin:0;object-fit:contain;object-position:center;pointer-events:none}
 #settings .settings-bindings .gamepad-add{width:42px;display:grid;place-items:center;border:0;padding:0;font-size:14px}
 #settings .gamepad-add-square{display:grid;place-items:center;width:40px;height:40px;border:1px solid #bcb8b16b;font-size:24px}
 #settings .gamepad-binding.is-binding{outline:2px solid #e5d3a0;box-shadow:0 0 12px #e5d3a026}
@@ -33,3 +33,4 @@
 #settings .settings-actions{display:flex;justify-content:center;gap:32px}
 #settings .settings-apply{font-size:21px;color:#e9e5dc}
 @media(max-width:540px){#settings .settings-card{padding:16px 8px}#settings nav{gap:0}#settings nav button{padding:7px;font-size:15px}#settings .settings-row{font-size:16px;gap:8px}#settings .settings-bindings button{min-width:64px;padding:6px;font-size:13px}}
+@media(max-width:540px){#settings .settings-bindings .gamepad-binding{min-width:42px;padding:5px}#settings .settings-bindings .gamepad-add{padding:0}}

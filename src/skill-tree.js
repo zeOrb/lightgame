@@ -155,6 +155,7 @@ export class SkillTree {
   }
   renderDetail(){
     const selected=SKILLS.find(s=>s.id===(this.selected??this.hovered)),buy=this.element.querySelector('#tree-buy');
+    this.art.focusedId=selected?.id??null;
     this.detail.classList.toggle('is-visible',!!selected);this.detail.classList.toggle('is-pinned',!!this.selected);this.detail.setAttribute('aria-hidden',String(!selected));
     if(!selected)return;
     const owned=progression.state.owned.includes(selected.id);

@@ -4,5 +4,4 @@
 #skill-tree :is(.tree-header,.tree-tabs) button.has-input-focus{outline:none;box-shadow:none}
 body:is([data-input-device=xbox],[data-input-device=playstation]) #settings :is(button,select):focus:not(:hover){outline-color:transparent;box-shadow:none}
 body:is([data-input-device=xbox],[data-input-device=playstation]) #settings .gamepad-add:focus:not(:hover) .gamepad-add-square{border-color:#bcb8b16b;box-shadow:none}
-body:is([data-input-device=xbox],[data-input-device=playstation]) .skill-node:focus-visible{outline-color:transparent}
 @media(prefers-reduced-motion:reduce){.gamepad-focus-indicator{transition:opacity .1s ease}}

@@ -89,7 +89,7 @@ export class PixelSkillArt {
     this.dormantSun??=createPixelSun(0,true);
     c.save();c.imageSmoothingEnabled=false;
     c.drawImage(owned?this.sunFrames.get(frame):this.dormantSun,center-size/2,center-size/2,size,size);
-    if(root?.selected)this.diamond(center,center,size*.23,'#00000000',owned?'#fff0bc':'#c79986',2);
+    if(root?.selected||root?.id===this.focusedId)this.diamond(center,center,size*.23,'#00000000',owned?'#fff0bc':'#c79986',2);
     if(owned&&age>=0&&age<1.1){
       const t=age/1.1,r=30+t*460;c.globalAlpha=(1-t)**.7;
       for(let i=0;i<112;i++){
@@ -169,7 +169,7 @@ export class PixelSkillArt {
     if(!owned&&node.unaffordable){c.save();c.shadowColor='#a9575140';c.shadowBlur=4;this.diamond(0,0,41,'#00000000','#a9575180',2);c.restore();}
     if(owned){c.save();c.shadowColor='#ffecac';c.shadowBlur=6;this.diamond(0,0,43,'#00000000','#ffedb499',2);c.restore();}
     if(owned)this.drawGoldShine(skill);
-    if(node.selected)this.diamond(0,0,50,'#00000000','#fff0b5',2);
+    if(node.selected||skill.id===this.focusedId)this.diamond(0,0,50,'#00000000','#fff0b5',2);
     const glyph=skillIcon(skill.icon),pixel=2.5,center=(glyph.length-1)/2;
     glyph.forEach((row,y)=>[...row].forEach((bit,x)=>{if(bit==='1'){c.fillStyle='#211e19';c.fillRect((x-center)*pixel+pixel,(y-center)*pixel+pixel,pixel,pixel);c.fillStyle=owned?'#fff3bc':ready?'#e8c889':'#87816b';c.fillRect((x-center)*pixel,(y-center)*pixel,pixel,pixel);}}));
     if(flash>0){this.diamond(0,0,36,`rgba(255,246,190,${flash*.9})`);c.globalAlpha*=flash;for(let i=0;i<12;i++){const a=i*Math.PI/6,r=48+(1-flash)*48;this.diamond(Math.cos(a)*r,Math.sin(a)*r,2+flash*3,i%3?'#fff1b7':'#f6b56f');}}

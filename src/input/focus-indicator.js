@@ -8,7 +8,10 @@ export class FocusIndicator{
   }
   update(target,scheme){
     const controller=scheme==='xbox'||scheme==='playstation';
-    const eligible=(controller||target?.matches?.(':focus-visible'))&&target?.matches?.('button,select,input')&&target.getClientRects().length>0;
+    // Graph nodes render their own diamond highlight beneath the detail card.
+    const node=target?.matches?.('.skill-node');
+    const eligible=!node&&(controller||target?.matches?.(':focus-visible'))&&target?.matches?.('button,select,input')&&target.getClientRects().length>0;
+    this.element.hidden=!!node;
     if(this.target!==target||!eligible){this.target?.classList.remove('has-input-focus');this.target=null;}
     if(!eligible){this.element.classList.remove('is-visible');this.visible=false;this.previousRect='';return;}
     this.target=target;target.classList.add('has-input-focus');
