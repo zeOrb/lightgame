@@ -25,6 +25,7 @@
     "global": {"map":"global","priority":2000,"modal":false},
     "rebinding": {"map": "ui", "priority": 1000, "modal": true},
     "settings": {"map": "ui", "priority": 900, "modal": true},
+    "runItems": {"map": "ui", "priority": 850, "modal": true},
     "upgrades": {"map": "ui", "priority": 800, "modal": true},
     "bestiary": {"map": "ui", "priority": 700, "modal": true},
     "pause": {"map": "ui", "priority": 600, "modal": true},

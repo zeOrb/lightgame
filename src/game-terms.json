@@ -1,0 +1,132 @@
+{
+  "Dash": {
+    "source": "Dash",
+    "color": "#abcbe8",
+    "stats": [
+      "dashEnabled"
+    ]
+  },
+  "Damage": {
+    "source": "Damage",
+    "color": "#e3a28d",
+    "stats": []
+  },
+  "Light": {
+    "source": "Light",
+    "color": "#e4cc88",
+    "stats": []
+  },
+  "MovementSpeed": {
+    "source": "Movement speed",
+    "color": "#bcd4b2",
+    "stats": [
+      "speed"
+    ]
+  },
+  "DashDistance": {
+    "source": "Dash distance",
+    "color": "#abcbe8",
+    "stats": [
+      "phaseDistance"
+    ]
+  },
+  "MaximumLight": {
+    "source": "Maximum Light",
+    "color": "#e4cc88",
+    "stats": [
+      "maxHP"
+    ]
+  },
+  "LightRestored": {
+    "source": "Light restored",
+    "color": "#e4cc88",
+    "stats": []
+  },
+  "Jump": {
+    "source": "Jump",
+    "color": "#bcd4b2",
+    "stats": []
+  },
+  "JumpStrength": {
+    "source": "Jump strength",
+    "color": "#bcd4b2",
+    "stats": [
+      "jump"
+    ]
+  },
+  "GemCollectionRange": {
+    "source": "Gem collection range",
+    "color": "#c6b4df",
+    "stats": [
+      "magnet"
+    ]
+  },
+  "StainedGlassHealing": {
+    "source": "Healing in stained-glass light",
+    "color": "#e4cc88",
+    "stats": [
+      "regen",
+      "vitralHealScale"
+    ]
+  },
+  "PassiveLightLoss": {
+    "source": "Passive Light loss",
+    "color": "#e4cc88",
+    "stats": [
+      "drainScale"
+    ]
+  },
+  "DashCooldown": {
+    "source": "Dash cooldown",
+    "color": "#abcbe8",
+    "stats": [
+      "phaseCooldown"
+    ]
+  },
+  "DamageTaken": {
+    "source": "Damage taken",
+    "color": "#e3a28d",
+    "stats": [
+      "damageScale"
+    ]
+  },
+  "GemHealing": {
+    "source": "Light restored by each gem",
+    "color": "#e4cc88",
+    "stats": [
+      "shardHeal"
+    ]
+  },
+  "Gems": {
+    "source": "Gems",
+    "color": "#c6b4df",
+    "stats": []
+  },
+  "StainedGlassLight": {
+    "source": "Stained-glass light",
+    "color": "#e4cc88",
+    "stats": []
+  },
+  "Phasing": {
+    "source": "Phasing",
+    "color": "#abcbe8",
+    "stats": []
+  },
+  "Cooldown": {
+    "source": "Cooldown",
+    "color": "#abcbe8",
+    "stats": []
+  },
+  "Healing": {
+    "source": "Healing",
+    "color": "#e4cc88",
+    "stats": []
+  },
+  "Luck": {
+    "source": "Luck",
+    "color": "#a9d491",
+    "stats": [
+      "luck"
+    ]
+  }
+}

@@ -1,4 +1,5 @@
-import {tr,onLanguageChange,localizeDOM,skillDescription} from './i18n.js';
+import {tr,onLanguageChange,localizeDOM,skillDescriptionKey} from './i18n.js';
+import {renderLocalized} from './localized-text.js';
 import {SKILLS,progression,isSkillVisible,isSkillPreview,SKILL_MAP_SIZE} from './progression.js';
 import {TreeViewport,treeKeyboardDelta,PanTail,SmoothTreeZoom} from './tree-viewport.js';
 import {PixelSkillArt,skillPosition} from './pixel-skill-art.js';
@@ -169,7 +170,7 @@ export class SkillTree {
     this.detail.classList.toggle('is-visible',!!selected);this.detail.classList.toggle('is-pinned',!!this.selected);this.detail.setAttribute('aria-hidden',String(!selected));
     if(!selected)return;
     const owned=progression.state.owned.includes(selected.id);
-    this.element.querySelector('#tree-name').textContent=tr(selected.name);this.element.querySelector('#tree-branch').textContent=selected.isRoot?tr("Source"):tr(selected.branch)+' · '+(selected.tier+1)+'/'+selected.tiers;this.element.querySelector('#tree-description').textContent=isSkillPreview(progression.state,selected.id)?'???':skillDescription(selected);
+    this.element.querySelector('#tree-name').textContent=tr(selected.name);this.element.querySelector('#tree-branch').textContent=selected.isRoot?tr("Source"):tr(selected.branch)+' · '+(selected.tier+1)+'/'+selected.tiers;const description=this.element.querySelector('#tree-description');if(isSkillPreview(progression.state,selected.id))description.textContent='???';else renderLocalized(description,skillDescriptionKey(selected));
     const conditions=[];
     if(selected.requires&&!progression.state.owned.includes(selected.requires))conditions.push(tr("Learn “{skill}”",{skill:tr(SKILLS.find(s=>s.id===selected.requires).name)}));
     if(!owned&&progression.state.points<selected.cost)conditions.push(tr("Points required: {cost} · available: {points}",{cost:selected.cost,points:progression.state.points}));

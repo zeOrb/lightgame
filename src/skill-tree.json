@@ -28,6 +28,7 @@
     "shardHeal": 22,
     "magnet": 0.65,
     "regen": 1,
+    "vitralHealScale": 1,
     "rayEntryHeal": 0,
     "rayDashHeal": 0,
     "flare": false,
@@ -40,7 +41,8 @@
     "gemPoolTier": 1,
     "comboEnabled": false,
     "dashEnabled": false,
-    "gleamDash": false
+    "gleamDash": false,
+    "luck": 0
   },
   "branches": [
     {
@@ -50,7 +52,7 @@
         {
           "id": "heart",
           "name": "Warm Heart",
-          "description": "Maximum Light +25 HP.",
+          "description": "{MaximumLight} +25 HP.",
           "cost": 4,
           "requires": "source",
           "icon": "heart",
@@ -76,7 +78,7 @@
         {
           "id": "lasting",
           "name": "Long Sunset",
-          "description": "Passive Light drain reduced by 18%.",
+          "description": "{PassiveLightLoss} −18%.",
           "cost": 18,
           "requires": "heart2",
           "icon": "hourglass",
@@ -108,7 +110,7 @@
         {
           "id": "speed",
           "name": "Quick Paws",
-          "description": "Movement speed along the spiral +15%.",
+          "description": "{MovementSpeed} along the spiral +15%.",
           "cost": 4,
           "requires": "source",
           "icon": "paw",
@@ -121,7 +123,7 @@
         {
           "id": "jump",
           "name": "High Jump",
-          "description": "Initial jump force +15%.",
+          "description": "{JumpStrength} +15%.",
           "cost": 9,
           "requires": "speed",
           "icon": "jump",
@@ -147,7 +149,7 @@
         {
           "id": "double",
           "name": "Double Jump",
-          "description": "Press Jump in midair for one extra jump.",
+          "description": "Press {Jump} in midair for one extra jump.",
           "cost": 24,
           "requires": "jump",
           "icon": "double-jump",
@@ -205,7 +207,7 @@
         {
           "id": "phaseCool",
           "name": "Short Shadow",
-          "description": "Phasing cooldown recovers 25% faster.",
+          "description": "{DashCooldown} −25%.",
           "cost": 4,
           "requires": "gleamDash",
           "icon": "dash-clock",
@@ -218,7 +220,7 @@
         {
           "id": "phaseReach",
           "name": "Long Ray",
-          "description": "Phasing distance +20%.",
+          "description": "{DashDistance} +20%.",
           "cost": 9,
           "requires": "phaseCool",
           "icon": "long-dash",
@@ -289,7 +291,7 @@
         {
           "id": "regen",
           "name": "Light Bloom",
-          "description": "Stained-glass healing is 30% faster.",
+          "description": "{StainedGlassHealing} +30%.",
           "cost": 18,
           "requires": "magnet",
           "icon": "bloom",

@@ -20,7 +20,7 @@ export class RabbitState {
       if(phasing){this.pendingHeal+=maxHP*(this.upgrades.rayDashHeal??0);this.dashHealedZones.add(zone);}
       this.entryHealedZones.add(zone);
     }
-    if(this.pendingHeal>beforeHeal){this.lightCharge=1.5;this.chargeZone={palette:zone.palette,lightStrength:1};}
+    if(this.pendingHeal>beforeHeal){this.pendingHeal=beforeHeal+(this.pendingHeal-beforeHeal)*(this.upgrades.vitralHealScale??1);this.lightCharge=1.5;this.chargeZone={palette:zone.palette,lightStrength:1};}
     this.zone=zone;this.mode=zone?RabbitMode.VITRAL:RabbitMode.NORMAL;
   }
   updateLight(light,dt,shadow,{passive=true}={}){
@@ -32,7 +32,7 @@ export class RabbitState {
     if(this.dashChargeZone)this.dashChargeZone.lightStrength=Math.min(1,this.dashCharge/.25);
     if(this.chargeZone)this.chargeZone.lightStrength=Math.min(1,this.lightCharge/.25);
     if(this.pendingHeal){light=clamp(light+this.pendingHeal,0,this.upgrades.maxHP??100);this.pendingHeal=0;this.healPulse=.65;}
-    const next=lightStep(light,dt,{...this.upgrades,...(!passive?{drainScale:0}:{}),shadow,vitral:vitral&&!this.upgrades.rayEntryHeal,vitralTime:this.vitralTime});
+    const next=lightStep(light,dt,{...this.upgrades,regen:(this.upgrades.regen??1)*(this.upgrades.vitralHealScale??1),...(!passive?{drainScale:0}:{}),shadow,vitral:vitral&&!this.upgrades.rayEntryHeal,vitralTime:this.vitralTime});
     if(vitral)this.vitralTime+=dt;
     return next;
   }

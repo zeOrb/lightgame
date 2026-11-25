@@ -26,8 +26,8 @@ msgid "Warm Heart"
 msgstr "Warm Heart"
 
 #: src/skill-tree.json
-msgid "Maximum Light +25 HP."
-msgstr "Maximum Light +25 HP."
+msgid "{MaximumLight} +25 HP."
+msgstr "{MaximumLight} +25 HP."
 
 #: src/skill-tree.json
 msgid "Sun Core"
@@ -42,8 +42,8 @@ msgid "Long Sunset"
 msgstr "Long Sunset"
 
 #: src/skill-tree.json
-msgid "Passive Light drain reduced by 18%."
-msgstr "Passive Light drain reduced by 18%."
+msgid "{PassiveLightLoss} −18%."
+msgstr "{PassiveLightLoss} −18%."
 
 #: src/skill-tree.json
 msgid "Amber Skin"
@@ -62,16 +62,16 @@ msgid "Quick Paws"
 msgstr "Quick Paws"
 
 #: src/skill-tree.json
-msgid "Movement speed along the spiral +15%."
-msgstr "Movement speed along the spiral +15%."
+msgid "{MovementSpeed} along the spiral +15%."
+msgstr "{MovementSpeed} along the spiral +15%."
 
 #: src/skill-tree.json
 msgid "High Jump"
 msgstr "High Jump"
 
 #: src/skill-tree.json
-msgid "Initial jump force +15%."
-msgstr "Initial jump force +15%."
+msgid "{JumpStrength} +15%."
+msgstr "{JumpStrength} +15%."
 
 #: src/skill-tree.json
 msgid "Through the Grass"
@@ -88,8 +88,8 @@ msgid "Double Jump"
 msgstr "Double Jump"
 
 #: src/skill-tree.json
-msgid "Press Jump in midair for one extra jump."
-msgstr "Press Jump in midair for one extra jump."
+msgid "Press {Jump} in midair for one extra jump."
+msgstr "Press {Jump} in midair for one extra jump."
 
 #: src/skill-tree.json
 msgid "Clear Ray"
@@ -130,16 +130,16 @@ msgid "Short Shadow"
 msgstr "Short Shadow"
 
 #: src/skill-tree.json
-msgid "Phasing cooldown recovers 25% faster."
-msgstr "Phasing cooldown recovers 25% faster."
+msgid "{DashCooldown} −25%."
+msgstr "{DashCooldown} −25%."
 
 #: src/skill-tree.json
 msgid "Long Ray"
 msgstr "Long Ray"
 
 #: src/skill-tree.json
-msgid "Phasing distance +20%."
-msgstr "Phasing distance +20%."
+msgid "{DashDistance} +20%."
+msgstr "{DashDistance} +20%."
 
 #: src/skill-tree.json
 msgid "Light from Shadow"
@@ -182,8 +182,8 @@ msgid "Light Bloom"
 msgstr "Light Bloom"
 
 #: src/skill-tree.json
-msgid "Stained-glass healing is 30% faster."
-msgstr "Stained-glass healing is 30% faster."
+msgid "{StainedGlassHealing} +30%."
+msgstr "{StainedGlassHealing} +30%."
 
 #: src/skill-tree.json
 msgid "Solar Flare"
@@ -435,6 +435,54 @@ msgid ""
 msgstr ""
 "Unlocks combos: chain varied actions to earn up to ×3 points from gems. "
 "Repeated actions give less; damage, falling or a long pause breaks the chain."
+
+#: src/treasury-tree.json
+msgid "Magic Find"
+msgstr "Magic Find"
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 1"
+msgstr "Lucky Charm 1"
+
+#: src/treasury-tree.json
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 2"
+msgstr "Lucky Charm 2"
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck2.description"
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 3"
+msgstr "Lucky Charm 3"
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck3.description"
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 4"
+msgstr "Lucky Charm 4"
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck4.description"
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 5"
+msgstr "Lucky Charm 5"
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck5.description"
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
 
 #: src/settings.js
 #. Stable UI key: dash

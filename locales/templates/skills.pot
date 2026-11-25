@@ -24,7 +24,7 @@ msgid "Warm Heart"
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Maximum Light +25 HP."
+msgid "{MaximumLight} +25 HP."
 msgstr ""
 
 #: src/skill-tree.json
@@ -40,7 +40,7 @@ msgid "Long Sunset"
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Passive Light drain reduced by 18%."
+msgid "{PassiveLightLoss} −18%."
 msgstr ""
 
 #: src/skill-tree.json
@@ -60,7 +60,7 @@ msgid "Quick Paws"
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Movement speed along the spiral +15%."
+msgid "{MovementSpeed} along the spiral +15%."
 msgstr ""
 
 #: src/skill-tree.json
@@ -68,7 +68,7 @@ msgid "High Jump"
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Initial jump force +15%."
+msgid "{JumpStrength} +15%."
 msgstr ""
 
 #: src/skill-tree.json
@@ -85,7 +85,7 @@ msgid "Double Jump"
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Press Jump in midair for one extra jump."
+msgid "Press {Jump} in midair for one extra jump."
 msgstr ""
 
 #: src/skill-tree.json
@@ -124,7 +124,7 @@ msgid "Short Shadow"
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Phasing cooldown recovers 25% faster."
+msgid "{DashCooldown} −25%."
 msgstr ""
 
 #: src/skill-tree.json
@@ -132,7 +132,7 @@ msgid "Long Ray"
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Phasing distance +20%."
+msgid "{DashDistance} +20%."
 msgstr ""
 
 #: src/skill-tree.json
@@ -176,7 +176,7 @@ msgid "Light Bloom"
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Stained-glass healing is 30% faster."
+msgid "{StainedGlassHealing} +30%."
 msgstr ""
 
 #: src/skill-tree.json
@@ -419,6 +419,54 @@ msgstr ""
 msgid ""
 "Unlocks combos: chain varied actions to earn up to ×3 points from gems. "
 "Repeated actions give less; damage, falling or a long pause breaks the chain."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Magic Find"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 1"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "{Luck} +20."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 2"
+msgstr ""
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck2.description"
+msgid "{Luck} +20."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 3"
+msgstr ""
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck3.description"
+msgid "{Luck} +20."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 4"
+msgstr ""
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck4.description"
+msgid "{Luck} +20."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 5"
+msgstr ""
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck5.description"
+msgid "{Luck} +20."
 msgstr ""
 
 #: src/settings.js

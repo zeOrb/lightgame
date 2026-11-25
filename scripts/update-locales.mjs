@@ -5,6 +5,10 @@ import {fileURLToPath} from 'node:url';
 const root=new URL('../',import.meta.url),read=file=>readFileSync(new URL(file,root),'utf8');
 const template=readCatalogGroup(fileURLToPath(new URL('locales/templates/',root)),'pot');
 template.translations['']??={};
+for(const [id,term] of Object.entries(JSON.parse(read('src/game-terms.json')))){
+  const context='term.'+id;template.translations[context]??={};
+  template.translations[context][term.source]={msgctxt:context,msgid:term.source,msgstr:[''],comments:{reference:'src/game-terms.json',extracted:'Use {'+id+'} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.'}};
+}
 function add(text,reference){
   if(!text||/[<>]/.test(text))return;
   if(/[А-Яа-яЁё]/.test(text))throw new Error(`Localization source must be English: ${reference}: ${text}`);
@@ -13,14 +17,14 @@ function add(text,reference){
   const old=template.translations[''][text];
   template.translations[''][text]={...old,msgid:text,msgstr:[''],comments:{...old?.comments,reference}};
 }
-const files=['src/settings.js','src/combo-hud.js','src/main.js','src/skill-tree.js','src/bestiary.js','src/shard-counter.js','src/level-diagnostics.js','src/threats.js'];
+const files=['src/settings.js','src/run-item-ui.js','src/combo-hud.js','src/main.js','src/skill-tree.js','src/bestiary.js','src/shard-counter.js','src/level-diagnostics.js','src/threats.js'];
 for(const file of files){
   const source=read(file),ast=parseAst(source);
   function visit(node){
     if(!node||typeof node!=='object')return;
     const reference=file+':'+(source.slice(0,node.start).split('\n').length);
     if(node.type==='Literal'&&typeof node.value==='string'&&template.translations[''][node.value])add(node.value,reference);
-    if(node.type==='CallExpression'&&node.callee?.name==='tr'){
+    if(node.type==='CallExpression'&&['tr','toastLocalized'].includes(node.callee?.name)){
       const collect=value=>{if(value?.type==='Literal'&&typeof value.value==='string')add(value.value,reference);else if(value?.type==='ConditionalExpression'){collect(value.consequent);collect(value.alternate);}};
       collect(node.arguments[0]);
     }
@@ -30,7 +34,7 @@ for(const file of files){
   visit(ast);
 }
 for(const file of ['index.html',...files])for(const match of read(file).matchAll(/data-i18n(?:-(?:aria-label|title|content))?="([^"]+)"/g))add(match[1],file);
-for(const file of ['src/skill-tree.json','src/treasury-tree.json','src/enemies.json','src/collectibles.json','src/floors.json']){
+for(const file of ['src/run-items.json','src/skill-tree.json','src/treasury-tree.json','src/enemies.json','src/collectibles.json','src/floors.json']){
   function visit(value){if(!value||typeof value!=='object')return;for(const [key,item] of Object.entries(value)){if(['name','description'].includes(key)&&typeof item==='string')add(item,file);else if(typeof item==='object')visit(item);}}
   visit(JSON.parse(read(file)));
 }

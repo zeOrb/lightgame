@@ -15,11 +15,15 @@ msgstr ""
 msgid "Air gem"
 msgstr ""
 
-#: src/main.js:469
+#: src/run-items.json
+msgid "Amber Magnet"
+msgstr ""
+
+#: src/main.js:494
 msgid "Arena"
 msgstr ""
 
-#: src/main.js:469
+#: src/main.js:494
 msgid "Arena cleared"
 msgstr ""
 
@@ -27,15 +31,23 @@ msgstr ""
 msgid "Automatic level corrections"
 msgstr ""
 
+#: src/run-items.json
+msgid "Azure Feather"
+msgstr ""
+
 #: index.html
 msgid "Back"
 msgstr ""
 
-#: src/skill-tree.js:155
+#: src/run-items.json
+msgid "Bright Dew"
+msgstr ""
+
+#: src/skill-tree.js:156
 msgid "COLLECTED {count}"
 msgstr ""
 
-#: src/skill-tree.js:155
+#: src/skill-tree.js:156
 msgid "CRYSTAL AWAKENED"
 msgstr ""
 
@@ -43,8 +55,28 @@ msgstr ""
 msgid "Chest break"
 msgstr ""
 
-#: src/main.js:721
+#: src/run-item-ui.js:30
+msgid "Choose an item"
+msgstr ""
+
+#: src/run-items.json
+msgid "Common"
+msgstr ""
+
+#: src/main.js:748
 msgid "Controls reversed"
+msgstr ""
+
+#: src/run-items.json
+msgid "Damage taken −10%."
+msgstr ""
+
+#: src/run-items.json
+msgid "Dash cooldown −10%."
+msgstr ""
+
+#: src/run-items.json
+msgid "Dash distance +15%."
 msgstr ""
 
 #: src/combo-hud.js:12
@@ -59,15 +91,19 @@ msgstr ""
 msgid "Eclipse Bell · jump over it or pass through with Phasing."
 msgstr ""
 
-#: src/main.js:722
+#: src/threats.js:5
+msgid "Eclipse Bell · jump over it or pass through with {Phasing}."
+msgstr ""
+
+#: src/main.js:749
 msgid "Entering floor {floor}"
 msgstr ""
 
-#: src/main.js:367
+#: src/main.js:392
 msgid "Falling"
 msgstr ""
 
-#: src/main.js:722
+#: src/main.js:749
 msgid "Final arch · the crystal is close"
 msgstr ""
 
@@ -79,7 +115,7 @@ msgstr ""
 msgid "Floor 12 / 12"
 msgstr ""
 
-#: src/main.js:421
+#: src/main.js:446
 msgid "Floor {floor} / {total}"
 msgstr ""
 
@@ -87,8 +123,16 @@ msgstr ""
 msgid "Floor “{floor}”: {category} #{index}, section {from} → {to}."
 msgstr ""
 
+#: src/run-item-ui.js:32
+msgid "For this run · effects stack"
+msgstr ""
+
 #: index.html
 msgid "Forward"
+msgstr ""
+
+#: src/run-items.json
+msgid "Gem collection range +0.35."
 msgstr ""
 
 #: src/threats.js:7
@@ -107,12 +151,24 @@ msgstr ""
 msgid "Glints: 0"
 msgstr ""
 
-#: src/main.js:469
+#: src/main.js:494
 msgid "Guardian · {hp} / {maxHP} · Enemies: {count}"
 msgstr ""
 
-#: src/main.js:721
+#: src/run-items.json
+msgid "Healing in stained-glass light +20%."
+msgstr ""
+
+#: src/run-items.json
+msgid "Honey Shard"
+msgstr ""
+
+#: src/main.js:748
 msgid "In the sunset light"
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Initial jump force +15%."
 msgstr ""
 
 #: src/threats.js:6
@@ -127,15 +183,19 @@ msgstr ""
 msgid "Jump"
 msgstr ""
 
-#: src/skill-tree.js:162
+#: src/run-items.json
+msgid "Jump strength +8%."
+msgstr ""
+
+#: src/skill-tree.js:163
 msgid "LEARNED"
 msgstr ""
 
-#: src/main.js:723
+#: src/main.js:750
 msgid "Last Spark · light restored!"
 msgstr ""
 
-#: src/skill-tree.js:174
+#: src/skill-tree.js:175
 msgid "Learn “{skill}”"
 msgstr ""
 
@@ -143,15 +203,63 @@ msgstr ""
 msgid "Left"
 msgstr ""
 
-#: src/main.js:93
+#: src/run-items.json
+msgid "Legendary"
+msgstr ""
+
+#: src/run-items.json
+msgid "Light restored by each gem +5."
+msgstr ""
+
+#: src/run-items.json
+msgid "Maximum Light +20. Restore 20 Light."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Maximum Light +25 HP."
+msgstr ""
+
+#: src/run-items.json
+msgid "Moon Clover"
+msgstr ""
+
+#: src/run-items.json
+msgid "Movement speed +10%."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Movement speed along the spiral +15%."
+msgstr ""
+
+#: src/main.js:102
 msgid "Open the game in a browser with hardware acceleration enabled."
+msgstr ""
+
+#: src/run-item-ui.js:37
+msgid "Owned: {count}"
 msgstr ""
 
 #: index.html
 msgid "PATH TO THE CRYSTAL"
 msgstr ""
 
-#: src/main.js:830
+#: src/skill-tree.json
+msgid "Passive Light drain reduced by 18%."
+msgstr ""
+
+#: src/run-items.json
+msgid "Passive Light loss −10%."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Phasing cooldown recovers 25% faster."
+msgstr ""
+
+#: src/skill-tree.json
+msgid "Phasing distance +20%."
+msgstr ""
+
+#: src/main.js:859
 msgid "Phasing {seconds}s"
 msgstr ""
 
@@ -159,7 +267,7 @@ msgstr ""
 msgid "Placement issues corrected: {count}"
 msgstr ""
 
-#: src/skill-tree.js:175
+#: src/skill-tree.js:176
 msgid "Points required: {cost} · available: {points}"
 msgstr ""
 
@@ -169,16 +277,32 @@ msgid ""
 "tower."
 msgstr ""
 
+#: src/skill-tree.json
+msgid "Press Jump in midair for one extra jump."
+msgstr ""
+
 #: src/shard-counter.js:39
 msgid "Progression points: {points}"
 msgstr ""
 
-#: src/skill-tree.js:155
+#: src/run-items.json
+msgid "Quick Prism"
+msgstr ""
+
+#: src/skill-tree.js:156
 msgid "RUN ENDED"
 msgstr ""
 
-#: src/main.js:666
+#: src/run-items.json
+msgid "Rare"
+msgstr ""
+
+#: src/main.js:693
 msgid "Refraction! Controls reversed for 2.5 seconds"
+msgstr ""
+
+#: src/run-item-ui.js:39
+msgid "Reroll · {count}"
 msgstr ""
 
 #: index.html
@@ -201,15 +325,15 @@ msgstr ""
 msgid "Shadow begins below 30% Light"
 msgstr ""
 
-#: src/main.js:408
+#: src/main.js:433
 msgid "Shadow begins below {threshold}% Light"
 msgstr ""
 
-#: src/main.js:690
+#: src/main.js:717
 msgid "Shadow dispelled!"
 msgstr ""
 
-#: src/main.js:721
+#: src/main.js:748
 msgid "Shadow drains your light!"
 msgstr ""
 
@@ -217,7 +341,11 @@ msgstr ""
 msgid "Shadow threshold: 30% Light"
 msgstr ""
 
-#: src/main.js:721
+#: src/run-items.json
+msgid "Silver Shell"
+msgstr ""
+
+#: src/main.js:748
 msgid "Slowed by refraction"
 msgstr ""
 
@@ -225,15 +353,19 @@ msgstr ""
 msgid "Space"
 msgstr ""
 
-#: src/main.js:721
+#: src/run-items.json
+msgid "Spring Leaf"
+msgstr ""
+
+#: src/main.js:748
 msgid "Stained glass · +{amount}/s"
 msgstr ""
 
-#: src/main.js:721
+#: src/main.js:748
 msgid "Stained glass · burst healing"
 msgstr ""
 
-#: src/main.js:684
+#: src/main.js:711
 msgid "Stained-glass breakthrough · shadow dispelled!"
 msgstr ""
 
@@ -241,8 +373,16 @@ msgstr ""
 msgid "Stained-glass crossing"
 msgstr ""
 
-#: src/main.js:709
+#: src/skill-tree.json
+msgid "Stained-glass healing is 30% faster."
+msgstr ""
+
+#: src/main.js:733
 msgid "Stained-glass light · healing accelerates while you stay in the light"
+msgstr ""
+
+#: src/run-items.json
+msgid "Steady Flame"
 msgstr ""
 
 #: src/combo-hud.js:12
@@ -253,35 +393,47 @@ msgstr ""
 msgid "Sun Bunny · Tower of the Last Light"
 msgstr ""
 
-#: src/skill-tree.js:156
+#: src/skill-tree.js:157
 msgid "Sunlight skill tree"
 msgstr ""
 
-#: src/main.js:644
+#: src/run-items.json
+msgid "Swift Thread"
+msgstr ""
+
+#: src/main.js:669
 msgid "The bell knocked you off the shelf…"
 msgstr ""
 
-#: src/main.js:549
+#: src/main.js:574
 msgid "The shelf is moving! It carries you inward — watch the edges."
 msgstr ""
 
-#: src/main.js:650
+#: src/main.js:675
 msgid "There is no shelf beneath your paws…"
 msgstr ""
 
-#: src/main.js:666
+#: src/main.js:693
 msgid "Thick light · slowed for 3 seconds"
+msgstr ""
+
+#: src/run-items.json
+msgid "Uncommon"
 msgstr ""
 
 #: src/floors.json
 msgid "Upper tier"
 msgstr ""
 
-#: src/skill-tree.js:155
+#: src/skill-tree.js:156
 msgid "VICTORY +{points}"
 msgstr ""
 
-#: src/main.js:93
+#: src/run-items.json
+msgid "Warm Core"
+msgstr ""
+
+#: src/main.js:102
 msgid "WebGL required"
 msgstr ""
 
@@ -293,7 +445,7 @@ msgstr ""
 msgid "[Sunny: level issue corrected]"
 msgstr ""
 
-#: src/main.js:410
+#: src/main.js:435
 msgid "along the spiral"
 msgstr ""
 
@@ -347,18 +499,70 @@ msgstr ""
 msgid "stained glass"
 msgstr ""
 
-#: src/main.js:646
+#: src/run-items.json
+msgid "{DamageTaken} −10%."
+msgstr ""
+
+#: src/run-items.json
+msgid "{DashCooldown} −10%."
+msgstr ""
+
+#: src/run-items.json
+msgid "{DashDistance} +15%."
+msgstr ""
+
+#: src/run-items.json
+msgid "{GemCollectionRange} +0.35."
+msgstr ""
+
+#: src/run-items.json
+msgid "{GemHealing} +5."
+msgstr ""
+
+#: src/run-items.json
+msgid "{JumpStrength} +8%."
+msgstr ""
+
+#: src/run-items.json
+msgid "{Luck} +25."
+msgstr ""
+
+#: src/run-items.json
+msgid "{MaximumLight} +20. {LightRestored}: 20."
+msgstr ""
+
+#: src/run-items.json
+msgid "{MovementSpeed} +10%."
+msgstr ""
+
+#: src/run-items.json
+msgid "{MovementSpeed} +18%."
+msgstr ""
+
+#: src/run-items.json
+msgid "{PassiveLightLoss} −10%."
+msgstr ""
+
+#: src/run-items.json
+msgid "{StainedGlassHealing} +20%."
+msgstr ""
+
+#: src/main.js:736
+msgid "{StainedGlassLight} · healing accelerates while you stay in the light"
+msgstr ""
+
+#: src/main.js:671
 msgid "{name} · −{damage} Light"
 msgstr ""
 
-#: src/skill-tree.js:178
+#: src/skill-tree.js:179
 msgid "✦ Learned"
 msgstr ""
 
-#: src/skill-tree.js:178
+#: src/skill-tree.js:179
 msgid "✦ {cost} · Select this skill"
 msgstr ""
 
-#: src/skill-tree.js:161
+#: src/skill-tree.js:162
 msgid "✦ {points} pts."
 msgstr ""

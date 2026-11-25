@@ -27,8 +27,8 @@ msgid "Warm Heart"
 msgstr "Тёплое сердце"
 
 #: src/skill-tree.json
-msgid "Maximum Light +25 HP."
-msgstr "Максимальный свет +25 HP."
+msgid "{MaximumLight} +25 HP."
+msgstr "{MaximumLight} +25 HP."
 
 #: src/skill-tree.json
 msgid "Sun Core"
@@ -43,8 +43,8 @@ msgid "Long Sunset"
 msgstr "Долгий закат"
 
 #: src/skill-tree.json
-msgid "Passive Light drain reduced by 18%."
-msgstr "Пассивный расход света меньше на 18%."
+msgid "{PassiveLightLoss} −18%."
+msgstr "{PassiveLightLoss} −18%."
 
 #: src/skill-tree.json
 msgid "Amber Skin"
@@ -63,16 +63,16 @@ msgid "Quick Paws"
 msgstr "Быстрые лапки"
 
 #: src/skill-tree.json
-msgid "Movement speed along the spiral +15%."
-msgstr "Скорость движения по спирали +15%."
+msgid "{MovementSpeed} along the spiral +15%."
+msgstr "{MovementSpeed} по спирали +15%."
 
 #: src/skill-tree.json
 msgid "High Jump"
 msgstr "Высокий прыжок"
 
 #: src/skill-tree.json
-msgid "Initial jump force +15%."
-msgstr "Начальная сила прыжка +15%."
+msgid "{JumpStrength} +15%."
+msgstr "{JumpStrength} +15%."
 
 #: src/skill-tree.json
 msgid "Through the Grass"
@@ -90,8 +90,8 @@ msgid "Double Jump"
 msgstr "Двойной прыжок"
 
 #: src/skill-tree.json
-msgid "Press Jump in midair for one extra jump."
-msgstr "Пробел в воздухе: один дополнительный прыжок."
+msgid "Press {Jump} in midair for one extra jump."
+msgstr "Нажми «{Jump}» в воздухе для дополнительного прыжка."
 
 #: src/skill-tree.json
 msgid "Clear Ray"
@@ -132,16 +132,16 @@ msgid "Short Shadow"
 msgstr "Короткая тень"
 
 #: src/skill-tree.json
-msgid "Phasing cooldown recovers 25% faster."
-msgstr "Перезарядка Phasing на 25% быстрее."
+msgid "{DashCooldown} −25%."
+msgstr "{DashCooldown} −25%."
 
 #: src/skill-tree.json
 msgid "Long Ray"
 msgstr "Длинный луч"
 
 #: src/skill-tree.json
-msgid "Phasing distance +20%."
-msgstr "Дальность Phasing +20%."
+msgid "{DashDistance} +20%."
+msgstr "{DashDistance} +20%."
 
 #: src/skill-tree.json
 msgid "Light from Shadow"
@@ -184,8 +184,8 @@ msgid "Light Bloom"
 msgstr "Цветение света"
 
 #: src/skill-tree.json
-msgid "Stained-glass healing is 30% faster."
-msgstr "Лечение витража ускоряется на 30%."
+msgid "{StainedGlassHealing} +30%."
+msgstr "{StainedGlassHealing} +30%."
 
 #: src/skill-tree.json
 msgid "Solar Flare"
@@ -439,6 +439,54 @@ msgid ""
 msgstr ""
 "Открывает комбо: сочетай разные действия, чтобы получать до ×3 очков за "
 "камни. Повторы дают меньше; урон, падение или долгая пауза обрывают цепочку."
+
+#: src/treasury-tree.json
+msgid "Magic Find"
+msgstr "Волшебная удача"
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 1"
+msgstr "Счастливый талисман 1"
+
+#: src/treasury-tree.json
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 2"
+msgstr "Счастливый талисман 2"
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck2.description"
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 3"
+msgstr "Счастливый талисман 3"
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck3.description"
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 4"
+msgstr "Счастливый талисман 4"
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck4.description"
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Lucky Charm 5"
+msgstr "Счастливый талисман 5"
+
+#: src/treasury-tree.json
+msgctxt "skill.treasuryLuck5.description"
+msgid "{Luck} +20."
+msgstr "{Luck} +20."
 
 #: src/settings.js
 #. Stable UI key: dash

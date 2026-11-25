@@ -35,7 +35,11 @@
       "topOffset": 0.68
     },
     "defaultTier": "bronze",
-    "tierWeights": {"bronze": 60, "silver": 30, "gold": 10},
+    "tierWeights": {
+      "bronze": 60,
+      "silver": 30,
+      "gold": 10
+    },
     "tiers": {
       "bronze": {
         "visuals": {
@@ -63,10 +67,9 @@
         },
         "rewards": [
           {
-            "type": "gems",
-            "count": [
-              3,
-              6
+            "type": "item-choice",
+            "pools": [
+              "starter"
             ]
           }
         ]
@@ -97,10 +100,9 @@
         },
         "rewards": [
           {
-            "type": "gems",
-            "count": [
-              5,
-              9
+            "type": "item-choice",
+            "pools": [
+              "starter"
             ]
           }
         ]
@@ -131,10 +133,9 @@
         },
         "rewards": [
           {
-            "type": "gems",
-            "count": [
-              8,
-              12
+            "type": "item-choice",
+            "pools": [
+              "starter"
             ]
           }
         ]

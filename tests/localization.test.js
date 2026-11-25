@@ -26,8 +26,8 @@ test('runtime catalogs match PO files and every gameplay skill has an English tr
   for(const entry of parseCatalog(gettext.po.compile(english)).values())assert.ok(entry.value,entry.source);
 });
 
-test('five PO categories keep every translation key in exactly one file',()=>{
-  assert.equal(Object.keys(CATALOG_CATEGORIES).length,5);
+test('six PO categories keep every translation key in exactly one file',()=>{
+  assert.equal(Object.keys(CATALOG_CATEGORIES).length,6);
   for(const language of ['ru','en','templates']){
     const extension=language==='templates'?'pot':'po',keys=new Set();
     for(const category of Object.keys(CATALOG_CATEGORIES)){
@@ -44,7 +44,7 @@ test('five PO categories keep every translation key in exactly one file',()=>{
     assert.equal(keys.size,Object.keys(messages.en).length);
   }
   assert.equal(categoryForEntry({msgid:'Warm Heart'}),'skills');
-  assert.equal(categoryForEntry({msgid:'Maximum Light +25 HP.'}),'skills');
+  assert.equal(categoryForEntry({msgid:'{MaximumLight} +25 HP.'}),'skills');
   assert.equal(categoryForEntry({msgctxt:'apply',msgid:'Apply'}),'buttons');
 });
 

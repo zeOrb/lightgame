@@ -1,4 +1,10 @@
 import {Combo} from './combo.js';
+import {renderLocalized} from './localized-text.js';
+import './localized-text.css';
+import {RunItems} from './run-items.js';
+import runItemConfig from './run-items.json' with {type:'json'};
+import {RunItemUI} from './run-item-ui.js';
+import {PauseItems} from './pause-items.js';
 import {chestBounce} from './chest-bounce.js';
 import {wallBayCenter,windowSteps} from './wall-layout.js';
 import {createChestModel} from './chest-model.js';
@@ -17,7 +23,7 @@ import {VineLeafParticles} from './vine-leaf-particles.js';
 import {showLevelDiagnostics} from './level-diagnostics.js';
 import './level-diagnostics.css';
 import {RandomManager,randomManager,createVisualRandom} from './random-manager.js';
-import {chestTier,chooseChestTier,rollChestRewards} from './chest-rewards.js';
+import {chestTier,chooseChestTier,rollChestRewards,ChestRewardDispatcher} from './chest-rewards.js';
 import {ShelfTravel,sweepShelfLanding,shelfSupport} from './shelf-travel.js';
 import {FLOOR_CONFIG,FLOORS,LEVEL_DIAGNOSTICS,TOTAL_SECTIONS,floorForSection,placementAt,stepAt} from './floor-config.js';
 import {TowerHierarchy} from './tower-hierarchy.js';
@@ -77,7 +83,7 @@ import {Abilities,AbilityType,AbilityInfo,applySpiralPhase,phaseHitsTarget} from
 import {PhaseTrail} from './phase-trail.js';
 import {createAncientLibrary} from './ancient-library.js';
 import {FloorGates} from './floor-gates.js';
-import {RUN_UPGRADES,progression} from './progression.js';
+import {RUN_UPGRADES,progression,skillStats} from './progression.js';
 import {SkillTree} from './skill-tree.js';
 import {BeastVitralBurst} from './beast-vitral-burst.js';
 import { CatcherRay } from './catcher-ray.js';
@@ -216,7 +222,7 @@ for(let s=0;s<=END+1;s++) {
     const chestLane=placementAt('chests',s).lane??0,p=route(s,chestLane),o=new THREE.Group(),{width:w,height:h,depth:d}=INTERACTABLES.chest.model;o.position.set(p.x,p.y+.04,p.z);o.rotation.y=-p.theta;scene.add(o);
     const tierId=placementAt('chests',s).tier??chooseChestTier(randomManager,floorForSection(s).id,s,INTERACTABLES.chest),tier=chestTier(INTERACTABLES.chest,tierId);
     const {lid}=createChestModel(o,{width:w,height:h,depth:d},tier.visuals);
-    chests.push({s,lane:chestLane,o,lid,tierId,rewards:tier.rewards,broken:false,top:p.y+INTERACTABLES.chest.collision.topOffset,radius:INTERACTABLES.chest.collision.radius});
+    chests.push({s,lane:chestLane,o,lid,tierId,rewards:placementAt('chests',s).rewards??tier.rewards,broken:false,top:p.y+INTERACTABLES.chest.collision.topOffset,radius:INTERACTABLES.chest.collision.radius});
   }
   if(placementAt('bottles',s) && !isGap(s)) {
     const lane=placementAt('bottles',s).lane??0,p=route(s,lane);const o=new THREE.Group();o.position.set(p.x,p.y+.55,p.z);scene.add(o);
@@ -348,10 +354,27 @@ const playerRoute=(s,lane=0)=>shelfTravel.position(s,lane);
 initializeMainMenu();
 const keys=new Set();const inputManager=new InputManager();let inputDevices;let jumpQueued=false;let audio=null,masterAudio=null,muted=preferences.volume===0;
 const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent=tr("Preparing run…");fadeToNextRun(()=>location.assign(nextRunURL(location.href)));});
+const runItems=new RunItems(runItemConfig,randomManager);
+runItems.reset(skillStats(progression.state),progression.state.owned);
+const runItemUI=new RunItemUI(runItems,id=>{
+  const item=runItems.choose(id);if(!item)return;
+  runItems.apply(RUN_UPGRADES);light=clamp(light+(item.restoreLight??0),0,RUN_UPGRADES.maxHP);
+  lightBarRecovery.receive(light);keys.clear();inputDevices?.clear();inputManager.clear();updateHUD();tone(880,.2);
+},()=>{keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=phaseQueued=flareQueued=false;});
+const pauseItems=new PauseItems(runItems,$('modal').querySelector('.modal-card'));
+const chestRewardConsumers=new ChestRewardDispatcher({
+  gem:(reward,{chest:c,index:i,count})=>{
+    const itemS=c.s+(i-(count-1)/2)*.13,p=route(itemS,0),gem=createGemPickable(reward.variant,{s:itemS,lane:0,position:new THREE.Vector3(p.x,p.y+.035,p.z)});
+    scene.add(gem.o);towerHierarchy.worldDriven(gem.o,floorForSection(itemS).index);gem.fromChest=true;
+    gem.drop={start:visualTime,originX:p.x,fromY:p.y+.035,velocity:2.2+RandomManager.graphics()*1.5,drift:(RandomManager.graphics()-.5)*1.5};gem.o.position.y+=.5;glints.push(gem);
+  },
+  'item-choice':(reward,{chest,index})=>runItems.request(`${floorForSection(chest.s).id}:${chest.s}:${index}`,reward.pools)
+});
 function ensureAudio(){audio??=new (window.AudioContext||window.webkitAudioContext)();if(!masterAudio){masterAudio=audio.createGain();masterAudio.gain.value=preferences.volume;masterAudio.connect(audio.destination);}audio.resume();return masterAudio;}
 function tone(freq=660,length=.15){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(freq,audio.currentTime);gain.gain.setValueAtTime(.055,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+length);osc.connect(gain);gain.connect(ensureAudio());osc.start();osc.stop(audio.currentTime+length);}
 function vitralAbsorbSound(){if(muted)return;audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();playVitralAbsorb(audio,ensureAudio());}
 function toast(text){$('toast').textContent=text;$('toast').style.opacity=1;toastTime=4;}
+function toastLocalized(key,values){renderLocalized($('toast'),key,values);$('toast').style.opacity=1;toastTime=4;}
 function beginRabbitFall(outward,message,launched=true){
   combo.end();
   if(!launched){
@@ -368,15 +391,15 @@ function beginRabbitFall(outward,message,launched=true){
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
   abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent=tr("Falling");
 }
-function reset(){combo.reset();secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent=tr("along the spiral");for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function reset(){runItems.reset(skillStats(progression.state),progression.state.owned);runItems.apply(RUN_UPGRADES);runItemUI.sync();combo.reset();secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent=tr("along the spiral");for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
 function start({boss=false}={}){frameClock.reset();skillTree.element.hidden=true;reset();if(boss&&arenas.arenas.length){const a=arenas.arenas[0];s=a.s;arenas.enter(a.s-.01,a.s,route(a.s));}state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';$('world').classList.add('is-paused');keys.clear();inputDevices?.clear();inputManager.clear();showModal('',t('pause'),'',t('resume'));$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('world').classList.remove('is-paused');$('modal').hidden=true;}}
 function breakChest(c){
   if(c.broken)return false;c.broken=true;c.o.visible=false;
   const pool=Math.max(1,Math.min(RUN_UPGRADES.gemPoolTier,COLLECTIBLES.variants.length));
-  const loot=rollChestRewards(randomManager,floorForSection(c.s).id,c.s,c.rewards,{poolSize:pool}).map(reward=>{if(reward.type!=='gem')throw new Error('Missing chest reward consumer: '+reward.type);return reward.variant;}),count=loot.length;
-  for(let i=0;i<count;i++){const itemS=c.s+(i-(count-1)/2)*.13,p=route(itemS,0),gem=createGemPickable(loot[i],{s:itemS,lane:0,position:new THREE.Vector3(p.x,p.y+.035,p.z)});scene.add(gem.o);towerHierarchy.worldDriven(gem.o,floorForSection(itemS).index);gem.fromChest=true;gem.drop={start:visualTime,originX:p.x,fromY:p.y+.035,velocity:2.2+RandomManager.graphics()*1.5,drift:(RandomManager.graphics()-.5)*1.5};gem.o.position.y+=.5;glints.push(gem);}
+  const rewards=rollChestRewards(randomManager,floorForSection(c.s).id,c.s,c.rewards,{poolSize:pool});
+  chestRewardConsumers.consume(rewards,{chest:c});
   combo.add('chest',c);tone(260,.16);return true;
 }
 function finish(won){if(state==='won'||state==='lost')return;if(won)progression.award(VICTORY_BONUS);state=won?'won':'lost';keys.clear();inputDevices?.clear();inputManager.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;tone(won?1046:164,won?1.8:.6);skillTree.open(won,collected,won?VICTORY_BONUS:0);}
@@ -639,7 +662,7 @@ function update(dt){
   if(landedSpring)activateSpring(landedSpring);
   if(knocked){height=knocked.height;velocity=0;}
   if(flareQueued&&abilities.use(AbilityType.FLARE)){flareFrame=true;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+height+.5,afterMove.z),glassGlowPalette);tone(1150,.3);}flareQueued=false;
-  for(const threat of threats)if(ThreatInfo[threat.type]&&!threat.introduced&&Math.abs(s-threat.s)<2.3){threat.introduced=true;toast(tr(ThreatInfo[threat.type].hint));tone(320,.16);}
+  for(const threat of threats)if(ThreatInfo[threat.type]&&!threat.introduced&&Math.abs(s-threat.s)<2.3){threat.introduced=true;toastLocalized(ThreatInfo[threat.type].hint);tone(320,.16);}
   const threatHit=phasingFrame||rescueInvul>0?null:consumeThreatHit(threats,{s,lane,height},time);
   if(threatHit){
     if(threatHit.type===ThreatType.PENDULUM){
@@ -710,7 +733,7 @@ function update(dt){
   }
 
   currentVitralZone=windowLight.sampleLight(new THREE.Vector3(lightPosition.x,lightPosition.y,lightPosition.z),height);
-  if(currentVitralZone&&!wasInVitral){if(height>.12||phasingFrame)combo.add('vitral',currentVitralZone);if(!RUN_UPGRADES.rayEntryHeal)tone(1100,.3);toast(tr("Stained-glass light · healing accelerates while you stay in the light"));}
+  if(currentVitralZone&&!wasInVitral){if(height>.12||phasingFrame)combo.add('vitral',currentVitralZone);if(!RUN_UPGRADES.rayEntryHeal)tone(1100,.3);toastLocalized("{StainedGlassLight} · healing accelerates while you stay in the light");}
   rabbitState.setVitral(currentVitralZone,phasingFrame,height>.025||velocity>0);
   if(phasingFrame||rescueInvul>0)inShadow=false;
   const absorbedVitral=rabbitState.pendingHeal>0;
@@ -775,13 +798,15 @@ registerInputContext('global',()=>true,frame=>{
 });
 registerInputContext('rebinding',()=>settingsUI.isCapturing,frame=>settingsUI.handleInput(frame),control=>settingsUI.captureRaw(control));
 registerInputContext('settings',()=>settingsUI.isOpen,frame=>settingsUI.handleInput(frame));
+registerInputContext('runItems',()=>runItemUI.isOpen,frame=>runItemUI.handleInput(frame));
 registerInputContext('upgrades',()=>!skillTree.element.hidden,frame=>skillTree.handleInput(frame));
 registerInputContext('bestiary',()=>document.body.classList.contains('bestiary-open'),frame=>{
   document.dispatchEvent(new CustomEvent('sunny:bestiary-input',{detail:frame}));
 });
 function handleMenuInput(surface,frame){
   if(frame.pressed.has('pause')&&state==='paused'){pause();return;}
-  const buttons=[...surface.querySelectorAll('button:not(:disabled)')];
+  if(state==='paused'&&surface===$('modal')&&pauseItems.handleInput(frame))return;
+  const buttons=[...surface.querySelectorAll('button:not(:disabled)')].filter(button=>!button.closest('[hidden]'));
   const direction=frame.uiPressed.has('down')?1:frame.uiPressed.has('up')?-1:0;
   if(direction){const i=buttons.indexOf(document.activeElement);buttons[(i+direction+buttons.length)%buttons.length]?.focus();}
   if(frame.uiPressed.has('submit'))(buttons.includes(document.activeElement)?document.activeElement:buttons[0])?.click();
@@ -798,7 +823,7 @@ registerInputContext('gameplay',()=>state==='playing',frame=>{
 inputDevices=new BrowserInput({preferences:()=>preferences,onRaw:control=>inputManager.dispatchRaw(control),captureKeyboard:()=>inputManager.resolve()?.map==='gameplay',onBlur:()=>{keys.clear();inputManager.clear();if(state==='playing')pause();}});
 const focusIndicator=new FocusIndicator();
 function updateInput(){keys.clear();inputManager.update(inputDevices.sample());document.body.dataset.inputDevice=inputManager.scheme;focusIndicator.update(document.activeElement,inputManager.scheme);}
-function frame(now){requestAnimationFrame(frame);updateInput();const realDt=frameClock.step(now);towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
+function frame(now){requestAnimationFrame(frame);updateInput();const realDt=frameClock.step(now);pauseItems.sync(state==='paused');if(runItemUI.sync())return;towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
   const stopped=state==='playing'&&hitStop>0,dt=stopped?0:realDt;
   hitStop=state==='playing'?Math.max(0,hitStop-realDt):0;
   const previousJumpHeight=height,landingVelocity=velocity,landingFrom=rabbit.position.clone();

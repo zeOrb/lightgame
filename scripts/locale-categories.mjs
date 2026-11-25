@@ -6,6 +6,7 @@ export const CATALOG_CATEGORIES=Object.freeze({
   buttons:'Кнопки и меню',settings:'Настройки и управление',
   skills:'Навыки: названия и описания',
   gameplay:'Игровые сообщения и HUD',bestiary:"Bestiary",
+  terms:'Игровые термины и характеристики',
 });
 const names=new Set(),descriptions=new Set(),skillOrder=new Map(),sharedDescriptions=new Map();
 let nextSkillOrder=0;
@@ -28,6 +29,7 @@ const buttons=new Set(['addBinding','settings','backButton','apply','reset','sta
   "Reset skill tree · debug","Boss fight · debug","Enable sound","Sound: off · debug",
   "Pause","Pause menu","Resume","Restart run","Return to main menu","Back to menu · Esc"]);
 export function categoryForEntry(entry){
+  if(entry.msgctxt?.startsWith('term.'))return 'terms';
   if(sharedDescriptions.has(entry.msgctxt)||descriptions.has(entry.msgid)||names.has(entry.msgid))return 'skills';
   if(buttons.has(entry.msgctxt||entry.msgid))return 'buttons';
   if(entry.msgctxt?.startsWith('hud.'))return 'gameplay';

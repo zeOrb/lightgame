@@ -55,7 +55,7 @@ msgstr "Close"
 msgid "Enable sound"
 msgstr "Enable sound"
 
-#: src/skill-tree.js:157
+#: src/skill-tree.js:158
 msgid "Light tree"
 msgstr "Light tree"
 
@@ -75,7 +75,7 @@ msgstr "Pause"
 msgid "Pause menu"
 msgstr "Pause menu"
 
-#: src/main.js:349
+#: src/main.js:356
 msgid "Preparing run…"
 msgstr "Preparing run…"
 
@@ -137,7 +137,7 @@ msgctxt "settings"
 msgid "Settings"
 msgstr "Settings"
 
-#: src/skill-tree.js:154
+#: src/skill-tree.js:155
 msgid "Skill tree"
 msgstr "Skill tree"
 
@@ -155,6 +155,6 @@ msgctxt "start"
 msgid "Start run"
 msgstr "Start run"
 
-#: src/skill-tree.js:32
+#: src/skill-tree.js:33
 msgid "☀ To the sun"
 msgstr "☀ To the sun"

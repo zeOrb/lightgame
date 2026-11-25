@@ -56,7 +56,7 @@ msgstr "Закрыть"
 msgid "Enable sound"
 msgstr "Включить звук"
 
-#: src/skill-tree.js:157
+#: src/skill-tree.js:158
 msgid "Light tree"
 msgstr "Древо света"
 
@@ -76,7 +76,7 @@ msgstr "Пауза"
 msgid "Pause menu"
 msgstr "Меню паузы"
 
-#: src/main.js:349
+#: src/main.js:356
 msgid "Preparing run…"
 msgstr "Готовим забег…"
 
@@ -138,7 +138,7 @@ msgctxt "settings"
 msgid "Settings"
 msgstr "Настройки"
 
-#: src/skill-tree.js:154
+#: src/skill-tree.js:155
 msgid "Skill tree"
 msgstr "Древо навыков"
 
@@ -156,6 +156,6 @@ msgctxt "start"
 msgid "Start run"
 msgstr "Начать забег"
 
-#: src/skill-tree.js:32
+#: src/skill-tree.js:33
 msgid "☀ To the sun"
 msgstr "☀ К солнцу"

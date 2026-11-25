@@ -1,0 +1,137 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Sunny 1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+"X-Sunny-Category: Игровые термины и характеристики\n"
+"X-Source-Language: en\n"
+
+#: src/game-terms.json
+#. Use {Cooldown} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Cooldown"
+msgid "Cooldown"
+msgstr "Перезарядка"
+
+#: src/game-terms.json
+#. Use {Damage} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Damage"
+msgid "Damage"
+msgstr "Урон"
+
+#: src/game-terms.json
+#. Use {DamageTaken} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.DamageTaken"
+msgid "Damage taken"
+msgstr "Получаемый урон"
+
+#: src/game-terms.json
+#. Use {Dash} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Dash"
+msgid "Dash"
+msgstr "Дэш"
+
+#: src/game-terms.json
+#. Use {DashCooldown} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.DashCooldown"
+msgid "Dash cooldown"
+msgstr "Перезарядка дэша"
+
+#: src/game-terms.json
+#. Use {DashDistance} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.DashDistance"
+msgid "Dash distance"
+msgstr "Дальность дэша"
+
+#: src/game-terms.json
+#. Use {GemCollectionRange} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.GemCollectionRange"
+msgid "Gem collection range"
+msgstr "Радиус подбора камней"
+
+#: src/game-terms.json
+#. Use {Gems} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Gems"
+msgid "Gems"
+msgstr "Камни"
+
+#: src/game-terms.json
+#. Use {Healing} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Healing"
+msgid "Healing"
+msgstr "Лечение"
+
+#: src/game-terms.json
+#. Use {StainedGlassHealing} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.StainedGlassHealing"
+msgid "Healing in stained-glass light"
+msgstr "Лечение в свете витража"
+
+#: src/game-terms.json
+#. Use {Jump} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Jump"
+msgid "Jump"
+msgstr "Прыжок"
+
+#: src/game-terms.json
+#. Use {JumpStrength} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.JumpStrength"
+msgid "Jump strength"
+msgstr "Сила прыжка"
+
+#: src/game-terms.json
+#. Use {Light} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Light"
+msgid "Light"
+msgstr "Свет"
+
+#: src/game-terms.json
+#. Use {LightRestored} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.LightRestored"
+msgid "Light restored"
+msgstr "Восстановление света"
+
+#: src/game-terms.json
+#. Use {GemHealing} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.GemHealing"
+msgid "Light restored by each gem"
+msgstr "Восстановление света каждым камнем"
+
+#: src/game-terms.json
+#. Use {Luck} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Luck"
+msgid "Luck"
+msgstr "Удача"
+
+#: src/game-terms.json
+#. Use {MaximumLight} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.MaximumLight"
+msgid "Maximum Light"
+msgstr "Максимум света"
+
+#: src/game-terms.json
+#. Use {MovementSpeed} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.MovementSpeed"
+msgid "Movement speed"
+msgstr "Скорость движения"
+
+#: src/game-terms.json
+#. Use {PassiveLightLoss} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.PassiveLightLoss"
+msgid "Passive Light loss"
+msgstr "Пассивная потеря света"
+
+#: src/game-terms.json
+#. Use {Phasing} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.Phasing"
+msgid "Phasing"
+msgstr "Фейзинг"
+
+#: src/game-terms.json
+#. Use {StainedGlassLight} in messages. Lowercase aliases are also supported; explicit runtime values take precedence.
+msgctxt "term.StainedGlassLight"
+msgid "Stained-glass light"
+msgstr "Свет витража"

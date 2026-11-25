@@ -229,6 +229,77 @@
           }
         }
       ]
+    },
+    {
+      "id": "treasuryLuck",
+      "name": "Magic Find",
+      "nodes": [
+        {
+          "id": "treasuryLuck1",
+          "name": "Lucky Charm 1",
+          "description": "{Luck} +20.",
+          "cost": 8,
+          "requires": "treasurySource",
+          "icon": "bloom",
+          "effects": {
+            "luck": {
+              "add": 20
+            }
+          }
+        },
+        {
+          "id": "treasuryLuck2",
+          "name": "Lucky Charm 2",
+          "description": "{Luck} +20.",
+          "cost": 20,
+          "requires": "treasuryLuck1",
+          "icon": "bloom",
+          "effects": {
+            "luck": {
+              "add": 20
+            }
+          }
+        },
+        {
+          "id": "treasuryLuck3",
+          "name": "Lucky Charm 3",
+          "description": "{Luck} +20.",
+          "cost": 45,
+          "requires": "treasuryLuck2",
+          "icon": "bloom",
+          "effects": {
+            "luck": {
+              "add": 20
+            }
+          }
+        },
+        {
+          "id": "treasuryLuck4",
+          "name": "Lucky Charm 4",
+          "description": "{Luck} +20.",
+          "cost": 90,
+          "requires": "treasuryLuck3",
+          "icon": "bloom",
+          "effects": {
+            "luck": {
+              "add": 20
+            }
+          }
+        },
+        {
+          "id": "treasuryLuck5",
+          "name": "Lucky Charm 5",
+          "description": "{Luck} +20.",
+          "cost": 180,
+          "requires": "treasuryLuck4",
+          "icon": "bloom",
+          "effects": {
+            "luck": {
+              "add": 20
+            }
+          }
+        }
+      ]
     }
   ]
 }

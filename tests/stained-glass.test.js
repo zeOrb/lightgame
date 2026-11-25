@@ -12,7 +12,7 @@ test('tall and wide panes keep equal texel density and approximately square mosa
     assert.ok(cellAspect>.8&&cellAspect<1.3);
   }
 });
-test('each glass pane projects its complete texture once, preserving mosaic count',()=>{
+test('one clamped window image covers the tread with aspect-preserving cropping',()=>{
   const window=new THREE.Group();window.position.set(18,106,0);window.rotation.y=Math.PI/2;
   const panes=[];
   for(let y=0;y<6;y++)for(let x=0;x<3;x++){
@@ -21,15 +21,10 @@ test('each glass pane projects its complete texture once, preserving mosaic coun
   }
   const floor=new THREE.Object3D();floor.userData={s:0,theta:0,y:100};
   const light=createWindowLight(panes,[floor]),patches=light.zones[0].o.children;
-  assert.equal(patches.length,panes.length);
-  patches.forEach((patch,i)=>{
-    assert.equal(patch.material.uniforms.glassMap.value,panes[i].material.map);
-    assert.deepEqual([...patch.geometry.attributes.uv.array],[1,0,0,0,0,1,1,1]);
-    assert.ok(!patch.material.fragmentShader.includes('fract('));
-    const p=patch.geometry.attributes.position;
-    const a=new THREE.Vector3().fromBufferAttribute(p,0),b=new THREE.Vector3().fromBufferAttribute(p,1),d=new THREE.Vector3().fromBufferAttribute(p,3);
-    assert.ok(Math.abs(a.distanceTo(b)/a.distanceTo(d)-1/1.6)<1e-5,'vertical glass must remain vertical, with identical physical proportions');
-    assert.ok(Math.abs(a.distanceTo(b)-1)<1e-5,'projection keeps the original glass width, regardless of shelf size');
-    assert.ok(Math.abs(a.distanceTo(d)-1.6)<1e-5,'projection keeps the original glass height');
-  });
+  assert.equal(patches.length,1);
+  const patch=patches[0];assert.deepEqual([...patch.geometry.attributes.uv.array],[0,0,1,0,1,1,0,1]);
+  assert.ok(!patch.material.fragmentShader.includes('fract('));assert.ok(patch.material.fragmentShader.includes('clamp('));
+  const p=patch.geometry.attributes.position;
+  const a=new THREE.Vector3().fromBufferAttribute(p,0),b=new THREE.Vector3().fromBufferAttribute(p,1),d=new THREE.Vector3().fromBufferAttribute(p,3),crop=patch.material.uniforms.imageCrop.value;
+  assert.ok(Math.abs(a.distanceTo(b)/(crop.x*3.2)-a.distanceTo(d)/(crop.y*10.1))<1e-5,'cropping preserves the physical mosaic aspect instead of squeezing the complete tall window');
 });

@@ -27,4 +27,5 @@ export class SkillProgression {
 }
 let storage;try{storage=globalThis.localStorage;}catch{}
 export const progression=new SkillProgression(storage);
-export const RUN_UPGRADES=skillStats(progression.state);
+// Stable runtime identity for gameplay systems; the compiled skill result stays immutable.
+export const RUN_UPGRADES={...skillStats(progression.state)};

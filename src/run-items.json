@@ -1,0 +1,311 @@
+{
+  "choices": 3,
+  "rerollsPerRun": 1,
+  "activePools": [
+    "starter"
+  ],
+  "pools": {
+    "starter": {
+      "items": [
+        "swift-thread",
+        "long-ray",
+        "warm-core",
+        "spring-leaf",
+        "amber-magnet",
+        "bright-dew",
+        "steady-flame",
+        "quick-prism",
+        "silver-shell",
+        "honey-shard",
+        "azure-feather",
+        "moon-clover"
+      ],
+      "rarityWeights": {
+        "common": 48,
+        "uncommon": 26,
+        "rare": 13.35804647,
+        "legendary": 12.64195353
+      },
+      "itemWeights": {}
+    },
+    "wayfarer": {
+      "items": [
+        "swift-thread",
+        "long-ray",
+        "spring-leaf",
+        "quick-prism"
+      ],
+      "requirements": {
+        "unlocks": [
+          "pool.wayfarer"
+        ]
+      },
+      "rarityWeights": {
+        "common": 48,
+        "uncommon": 26,
+        "rare": 13.35804647,
+        "legendary": 12.64195353
+      },
+      "itemWeights": {}
+    }
+  },
+  "items": [
+    {
+      "id": "swift-thread",
+      "name": "Swift Thread",
+      "description": "{MovementSpeed} +10%.",
+      "symbol": "≋",
+      "effects": {
+        "speed": {
+          "multiply": 1.1
+        }
+      },
+      "requirements": {
+        "stats": {
+          "speed": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "long-ray",
+      "name": "Long Ray",
+      "description": "{DashDistance} +15%.",
+      "symbol": "➝",
+      "effects": {
+        "phaseDistance": {
+          "multiply": 1.15
+        }
+      },
+      "requirements": {
+        "stats": {
+          "phaseDistance": {
+            "gt": 0
+          },
+          "dashEnabled": true
+        }
+      },
+      "rarity": "rare"
+    },
+    {
+      "id": "warm-core",
+      "name": "Warm Core",
+      "description": "{MaximumLight} +20. {LightRestored}: 20.",
+      "symbol": "☀",
+      "effects": {
+        "maxHP": {
+          "add": 20
+        }
+      },
+      "restoreLight": 20,
+      "requirements": {
+        "stats": {
+          "maxHP": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "spring-leaf",
+      "name": "Spring Leaf",
+      "description": "{JumpStrength} +8%.",
+      "symbol": "❧",
+      "effects": {
+        "jump": {
+          "multiply": 1.08
+        }
+      },
+      "requirements": {
+        "stats": {
+          "jump": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "amber-magnet",
+      "name": "Amber Magnet",
+      "description": "{GemCollectionRange} +0.35.",
+      "symbol": "◇",
+      "effects": {
+        "magnet": {
+          "add": 0.35
+        }
+      },
+      "requirements": {
+        "stats": {
+          "magnet": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "uncommon"
+    },
+    {
+      "id": "bright-dew",
+      "name": "Bright Dew",
+      "description": "{StainedGlassHealing} +20%.",
+      "symbol": "✧",
+      "effects": {
+        "vitralHealScale": {
+          "multiply": 1.2
+        }
+      },
+      "requirements": {
+        "stats": {
+          "vitralHealScale": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "legendary"
+    },
+    {
+      "id": "steady-flame",
+      "name": "Steady Flame",
+      "description": "{PassiveLightLoss} −10%.",
+      "symbol": "♧",
+      "effects": {
+        "drainScale": {
+          "multiply": 0.9
+        }
+      },
+      "requirements": {
+        "stats": {
+          "drainScale": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "uncommon"
+    },
+    {
+      "id": "quick-prism",
+      "name": "Quick Prism",
+      "description": "{DashCooldown} −10%.",
+      "symbol": "⚡",
+      "effects": {
+        "phaseCooldown": {
+          "multiply": 0.9
+        }
+      },
+      "requirements": {
+        "stats": {
+          "phaseCooldown": {
+            "gt": 0
+          },
+          "dashEnabled": true
+        }
+      },
+      "rarity": "uncommon"
+    },
+    {
+      "id": "silver-shell",
+      "name": "Silver Shell",
+      "description": "{DamageTaken} −10%.",
+      "symbol": "⬡",
+      "effects": {
+        "damageScale": {
+          "multiply": 0.9
+        }
+      },
+      "requirements": {
+        "stats": {
+          "damageScale": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "rare"
+    },
+    {
+      "id": "honey-shard",
+      "name": "Honey Shard",
+      "description": "{GemHealing} +5.",
+      "symbol": "✦",
+      "effects": {
+        "shardHeal": {
+          "add": 5
+        }
+      },
+      "requirements": {
+        "stats": {
+          "shardHeal": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "common"
+    },
+    {
+      "id": "azure-feather",
+      "name": "Azure Feather",
+      "description": "{MovementSpeed} +18%.",
+      "symbol": "❧",
+      "effects": {
+        "speed": {
+          "multiply": 1.18
+        }
+      },
+      "requirements": {
+        "stats": {
+          "speed": {
+            "gt": 0
+          }
+        }
+      },
+      "rarity": "rare"
+    },
+    {
+      "id": "moon-clover",
+      "name": "Moon Clover",
+      "description": "{Luck} +25.",
+      "symbol": "♧",
+      "effects": {
+        "luck": {
+          "add": 25
+        }
+      },
+      "requirements": {
+        "stats": {
+          "luck": {
+            "min": 0
+          }
+        }
+      },
+      "rarity": "rare"
+    }
+  ],
+  "rarities": {
+    "common": {
+      "name": "Common",
+      "color": "#dfcf9c",
+      "weight": 48,
+      "luckPower": 0
+    },
+    "uncommon": {
+      "name": "Uncommon",
+      "color": "#86c990",
+      "weight": 26,
+      "luckPower": 0.5
+    },
+    "rare": {
+      "name": "Rare",
+      "color": "#78b5f2",
+      "weight": 13.35804647,
+      "luckPower": 1
+    },
+    "legendary": {
+      "name": "Legendary",
+      "color": "#ff9c32",
+      "weight": 12.64195353,
+      "luckPower": 2
+    }
+  }
+}
