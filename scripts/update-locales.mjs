@@ -17,7 +17,7 @@ function add(text,reference){
   const old=template.translations[''][text];
   template.translations[''][text]={...old,msgid:text,msgstr:[''],comments:{...old?.comments,reference}};
 }
-const files=['src/settings.js','src/run-item-ui.js','src/combo-hud.js','src/main.js','src/skill-tree.js','src/bestiary.js','src/shard-counter.js','src/level-diagnostics.js','src/threats.js'];
+const files=['src/debug-options.js','src/run-statistics.js','src/run-summary.js','src/settings.js','src/run-item-ui.js','src/combo-hud.js','src/main.js','src/skill-tree.js','src/bestiary.js','src/shard-counter.js','src/level-diagnostics.js','src/threats.js'];
 for(const file of files){
   const source=read(file),ast=parseAst(source);
   function visit(node){

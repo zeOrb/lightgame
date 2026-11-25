@@ -34,7 +34,11 @@ export class RunItemUI {
     for(const [index,id] of pending.options.entries()){const item=this.items.items.get(id),button=document.createElement('button');button.className='run-item-option';button.dataset.rarity=item.rarity;button.dataset.leaves=String(1+(index+[...String(pending.source)].reduce((sum,c)=>sum+c.charCodeAt(0),0))%4);button.style.setProperty('--rarity-color',this.items.rarity(id).color);
       const icon=document.createElement('span');icon.className='run-item-icon';const glyph=document.createElement('span');glyph.textContent=item.symbol;icon.append(glyph);icon.setAttribute('aria-hidden','true');
       const name=document.createElement('strong');name.className='run-item-name';name.textContent=tr(item.name);const rarity=document.createElement('small');rarity.className='run-item-rarity';rarity.textContent=tr(this.items.rarity(id).name);name.append(rarity);const effect=document.createElement('span');effect.className='run-item-effect';renderLocalized(effect,item.description);
-      button.append(icon,name,effect);button.onclick=()=>{if(this.items.pending!==pending)return;this.onChoose(id);this.sync();};options.append(button);
+      button.append(icon,name,effect);
+      if(item.rarity!=='common'){
+        const rim=document.createElement('i');rim.className='run-item-rim-sweep';rim.setAttribute('aria-hidden','true');button.append(rim);
+      }
+      button.onclick=()=>{if(this.items.pending!==pending)return;this.onChoose(id);this.sync();};options.append(button);
     }
     panel.append(options);const reroll=document.createElement('button');reroll.className='run-item-reroll';reroll.textContent=tr('Reroll · {count}',{count:this.items.rerolls});reroll.disabled=!this.items.canReroll;
     reroll.onclick=()=>{if(this.items.reroll())this.sync();};panel.append(reroll);this.element.append(panel);this.buttons()[0]?.focus({preventScroll:true});return true;

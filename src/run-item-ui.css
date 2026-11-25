@@ -32,6 +32,16 @@
 #run-item-choice .run-item-option:not([data-rarity=common]):before{content:'';position:absolute;inset:2px;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 38%,color-mix(in srgb,var(--rarity-color) 8%,transparent) 44%,color-mix(in srgb,var(--rarity-color) 28%,transparent) 50%,color-mix(in srgb,var(--rarity-color) 8%,transparent) 56%,transparent 62%);background-size:300% 100%;background-repeat:no-repeat;animation:run-item-rarity-sweep 2s ease-in-out infinite}
 #run-item-choice .run-item-option:not([data-rarity=common])>span,#run-item-choice .run-item-option:not([data-rarity=common])>strong{position:relative}
 @keyframes run-item-rarity-sweep{0%{background-position:100% 0;opacity:0}15%{opacity:1}65%{opacity:1}85%,100%{background-position:0% 0;opacity:0}}
+#run-item-choice .run-item-rim-sweep{
+  position:absolute;inset:-2px;padding:2px;border-radius:inherit;pointer-events:none;z-index:2;
+  --rim-highlight:color-mix(in srgb,var(--rarity-color) 52%,white);
+  background:linear-gradient(115deg,transparent 38%,color-mix(in srgb,var(--rim-highlight) 40%,transparent) 44%,var(--rim-highlight) 50%,color-mix(in srgb,var(--rim-highlight) 40%,transparent) 56%,transparent 62%);
+  background-size:300% 100%;background-repeat:no-repeat;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;
+  animation:run-item-rarity-sweep 2s ease-in-out infinite;
+}
+@media(prefers-reduced-motion:reduce){#run-item-choice .run-item-rim-sweep{display:none}}
 @media(prefers-reduced-motion:reduce){#run-item-choice .run-item-option:not([data-rarity=common]):before{animation:none;opacity:0}}
 #run-item-choice .run-item-option:not([data-rarity=common]) .run-item-name,#run-item-choice .run-item-option:not([data-rarity=common]) .run-item-icon{color:var(--rarity-color)}
 #run-item-choice .run-item-option:not([data-rarity=common]) .run-item-icon{border-color:var(--rarity-color)}

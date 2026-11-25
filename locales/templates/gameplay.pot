@@ -15,15 +15,19 @@ msgstr ""
 msgid "Air gem"
 msgstr ""
 
+#: src/run-statistics.js:12
+msgid "All runs"
+msgstr ""
+
 #: src/run-items.json
 msgid "Amber Magnet"
 msgstr ""
 
-#: src/main.js:494
+#: src/main.js:509
 msgid "Arena"
 msgstr ""
 
-#: src/main.js:494
+#: src/main.js:509
 msgid "Arena cleared"
 msgstr ""
 
@@ -55,16 +59,40 @@ msgstr ""
 msgid "Chest break"
 msgstr ""
 
+#: src/debug-options.js:8
+msgid "Chest on every step · debug"
+msgstr ""
+
 #: src/run-item-ui.js:30
 msgid "Choose an item"
+msgstr ""
+
+#: src/run-summary.js:31
+msgid "Collected items"
 msgstr ""
 
 #: src/run-items.json
 msgid "Common"
 msgstr ""
 
-#: src/main.js:748
+#: src/run-statistics.js:17
+msgid "Compare curves"
+msgstr ""
+
+#: src/run-summary.js:37
+msgid "Compare recent runs"
+msgstr ""
+
+#: src/run-summary.js:38
+msgid "Continue to upgrades"
+msgstr ""
+
+#: src/main.js:763
 msgid "Controls reversed"
+msgstr ""
+
+#: src/run-summary.js:28
+msgid "Crystal awakened"
 msgstr ""
 
 #: src/run-items.json
@@ -83,6 +111,10 @@ msgstr ""
 msgid "Dash kill"
 msgstr ""
 
+#: src/run-summary.js:52
+msgid "Death"
+msgstr ""
+
 #: src/threats.js:5
 msgid "Eclipse Bell"
 msgstr ""
@@ -95,15 +127,23 @@ msgstr ""
 msgid "Eclipse Bell · jump over it or pass through with {Phasing}."
 msgstr ""
 
-#: src/main.js:749
+#: src/run-summary.js:29
+msgid "Enemies defeated"
+msgstr ""
+
+#: src/run-summary.js:50
+msgid "Enemy defeated"
+msgstr ""
+
+#: src/main.js:764
 msgid "Entering floor {floor}"
 msgstr ""
 
-#: src/main.js:392
+#: src/main.js:406
 msgid "Falling"
 msgstr ""
 
-#: src/main.js:749
+#: src/main.js:764
 msgid "Final arch · the crystal is close"
 msgstr ""
 
@@ -115,12 +155,24 @@ msgstr ""
 msgid "Floor 12 / 12"
 msgstr ""
 
-#: src/main.js:446
+#: src/run-summary.js:31
+msgid "Floor completed"
+msgstr ""
+
+#: src/run-summary.js:47
+msgid "Floor {floor}"
+msgstr ""
+
+#: src/main.js:460
 msgid "Floor {floor} / {total}"
 msgstr ""
 
 #: src/level-diagnostics.js:4
 msgid "Floor “{floor}”: {category} #{index}, section {from} → {to}."
+msgstr ""
+
+#: src/run-statistics.js:13
+msgid "Floors completed"
 msgstr ""
 
 #: src/run-item-ui.js:32
@@ -133,6 +185,14 @@ msgstr ""
 
 #: src/run-items.json
 msgid "Gem collection range +0.35."
+msgstr ""
+
+#: src/run-summary.js:29
+msgid "Gems collected"
+msgstr ""
+
+#: src/run-summary.js:29
+msgid "Gems collected over run time"
 msgstr ""
 
 #: src/threats.js:7
@@ -151,7 +211,7 @@ msgstr ""
 msgid "Glints: 0"
 msgstr ""
 
-#: src/main.js:494
+#: src/main.js:509
 msgid "Guardian · {hp} / {maxHP} · Enemies: {count}"
 msgstr ""
 
@@ -163,7 +223,7 @@ msgstr ""
 msgid "Honey Shard"
 msgstr ""
 
-#: src/main.js:748
+#: src/main.js:763
 msgid "In the sunset light"
 msgstr ""
 
@@ -179,6 +239,10 @@ msgstr ""
 msgid "Ink Wave · jump over the expanding ring."
 msgstr ""
 
+#: src/run-summary.js:21
+msgid "Item acquired"
+msgstr ""
+
 #: index.html
 msgid "Jump"
 msgstr ""
@@ -191,8 +255,12 @@ msgstr ""
 msgid "LEARNED"
 msgstr ""
 
-#: src/main.js:750
+#: src/main.js:765
 msgid "Last Spark · light restored!"
+msgstr ""
+
+#: src/run-statistics.js:13
+msgid "Last five runs"
 msgstr ""
 
 #: src/skill-tree.js:175
@@ -231,7 +299,15 @@ msgstr ""
 msgid "Movement speed along the spiral +15%."
 msgstr ""
 
-#: src/main.js:102
+#: src/run-statistics.js:18
+msgid "No completed runs yet"
+msgstr ""
+
+#: src/run-summary.js:36
+msgid "No items collected"
+msgstr ""
+
+#: src/main.js:108
 msgid "Open the game in a browser with hardware acceleration enabled."
 msgstr ""
 
@@ -259,7 +335,7 @@ msgstr ""
 msgid "Phasing distance +20%."
 msgstr ""
 
-#: src/main.js:859
+#: src/main.js:877
 msgid "Phasing {seconds}s"
 msgstr ""
 
@@ -267,8 +343,16 @@ msgstr ""
 msgid "Placement issues corrected: {count}"
 msgstr ""
 
+#: src/run-summary.js:42
+msgid "Points earned over run time"
+msgstr ""
+
 #: src/skill-tree.js:176
 msgid "Points required: {cost} · available: {points}"
+msgstr ""
+
+#: src/run-statistics.js:15
+msgid "Points: {points} · {time}"
 msgstr ""
 
 #: index.html
@@ -297,7 +381,7 @@ msgstr ""
 msgid "Rare"
 msgstr ""
 
-#: src/main.js:693
+#: src/main.js:708
 msgid "Refraction! Controls reversed for 2.5 seconds"
 msgstr ""
 
@@ -313,6 +397,26 @@ msgstr ""
 msgid "Ruby"
 msgstr ""
 
+#: src/run-summary.js:28
+msgid "Run ended"
+msgstr ""
+
+#: src/run-summary.js:30
+msgid "Run points"
+msgstr ""
+
+#: src/run-summary.js:28
+msgid "Run summary"
+msgstr ""
+
+#: src/run-summary.js:29
+msgid "Run time"
+msgstr ""
+
+#: src/run-statistics.js:13
+msgid "Runs"
+msgstr ""
+
 #: src/skill-tree.js
 msgid "SOURCE"
 msgstr ""
@@ -325,15 +429,15 @@ msgstr ""
 msgid "Shadow begins below 30% Light"
 msgstr ""
 
-#: src/main.js:433
+#: src/main.js:447
 msgid "Shadow begins below {threshold}% Light"
 msgstr ""
 
-#: src/main.js:717
+#: src/main.js:732
 msgid "Shadow dispelled!"
 msgstr ""
 
-#: src/main.js:748
+#: src/main.js:763
 msgid "Shadow drains your light!"
 msgstr ""
 
@@ -345,7 +449,7 @@ msgstr ""
 msgid "Silver Shell"
 msgstr ""
 
-#: src/main.js:748
+#: src/main.js:763
 msgid "Slowed by refraction"
 msgstr ""
 
@@ -357,15 +461,15 @@ msgstr ""
 msgid "Spring Leaf"
 msgstr ""
 
-#: src/main.js:748
+#: src/main.js:763
 msgid "Stained glass · +{amount}/s"
 msgstr ""
 
-#: src/main.js:748
+#: src/main.js:763
 msgid "Stained glass · burst healing"
 msgstr ""
 
-#: src/main.js:711
+#: src/main.js:726
 msgid "Stained-glass breakthrough · shadow dispelled!"
 msgstr ""
 
@@ -379,6 +483,10 @@ msgstr ""
 
 #: src/main.js:733
 msgid "Stained-glass light · healing accelerates while you stay in the light"
+msgstr ""
+
+#: src/main.js:369
+msgid "Statistics"
 msgstr ""
 
 #: src/run-items.json
@@ -401,20 +509,24 @@ msgstr ""
 msgid "Swift Thread"
 msgstr ""
 
-#: src/main.js:669
+#: src/main.js:684
 msgid "The bell knocked you off the shelf…"
 msgstr ""
 
-#: src/main.js:574
+#: src/main.js:589
 msgid "The shelf is moving! It carries you inward — watch the edges."
 msgstr ""
 
-#: src/main.js:675
+#: src/main.js:690
 msgid "There is no shelf beneath your paws…"
 msgstr ""
 
-#: src/main.js:693
+#: src/main.js:708
 msgid "Thick light · slowed for 3 seconds"
+msgstr ""
+
+#: src/run-statistics.js:13
+msgid "Total run time"
 msgstr ""
 
 #: src/run-items.json
@@ -429,11 +541,19 @@ msgstr ""
 msgid "VICTORY +{points}"
 msgstr ""
 
+#: src/run-statistics.js:13
+msgid "Victories"
+msgstr ""
+
+#: src/run-statistics.js:17
+msgid "View run"
+msgstr ""
+
 #: src/run-items.json
 msgid "Warm Core"
 msgstr ""
 
-#: src/main.js:102
+#: src/main.js:108
 msgid "WebGL required"
 msgstr ""
 
@@ -445,7 +565,7 @@ msgstr ""
 msgid "[Sunny: level issue corrected]"
 msgstr ""
 
-#: src/main.js:435
+#: src/main.js:449
 msgid "along the spiral"
 msgstr ""
 
@@ -547,11 +667,11 @@ msgstr ""
 msgid "{StainedGlassHealing} +20%."
 msgstr ""
 
-#: src/main.js:736
+#: src/main.js:751
 msgid "{StainedGlassLight} · healing accelerates while you stay in the light"
 msgstr ""
 
-#: src/main.js:671
+#: src/main.js:686
 msgid "{name} · −{damage} Light"
 msgstr ""
 

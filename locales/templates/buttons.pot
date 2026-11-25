@@ -73,7 +73,7 @@ msgstr ""
 msgid "Pause menu"
 msgstr ""
 
-#: src/main.js:356
+#: src/main.js:363
 msgid "Preparing run…"
 msgstr ""
 
