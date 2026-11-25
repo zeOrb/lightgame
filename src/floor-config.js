@@ -2,6 +2,7 @@ import {readPlacementRules,repairAuthoredPlacements,solveFloorPlacements} from '
 import {RandomManager,randomManager} from './random-manager.js';
 import config from './floors.json' with {type:'json'};
 import {RUN_UPGRADES} from './progression.js';
+import {STEPS_PER_WALL_BAY} from './wall-layout.js';
 
 export const FLOOR_CONFIG=config;
 const categories=['windows','loot','enemies','shadows','chests','bottles','books','springboards','threats'];
@@ -42,7 +43,10 @@ export function buildFloorLayout(source,extraFloors=0,seed=randomManager.seed){
       floor.stepItems=new Map(stepRule.items.map(item=>{const value=typeof item==='number'?{offset:item}:item;if(!valid(value.offset))throw new Error('floors.json: invalid step offset');checkStep(value);return [value.offset,value];}));
       if(floor.stepItems.size!==stepRule.items.length)throw new Error('floors.json: duplicate step offset');
       floor.holes=Array.from({length:count},(_,i)=>i).filter(i=>!floor.stepItems.has(i));
-    }else if(stepRule.mode==='generated')floor.holes=select(amount(stepRule.holes?.count,stream),stepRule.holes?.safeStart??2,count-1-(stepRule.holes?.safeEnd??2));
+    }else if(stepRule.mode==='generated'){
+      const centres=Array.from({length:count},(_,i)=>i).filter(i=>(start+i)%STEPS_PER_WALL_BAY===0&&!used.has(i));centres.forEach(i=>used.add(i));
+      floor.holes=select(amount(stepRule.holes?.count,stream),stepRule.holes?.safeStart??2,count-1-(stepRule.holes?.safeEnd??2));centres.forEach(i=>used.delete(i));
+    }
     else throw new Error('floors.json: unknown steps mode');
     if(floor.holes.includes(count-1))throw new Error('floors.json: final step is required for the floor gate');
     floor.holes.forEach(i=>used.add(i));used.add(count-1);

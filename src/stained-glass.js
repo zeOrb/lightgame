@@ -18,7 +18,7 @@ export function createGlassTextures(){
       const corners=[[left,top],[left+w,top],[left+w,top+h],[left,top+h]];
       for(let t=0;t<4;t++){
         const a=corners[t],b=corners[(t+1)%4];ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(...a);ctx.lineTo(...b);ctx.closePath();
-        ctx.fillStyle=palette[(x*3+y*2+t+variant)%palette.length];ctx.fill();ctx.strokeStyle='#171329';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.fillStyle=palette[(x*3+y*2+t+variant)%palette.length];ctx.fill();ctx.strokeStyle='#171329';ctx.lineWidth=2.4;ctx.stroke();
       }
     }
     ctx.strokeStyle='#b38b55';ctx.lineWidth=3;ctx.strokeRect(2,2,canvas.width-4,canvas.height-4);

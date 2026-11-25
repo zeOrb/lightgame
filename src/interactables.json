@@ -1,8 +1,30 @@
 {
   "chest": {
     "type": "breakable",
-    "rewardRange": [3, 6],
+    "rewardRange": [
+      3,
+      6
+    ],
     "jumpBreak": true,
+    "visuals": {
+      "aura": {
+        "enabled": true,
+        "color": "#ffffff",
+        "opacity": 0.75,
+        "offset": [
+          0,
+          0.48,
+          0
+        ],
+        "scale": [
+          2.1,
+          2.3,
+          1
+        ],
+        "blend": "additive",
+        "depthTest": true
+      }
+    },
     "model": {
       "width": 1.1,
       "height": 0.8,
@@ -11,6 +33,112 @@
     "collision": {
       "radius": 0.85,
       "topOffset": 0.68
+    },
+    "defaultTier": "bronze",
+    "tierWeights": {"bronze": 60, "silver": 30, "gold": 10},
+    "tiers": {
+      "bronze": {
+        "visuals": {
+          "aura": {
+            "enabled": true,
+            "color": "#d6ac74",
+            "opacity": 0.75,
+            "offset": [
+              0,
+              0.48,
+              0
+            ],
+            "scale": [
+              2.1,
+              2.3,
+              1
+            ],
+            "blend": "additive",
+            "depthTest": true
+          },
+          "metal": {
+            "color": "#ad8055",
+            "accent": "#d6ac74"
+          }
+        },
+        "rewards": [
+          {
+            "type": "gems",
+            "count": [
+              3,
+              6
+            ]
+          }
+        ]
+      },
+      "silver": {
+        "visuals": {
+          "aura": {
+            "enabled": true,
+            "color": "#e1e5e8",
+            "opacity": 0.75,
+            "offset": [
+              0,
+              0.48,
+              0
+            ],
+            "scale": [
+              2.1,
+              2.3,
+              1
+            ],
+            "blend": "additive",
+            "depthTest": true
+          },
+          "metal": {
+            "color": "#b9c1c8",
+            "accent": "#e1e5e8"
+          }
+        },
+        "rewards": [
+          {
+            "type": "gems",
+            "count": [
+              5,
+              9
+            ]
+          }
+        ]
+      },
+      "gold": {
+        "visuals": {
+          "aura": {
+            "enabled": true,
+            "color": "#ffe39a",
+            "opacity": 0.75,
+            "offset": [
+              0,
+              0.48,
+              0
+            ],
+            "scale": [
+              2.1,
+              2.3,
+              1
+            ],
+            "blend": "additive",
+            "depthTest": true
+          },
+          "metal": {
+            "color": "#d6ad45",
+            "accent": "#ffe39a"
+          }
+        },
+        "rewards": [
+          {
+            "type": "gems",
+            "count": [
+              8,
+              12
+            ]
+          }
+        ]
+      }
     }
   }
 }

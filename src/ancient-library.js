@@ -5,12 +5,14 @@ import {applyTowerDepth} from './tower-depth.js';
 import {createVisualRandom} from './random-manager.js';
 import {FLOOR_COUNT,TOWER_TOP} from './game.js';
 import {lanternSurfaces,lanternGlow} from './lantern-surfaces.js';
+import {libraryWindowOpenings,clipLibraryWindows} from './library-window-openings.js';
+import {WALL_BAY_ORIGIN,WALL_BAY_STEP} from './wall-layout.js';
 
 const palette=['#615044','#525752','#56505b','#634e4c','#665944','#4c535d','#5c5044','#50564b'];
 export function libraryLayout(){
   const random=createVisualRandom('library-layout'),cases=[],books=[];
   for(const floor of FLOORS)for(let bay=0;bay<8;bay++){
-    const angle=.18+Math.PI/8+bay*Math.PI/4;
+    const angle=WALL_BAY_ORIGIN+bay*WALL_BAY_STEP;
     const bottom=TOWER_TOP-(floor.end+1)*.5,top=TOWER_TOP-floor.start*.5;
     const rows=Math.max(1,Math.floor((top-bottom-.9)/1.18));
     cases.push({angle,base:bottom+.04,level:floor.index,bay,rows,floorIndex:floor.index});
@@ -74,7 +76,8 @@ export function spineAtlas(){
 }
 export function createAncientLibrary(scene,{minY=-Infinity,maxY=Infinity}={}){
   const source=sharedLayout??=libraryLayout(),layout=partitionLibraryLayout(source,minY,maxY),group=new THREE.Group();group.name='Ancient library';scene.add(group);
-  const material=color=>applyTowerDepth(new THREE.MeshStandardMaterial({color,roughness:.85}));
+  const openings=libraryWindowOpenings().filter(o=>o.y+o.height/2>=minY&&o.y-o.height/2<=maxY);
+  const material=color=>clipLibraryWindows(applyTowerDepth(new THREE.MeshStandardMaterial({color,roughness:.85})),openings);
   const oak=material('#493a30'),recess=material('#231f1d'),brass=material('#8d7854');brass.metalness=.45;
   const leather=material('#5f4a3a'),pages=material('#81765f'),spines=material('#ffffff');spines.map=spineAtlas();
   // Continuous book-filled rear wall seals even the narrow gaps between cases.
@@ -99,9 +102,9 @@ export function createAncientLibrary(scene,{minY=-Infinity,maxY=Infinity}={}){
   const uv=wallGeometry.attributes.uv,position=wallGeometry.attributes.position;
   for(let i=0;i<uv.count;i++)uv.setY(i,(position.getY(i)+(wallBottom+wallTop)/2+1)/15.6);
   const backdrop=new THREE.Mesh(wallGeometry,backdropMaterial);backdrop.position.y=(wallBottom+wallTop)/2;backdrop.name='Continuous book-lined wall';group.add(backdrop);
-  const previous=spines.onBeforeCompile;
+  const previous=spines.onBeforeCompile,spineCacheKey=spines.customProgramCacheKey();
   spines.onBeforeCompile=shader=>{previous(shader);shader.vertexShader='attribute vec2 spineTile;\n'+shader.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\nvMapUv=(vMapUv*.96+.02+spineTile)/vec2(8.,4.);');};
-  spines.customProgramCacheKey=()=> 'ancient-library-spines-v1';
+  spines.customProgramCacheKey=()=>spineCacheKey+'-ancient-library-spines-v1';
   const bookGeometry=new THREE.BoxGeometry(1,1,1),tiles=new Float32Array(layout.books.length*2);
   layout.books.forEach((b,i)=>tiles.set([b.tile%8,Math.floor(b.tile/8)],i*2));bookGeometry.setAttribute('spineTile',new THREE.InstancedBufferAttribute(tiles,2));
   const books=new THREE.InstancedMesh(bookGeometry,[leather,leather,pages,pages,leather,spines],layout.books.length);books.name='Thousands of embossed volumes';group.add(books);

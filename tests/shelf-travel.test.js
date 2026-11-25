@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {ShelfTravel,sweepShelfLanding} from '../src/shelf-travel.js';
 import {FLOORS,floorForSection} from '../src/floor-config.js';
-import {route,setRouteYawResolver} from '../src/game.js';
+import {route,setRouteYawResolver,ROUTE_ANGLE,SHELF_HALF_ANGLE} from '../src/game.js';
 import {RabbitState} from '../src/rabbit-state.js';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6, a+' != '+b);
 
@@ -15,10 +15,10 @@ test('rotated floor boundary retains the departing arc until its physical edge',
     assert.equal(travel.leavesFloor(edge+.45,edge+.51,0),false);
     const a=travel.position(edge+.51),b=route(edge+.51);
     near(a.x,b.x);near(a.z,b.z);
-    assert.equal(travel.leavesFloor(edge+.58,edge+.61,0),true);
+    assert.equal(travel.leavesFloor(edge+SHELF_HALF_ANGLE/ROUTE_ANGLE-.01,edge+SHELF_HALF_ANGLE/ROUTE_ANGLE+.01,0),true);
     // A full step into another floor still follows the original world arc.
     const actual=travel.position(edge+1.01);
-    near(actual.theta,(edge+1.01)*Math.PI/14);
+    near(actual.theta,route(edge).theta+1.01*ROUTE_ANGLE);
     assert.ok(Math.hypot(actual.x-route(edge+1.01).x,actual.z-route(edge+1.01).z)>1);
   }finally{setRouteYawResolver(()=>0);}
 });
@@ -77,9 +77,9 @@ test('support uses the actual retained floor frame instead of an unrelated nearb
   try{
     setRouteYawResolver(s=>floorForSection(s).index===1?.87:0);
     const travel=new ShelfTravel(),section=FLOORS[1].start;
-    travel.land(section,route(section));const outside=section-.8,p=travel.position(outside);
+    travel.land(section,route(section));const outside=section-1,p=travel.position(outside);
     assert.equal(hasShelfSupport([],outside,0),true);
     assert.equal(hasShelfSupport([],outside,0,p),false);
-    assert.equal(travel.leavesFloor(section-.58,section-.61,0),true);
+    assert.equal(travel.leavesFloor(section-SHELF_HALF_ANGLE/ROUTE_ANGLE+.01,section-SHELF_HALF_ANGLE/ROUTE_ANGLE-.01,0),true);
   }finally{setRouteYawResolver(()=>0);}
 });

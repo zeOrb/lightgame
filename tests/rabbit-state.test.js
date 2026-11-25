@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import {RabbitState,RabbitMode} from '../src/rabbit-state.js';
 import {PASSIVE_LIGHT_DRAIN} from '../src/game.js';
 
+test('fatal encounter holes dissolve the rabbit in flight within 0.85 seconds at any frame rate',()=>{
+  for(const fps of [20,30,60,144]){
+    const rabbit=new RabbitState();rabbit.startFall({x:15,y:90,z:0},false,false);
+    Object.assign(rabbit.fall,{deathDuration:.85,recoverable:false,vx:2,vz:1});
+    for(let i=0;i<fps*2&&!rabbit.fall.done;i++)rabbit.updateFall(1/fps);
+    assert.ok(rabbit.fall.time>=.7&&rabbit.fall.time<=1);assert.equal(rabbit.fall.dissolve,1);assert.equal(rabbit.fall.landed,false);assert.ok(rabbit.fall.y>70);assert.ok(rabbit.fall.x>15);
+  }
+});
+
 test('rabbit states own vitral healing and leave it when the zone ends',()=>{
   const rabbit=new RabbitState();assert.equal(rabbit.mode,RabbitMode.NORMAL);
   assert.equal(rabbit.updateLight(50,1,false),50-PASSIVE_LIGHT_DRAIN);

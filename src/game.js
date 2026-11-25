@@ -1,6 +1,7 @@
 import {FLOORS,TOTAL_SECTIONS,floorForSection,stepAt} from './floor-config.js';
 import {randomManager} from './random-manager.js';
 import {RUN_UPGRADES} from './progression.js';
+import {SPIRAL_STEP_ANGLE,WALL_BAY_ORIGIN} from './wall-layout.js';
 export const FLOOR_COUNT = FLOORS.length;
 export const END = TOTAL_SECTIONS-1;
 export const TOWER_TOP=100+(TOTAL_SECTIONS-140)*.5;
@@ -10,8 +11,9 @@ export function canStomp(previousFoot, foot, previousTop, top, velocity, overlap
   return overlaps && velocity < 0 && previousFoot >= previousTop-.12 && foot <= top+.12;
 }
 export const gaps = FLOORS.flatMap(f=>f.holes.map(offset=>f.start+offset));
-export const ROUTE_ANGLE = Math.PI / 14;
-export const SHELF_HALF_ANGLE = .133;
+export const ROUTE_ANGLE = SPIRAL_STEP_ANGLE;
+// A small seam overlap keeps the route continuous without burying neighbouring treads.
+export const SHELF_HALF_ANGLE = ROUTE_ANGLE*.52;
 export const ROUTE_RADIUS = 15;
 export const SHELF_INNER_RADIUS = 13.1;
 export const SHELF_OUTER_RADIUS = 17.0;
@@ -66,7 +68,7 @@ export function lightStep(light, dt, { shadow = false, vitral = false, vitralTim
 let routeYaw=()=>0;
 export function setRouteYawResolver(resolve){routeYaw=resolve;}
 export function route(s, lane = 0) {
-  const theta = s * ROUTE_ANGLE+routeYaw(s);
+  const theta = WALL_BAY_ORIGIN+s * ROUTE_ANGLE+routeYaw(s);
   const radius = ROUTE_RADIUS + lane;
   return { x: Math.cos(theta) * radius, y: TOWER_TOP - s * .5, z: Math.sin(theta) * radius, theta };
 }

@@ -2,8 +2,10 @@ import {mkdir,cp,writeFile,readFile,readdir,unlink} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {packager} from '@electron/packager';
+import {assertGameArtifacts} from './game-artifact-policy.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+await assertGameArtifacts(path.join(root,'dist'));
 const stamp=new Date().toISOString().replace(/[:.]/g,'-');
 const buildsRoot=path.join(root,'launchers','builds');
 await mkdir(buildsRoot,{recursive:true});
@@ -24,6 +26,7 @@ await cp(path.join(root,'electron','main.cjs'),path.join(stage,'main.cjs'));
 await cp(path.join(root,'electron','preload.cjs'),path.join(stage,'preload.cjs'));
 await cp(path.join(root,'electron','graphics.cjs'),path.join(stage,'graphics.cjs'));
 await writeFile(path.join(stage,'package.json'),JSON.stringify({name:'sunny',productName:'Sunny',author:'Sunny',version:pkg.version,main:'main.cjs'},null,2));
+await assertGameArtifacts(stage);
 const [built]=await packager({dir:stage,out:destination,name:'Sunny',executableName:'Sunny',
   platform:'win32',arch:'x64',electronVersion:electron.version,asar:false,prune:false,
   appVersion:pkg.version,buildVersion:`${pkg.version}.${number}`,win32metadata:{ProductName:'Sunny',FileDescription:`Sunny — ${buildName}`}});

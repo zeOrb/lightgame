@@ -45,6 +45,11 @@ export class RabbitState {
   updateFall(dt){
     const f=this.fall;if(!f||f.done)return f;
     f.time+=dt;
+    if(f.deathDuration){
+      f.x+=f.vx*dt;f.z+=f.vz*dt;f.y+=f.vy*dt-14*dt*dt;f.vy=Math.max(-42,f.vy-28*dt);
+      const t=clamp((f.time-.10)/(f.deathDuration-.10),0,1);f.dissolve=t*t*(3-2*t);f.done=f.time+1e-8>=f.deathDuration;
+      if(f.done)f.dissolve=1;return f;
+    }
     if(f.recoverable&&!f.landed){
       const gravity=f.vy<0?28:20;
       f.x+=f.vx*dt;f.z+=f.vz*dt;f.y+=f.vy*dt-.5*gravity*dt*dt;f.vy=Math.max(-42,f.vy-gravity*dt);

@@ -43,7 +43,7 @@ function gothicLampGeometry(){
 }
 export class FloorGates {
   constructor(scene,texture,palette){
-    this.gates=floorGateLayout();this.palette=palette;this.clock=0;
+    this.gates=floorGateLayout();this.palette=['#ff963e','#ffbd69','#ffe0a0'].map(color=>new THREE.Color(color));this.clock=0;
     this.player=new THREE.Vector3();this.source=new THREE.Vector3();this.shake=0;
     this.reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
     const iron=applyTowerDepth(new THREE.MeshStandardMaterial({color:'#51483b',metalness:.65,roughness:.7}));
@@ -61,10 +61,14 @@ export class FloorGates {
     this.burst=new THREE.Group();scene.add(this.burst);this.burst.visible=false;this.age=1;
     const material=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false});
     this.shards=new THREE.InstancedMesh(new THREE.OctahedronGeometry(1),material,64);this.shards.frustumCulled=false;this.burst.add(this.shards);
-    this.directions=Array.from({length:64},(_,i)=>{const y=random()*2-1,a=random()*Math.PI*2,r=Math.sqrt(1-y*y);this.shards.setColorAt(i,palette[i%palette.length]);return new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r);});
-    this.core=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,color:'#fff4ff',transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}));this.burst.add(this.core);
+    this.directions=Array.from({length:64},(_,i)=>{const y=random()*2-1,a=random()*Math.PI*2,r=Math.sqrt(1-y*y);this.shards.setColorAt(i,this.palette[i%this.palette.length]);return new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r);});
+    this.core=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,color:'#ffd394',transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false}));this.burst.add(this.core);
     this.spark=new THREE.Sprite(this.core.material.clone());this.spark.scale.setScalar(.40);this.spark.visible=false;scene.add(this.spark);
     this.ring=new THREE.Mesh(new THREE.TorusGeometry(1,.055,6,64),material.clone());this.burst.add(this.ring);this.dummy=new THREE.Object3D();
+    const flyGeometry=new THREE.BufferGeometry();flyGeometry.setAttribute('position',new THREE.BufferAttribute(new Float32Array(28*3),3));
+    this.fireflies=new THREE.Points(flyGeometry,new THREE.PointsMaterial({map:texture,color:'#ffb45e',size:.28,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+    this.fireflies.frustumCulled=false;this.fireflies.visible=false;scene.add(this.fireflies);this.flyAge=2;
+    this.flyParams=Array.from({length:28},()=>({angle:0,radius:0,speed:0,delay:0}));
   }
   check(previous,s,previousLane,lane){
     let crossed=null;
@@ -84,6 +88,21 @@ export class FloorGates {
     gate.halo.getWorldPosition(this.burst.position);this.source.copy(this.player);this.source.y+=.65;
     if(this.source.distanceTo(this.burst.position)>12)this.source.copy(this.burst.position).add(new THREE.Vector3(0,-2.3,0));
     this.spark.visible=true;this.shake=this.reducedMotion?0:.055;
+    this.flyAge=0;this.fireflies.position.copy(this.burst.position);this.fireflies.visible=true;
+    for(const fly of this.flyParams){fly.angle=random()*Math.PI*2;fly.radius=.28+random()*.40;fly.speed=4.8+random()*1.8;fly.delay=random()*.22;}
+    this.updateFireflies(0);
+  }
+  updateFireflies(dt){
+    this.flyAge+=dt;this.fireflies.visible=this.flyAge<1.8;if(!this.fireflies.visible)return;
+    const positions=this.fireflies.geometry.attributes.position;
+    this.flyParams.forEach((fly,i)=>{
+      const t=Math.max(0,this.flyAge-fly.delay),travel=(1-Math.exp(-2.4*t))/2.4,angle=fly.angle+travel*8;
+      const radius=fly.radius*(1+travel*.65);
+      positions.setXYZ(i,Math.cos(angle)*radius,travel*fly.speed+Math.sin(angle)*.035,Math.sin(angle)*radius);
+    });
+    positions.needsUpdate=true;
+    const fade=1-THREE.MathUtils.smoothstep(this.flyAge,.65,1.8);
+    this.fireflies.material.opacity=fade;this.fireflies.material.size=.19+.09*fade;
   }
   applyShake(camera){camera.translateX(Math.sin(this.clock*77)*this.shake);camera.translateY(Math.sin(this.clock*91)*this.shake*.65);}
   update(dt=0,player){
@@ -91,6 +110,7 @@ export class FloorGates {
     dt=Number.isFinite(dt)?Math.max(0,dt):0;
     if(!Number.isFinite(this.clock))this.clock=0;
     this.clock+=dt;this.shake*=Math.exp(-dt*13);
+    this.updateFireflies(dt);
     for(const gate of this.gates){gate.lit=THREE.MathUtils.damp(gate.lit,gate.passed?1:0,7,dt);gate.glass.material.emissiveIntensity=gate.lit*1.8;gate.glass.material.color.set(gate.passed?'#ffe1a4':'#48483d');gate.halo.material.opacity=gate.lit*(.62+Math.sin(this.clock*3)*.035);}
     this.age=Math.min(1,this.age+dt);this.burst.visible=this.age<1;this.spark.visible=this.age<.28;if(!this.burst.visible)return;
     const t=this.age;this.spark.visible=t<.28;if(this.spark.visible){const u=Math.min(1,t/.28);this.spark.position.lerpVectors(this.source,this.burst.position,u);this.spark.position.y+=Math.sin(u*Math.PI)*.5;this.spark.material.opacity=1-u*.3;}
@@ -99,5 +119,5 @@ export class FloorGates {
     this.core.scale.setScalar( .5+Math.sin(t*Math.PI)*1.8);this.core.material.opacity=Math.exp(-t*6)*.95;
     this.ring.scale.setScalar(.15+travel*1.05);this.ring.material.color.copy(this.palette[Math.floor(t*12)%this.palette.length]);this.ring.material.opacity=fade*.85;
   }
-  reset(){for(const gate of this.gates){gate.passed=false;gate.lit=0;gate.halo.material.opacity=0;gate.glass.material.emissiveIntensity=0;gate.glass.material.color.set('#48483d');}this.shake=0;this.spark.visible=false;this.age=1;this.clock=0;this.burst.visible=false;}
+  reset(){for(const gate of this.gates){gate.passed=false;gate.lit=0;gate.halo.material.opacity=0;gate.glass.material.emissiveIntensity=0;gate.glass.material.color.set('#48483d');}this.flyAge=2;this.fireflies.visible=false;this.shake=0;this.spark.visible=false;this.age=1;this.clock=0;this.burst.visible=false;}
 }

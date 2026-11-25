@@ -5,3 +5,4 @@ dist/
 /output/
 /launchers/builds/*
 !/launchers/builds/.gitkeep
+/feedback/data/

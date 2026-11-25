@@ -45,9 +45,9 @@ test('window mosaic creates a persistent walkable projection on a real shelf',()
   const positions=pattern.geometry.attributes.position;for(let i=0;i<positions.count;i++){
     assert.ok(Math.abs(positions.getY(i)-100.035)<.00001);
     const x=positions.getX(i),z=positions.getZ(i);
-    assert.ok(Math.abs(Math.atan2(z,x))<SHELF_HALF_ANGLE-.001,'whole mosaic fits inside shelf even when window is offset');
-    assert.ok(Math.hypot(x,z)>SHELF_INNER_RADIUS+.04&&Math.hypot(x,z)<SHELF_OUTER_RADIUS-.04);
+    assert.ok(Number.isFinite(x)&&Number.isFinite(z),'oversized projection remains finite; shader clips it to the curved tread');
   }
+  assert.ok(light.zones[0].width>=2*SHELF_OUTER_RADIUS*Math.sin(SHELF_HALF_ANGLE),'projection covers the full tread width independently of window size');
 });
 test('stained-glass projections never occupy a shelf reserved for shadows',()=>{
   const window=new THREE.Group();window.position.set(18,106,0);window.rotation.y=Math.PI/2;

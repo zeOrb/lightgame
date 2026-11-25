@@ -1,7 +1,24 @@
 import * as THREE from 'three';
+import projectionDefaults from './window-light.json' with {type:'json'};
 import { ROUTE_RADIUS, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius } from './game.js';
 
 export const SUN_RAY_DIRECTION = new THREE.Vector3(15,-22,25).normalize();
+
+function projectionMosaic(panes,window,origin,tangent,bounds){
+  const first=panes.find(p=>p.parent===window)?.material.map??null;
+  if(typeof document==='undefined'||!first?.image)return first;
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=1024;
+  const ctx=canvas.getContext('2d'),w=bounds.maxX-bounds.minX,h=bounds.maxY-bounds.minY;
+  ctx.fillStyle='#665548';ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(const pane of panes)if(pane.parent===window&&pane.material.map?.image){
+    const corners=paneBeam(pane).corners.map(p=>p.sub(origin));
+    const x0=Math.min(...corners.map(p=>p.dot(tangent))),x1=Math.max(...corners.map(p=>p.dot(tangent)));
+    const y0=Math.min(...corners.map(p=>p.y)),y1=Math.max(...corners.map(p=>p.y));
+    ctx.drawImage(pane.material.map.image,(x0-bounds.minX)/w*canvas.width,(bounds.maxY-y1)/h*canvas.height,(x1-x0)/w*canvas.width,(y1-y0)/h*canvas.height);
+  }
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;
+  texture.wrapS=texture.wrapT=THREE.ClampToEdgeWrapping;return texture;
+}
 
 export function paneBeam(pane) {
   pane.updateWorldMatrix(true,false);
@@ -40,7 +57,9 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       const targetAngle=floor?floor.userData.theta:angle;
       const radial=new THREE.Vector3(Math.cos(targetAngle),0,Math.sin(targetAngle)),tangent=new THREE.Vector3(-Math.sin(targetAngle),0,Math.cos(targetAngle));
       const sourceTangent=new THREE.Vector3(-Math.sin(angle),0,Math.cos(angle));
-      const center=floor?radial.clone().multiplyScalar(ROUTE_RADIUS+.55).setY(floor.userData.y+.035):new THREE.Vector3(0,Math.max(2,origin.y-9),0);
+      const settings={...projectionDefaults,...window?.userData.lightProjection};
+      const inner=floor?shelfInnerRadius(floor.userData.s)*Math.cos(SHELF_HALF_ANGLE):0;
+      const center=floor?radial.clone().multiplyScalar(settings.fitToStep?(inner+SHELF_OUTER_RADIUS)/2:ROUTE_RADIUS+.55).setY(floor.userData.y+.035):new THREE.Vector3(0,Math.max(2,origin.y-9),0);
       const patch=new THREE.Group();group.add(patch);
       const bounds={minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity};
       for(const sibling of panes)if(sibling.parent===window)for(const corner of paneBeam(sibling).corners){
@@ -48,9 +67,13 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
         bounds.minX=Math.min(bounds.minX,x);bounds.maxX=Math.max(bounds.maxX,x);bounds.minY=Math.min(bounds.minY,offset.y);bounds.maxY=Math.max(bounds.maxY,offset.y);
       }
       // A full-size projection: one world unit of glass becomes one unit of floor.
-      const scaleX=1,scaleY=1;
+      const scaleX=(floor&&settings.fitToStep?2*SHELF_OUTER_RADIUS*Math.sin(SHELF_HALF_ANGLE)/(bounds.maxX-bounds.minX):1)*settings.widthScale;
+      const scaleY=(floor&&settings.fitToStep?(SHELF_OUTER_RADIUS-inner)/(bounds.maxY-bounds.minY):1)*settings.lengthScale;
       const midX=(bounds.minX+bounds.maxX)/2,midY=(bounds.minY+bounds.maxY)/2;
-      const data={origin,radial,tangent,sourceTangent,center,patch,floor,scaleX,scaleY,midX,midY,window,panes:[],beams:[],replaced:[],extinguished:false};windows.set(window,data);
+      const data={origin,radial,tangent,sourceTangent,center,patch,floor,scaleX,scaleY,midX,midY,settings,window,panes:[],beams:[],replaced:[],extinguished:false};windows.set(window,data);
+      data.projectionMap=projectionMosaic(panes,window,origin,sourceTangent,bounds);
+      const sourceAspect=(bounds.maxX-bounds.minX)/(bounds.maxY-bounds.minY),targetAspect=((bounds.maxX-bounds.minX)*scaleX)/((bounds.maxY-bounds.minY)*scaleY);
+      data.imageCrop=new THREE.Vector2(Math.min(1,targetAspect/sourceAspect),Math.min(1,sourceAspect/targetAspect));
       if(floor){data.zone={s:floor.userData.s,lane:0,o:patch,taken:false,center:center.clone(),radial:radial.clone(),tangent:tangent.clone(),width:(bounds.maxX-bounds.minX)*scaleX,length:(bounds.maxY-bounds.minY)*scaleY,palette:pane.material.userData.glowPalette??[beam.color],extinguished:false};zones.push(data.zone);}
     }
     const data=windows.get(window);
@@ -63,12 +86,12 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
     const positions=[],uvs=[],indices=[];
     for(let face=0;face<4;face++){
       const a=beam.corners[face],b=beam.corners[(face+1)%4];
-      const endA=endCorners[face],endB=endCorners[(face+1)%4];
+      const endA=endCorners[face].clone().sub(data.center).multiplyScalar(data.settings.beamEndScale).add(data.center),endB=endCorners[(face+1)%4].clone().sub(data.center).multiplyScalar(data.settings.beamEndScale).add(data.center);
       for(const p of [a,b,endB,endA])positions.push(p.x,p.y,p.z);
       uvs.push(0,0,1,0,1,1,0,1);const k=face*4;indices.push(k,k+1,k+2,k,k+2,k+3);
     }
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geometry.setIndex(indices);
-    const baseOpacity=.052*(.35+.65*THREE.MathUtils.clamp(beam.origin.y/106,0,1));
+    const baseOpacity=.052*data.settings.beamIntensity*(.35+.65*THREE.MathUtils.clamp(beam.origin.y/106,0,1));
     const material=new THREE.ShaderMaterial({
       uniforms:{beamColor:{value:beam.color},strength:{value:baseOpacity},...arenaMask},
       vertexShader:'varying vec2 beamUV; void main(){beamUV=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
@@ -82,7 +105,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
             float maskRadius=abs(surface.y-arenaY)<.06?arenaRadius+.03:arenaRadius-.65;
             if(depth<.99999&&length(surface.xz)<=maskRadius&&surface.y>=arenaY-.4&&surface.y<=arenaY+4.2)discard;
           }
-          float edge=pow(max(0.0,sin(3.14159265*beamUV.x)),.65);float fade=.35+.65*pow(1.0-beamUV.y,.8);gl_FragColor=vec4(beamColor,strength*edge*fade);
+          float edge=pow(max(0.0,sin(3.14159265*beamUV.x)),.85);float fade=.58+.42*pow(1.0-beamUV.y,.8);gl_FragColor=vec4(beamColor,strength*edge*fade);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }`,
@@ -91,10 +114,12 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
     material.userData.baseOpacity=baseOpacity;materials.push(material);
     material.userData.windowData=data;
     const beamMesh=new THREE.Mesh(geometry,material);group.add(beamMesh);data.beams.push(beamMesh);
-    if(data.floor){
-      const floorGeometry=new THREE.BufferGeometry();floorGeometry.setAttribute('position',new THREE.Float32BufferAttribute(endCorners.flatMap(p=>[p.x,p.y,p.z]),3));floorGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(beam.sourceUV,2));floorGeometry.setIndex([0,1,2,0,2,3]);
+    if(data.floor&&data.patch.children.length===0){
+      // One image for the entire window footprint, never one copy per glass pane.
+      const footprint=[[-.5,.5],[.5,.5],[.5,-.5],[-.5,-.5]].map(([x,y])=>data.center.clone().addScaledVector(data.tangent,x*data.zone.width).addScaledVector(data.radial,y*data.zone.length));
+      const floorGeometry=new THREE.BufferGeometry();floorGeometry.setAttribute('position',new THREE.Float32BufferAttribute(footprint.flatMap(p=>[p.x,p.y,p.z]),3));floorGeometry.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,1,1,0,1],2));floorGeometry.setIndex([0,1,2,0,2,3]);
       const floorMaterial=new THREE.ShaderMaterial({
-        uniforms:{beamColor:{value:beam.color},glassMap:{value:pane.material.map??null},hasGlassMap:{value:!!pane.material.map},strength:{value:.8},clock:{value:0},floorAngle:{value:data.floor.userData.theta},floorBounds:{value:new THREE.Vector3(shelfInnerRadius(data.floor.userData.s)+.012,SHELF_OUTER_RADIUS-.012,SHELF_HALF_ANGLE-.001)},projectionDepth:{value:null},depthResolution:{value:new THREE.Vector2(1,1)},depthRange:{value:new THREE.Vector2(.1,240)},depthEnabled:{value:false}},
+        uniforms:{beamColor:{value:beam.color},glassMap:{value:data.projectionMap},hasGlassMap:{value:!!data.projectionMap},strength:{value:.8},clock:{value:0},floorAngle:{value:data.floor.userData.theta},floorBounds:{value:new THREE.Vector3(shelfInnerRadius(data.floor.userData.s)+.012,SHELF_OUTER_RADIUS-.012,SHELF_HALF_ANGLE-.001)},projectionDepth:{value:null},depthResolution:{value:new THREE.Vector2(1,1)},depthRange:{value:new THREE.Vector2(.1,240)},depthEnabled:{value:false}},
         vertexShader:'varying vec2 tileUV; varying vec3 tileWorld; void main(){tileUV=uv;tileWorld=(modelMatrix*vec4(position,1.0)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
         fragmentShader:`uniform vec3 beamColor;uniform sampler2D glassMap;uniform bool hasGlassMap;uniform float strength;uniform float clock;uniform float floorAngle;uniform vec3 floorBounds;uniform sampler2D projectionDepth;uniform vec2 depthResolution;uniform vec2 depthRange;uniform bool depthEnabled;varying vec2 tileUV;varying vec3 tileWorld;
           void main(){float r=length(tileWorld.xz);float angle=atan(tileWorld.z,tileWorld.x)-floorAngle;angle=atan(sin(angle),cos(angle));if(r<floorBounds.x||r>floorBounds.y||abs(angle)>floorBounds.z)discard;
@@ -108,13 +133,15 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
           }
           vec2 q=tileUV-.5;float border=smoothstep(0.0,.07,min(min(tileUV.x,1.0-tileUV.x),min(tileUV.y,1.0-tileUV.y)));
           float diamond=abs(q.x)+abs(q.y);float lead=1.0-smoothstep(.012,.035,abs(diamond-.36));float star=pow(max(0.0,1.0-length(q)*2.4),5.0);float pulse=.92+.08*sin(clock*1.8+tileWorld.x*.6);
-          vec3 color=hasGlassMap?texture2D(glassMap,tileUV).rgb:beamColor;
-          gl_FragColor=vec4(color*(1.3+star*.4),strength*border*.85*pulse*surfaceMask);
+          vec3 color=hasGlassMap?texture2D(glassMap,clamp(tileUV,vec2(.001),vec2(.999))).rgb:beamColor;
+          gl_FragColor=vec4(color*(1.08+star*.18),strength*border*.75*pulse*surfaceMask);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }`,side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.NormalBlending,polygonOffset:true,polygonOffsetFactor:-1,
       });
       floorMaterial.userData.baseOpacity=.8;materials.push(floorMaterial);floorMaterials.push(floorMaterial);data.patch.add(new THREE.Mesh(floorGeometry,floorMaterial));
+      floorMaterial.uniforms.imageCrop={value:data.imageCrop};
+      floorMaterial.fragmentShader='uniform vec2 imageCrop;\n'+floorMaterial.fragmentShader.replace('texture2D(glassMap,clamp(tileUV,vec2(.001),vec2(.999)))','texture2D(glassMap,clamp(vec2(.5)+(tileUV-vec2(.5))*imageCrop,vec2(.001),vec2(.999)))');
       floorMaterial.userData.windowData=data;
     }
   }

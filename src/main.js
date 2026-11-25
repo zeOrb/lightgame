@@ -1,4 +1,7 @@
 import {Combo} from './combo.js';
+import {chestBounce} from './chest-bounce.js';
+import {wallBayCenter,windowSteps} from './wall-layout.js';
+import {createChestModel} from './chest-model.js';
 import {ComboHUD} from './combo-hud.js';
 import {tr,onLanguageChange,localizeDOM} from './i18n.js';
 import {InputManager} from './input/input-manager.js';
@@ -14,7 +17,7 @@ import {VineLeafParticles} from './vine-leaf-particles.js';
 import {showLevelDiagnostics} from './level-diagnostics.js';
 import './level-diagnostics.css';
 import {RandomManager,randomManager,createVisualRandom} from './random-manager.js';
-import {rollChestLoot} from './run-loot.js';
+import {chestTier,chooseChestTier,rollChestRewards} from './chest-rewards.js';
 import {ShelfTravel,sweepShelfLanding,shelfSupport} from './shelf-travel.js';
 import {FLOOR_CONFIG,FLOORS,LEVEL_DIAGNOSTICS,TOTAL_SECTIONS,floorForSection,placementAt,stepAt} from './floor-config.js';
 import {TowerHierarchy} from './tower-hierarchy.js';
@@ -63,9 +66,9 @@ import { TowerMist } from './tower-mist.js';
 import { applyTowerDepth } from './tower-depth.js';
 import { RabbitAnimation } from './rabbit-animation.js';
 import { SHADOW_LIGHT_THRESHOLD } from './game.js';
-import { shelfInnerRadius } from './game.js';
+import { shelfInnerRadius,ROUTE_ANGLE } from './game.js';
 import { VitralGlow } from './vitral-glow.js';
-import { ThreatType, ThreatInfo, updateThreats, resetThreats, consumeThreatHit, hasShelfSupport,platformPassenger,carryPlatformPassenger } from './threats.js';
+import { ThreatType, ThreatInfo, updateThreats, resetThreats, consumeThreatHit, hasShelfSupport,unsupportedThreat,platformPassenger,carryPlatformPassenger } from './threats.js';
 import { ThreatVisuals } from './threat-visuals.js';
 import {RabbitState,RabbitMode,traceVitralPath} from './rabbit-state.js';
 import {FallingShadows} from './falling-shadows.js';
@@ -136,14 +139,14 @@ for(const floor of FLOORS){const library=createAncientLibrary(scene,{minY:floor.
 // Tall jewel windows, lead lattice and sunset beyond the panes.
 const glassTextures=createGlassTextures();
 const glassGlowPalette=glassTextures.palette.map(color=>new THREE.Color(color));
-const glassMats=[...glassTextures.mosaics,...glassTextures.wideMosaics].map((texture,i)=>{const material=mat('#ffffff',{map:texture,emissive:'#ffffff',emissiveMap:texture,emissiveIntensity:.65,transparent:true,opacity:.94,side:THREE.DoubleSide});material.userData.beamColor=new THREE.Color(['#f52c9e','#7244ff','#22bfff','#ffcf38'][i%4]);return material;});
+const glassMats=[...glassTextures.mosaics,...glassTextures.wideMosaics].map((texture,i)=>{const material=mat('#303030',{map:texture,emissive:'#ffffff',emissiveMap:texture,emissiveIntensity:.9,fog:false,transparent:true,opacity:1,side:THREE.DoubleSide});material.userData.beamColor=new THREE.Color(['#f52c9e','#7244ff','#22bfff','#ffcf38'][i%4]);return material;});
 const roseMat=new THREE.MeshBasicMaterial({map:glassTextures.rose,transparent:true,side:THREE.DoubleSide,depthWrite:false});
 for(const glass of glassMats)glass.userData.glowPalette=glassGlowPalette;
 const windowPanes=[];
-for(const floor of FLOORS)for(const item of floor.placements.windows){
-  const p=route(item.s),angle=item.angleDegrees===undefined?p.theta:item.angleDegrees*Math.PI/180;
+for(const floor of FLOORS)for(const {item,section} of windowSteps(floor)){
+  const p=route(section),angle=wallBayCenter(item.angleDegrees===undefined?p.theta:item.angleDegrees*Math.PI/180);
   const window=new THREE.Group();window.position.set(Math.cos(angle)*18.1,p.y+(item.heightAboveShelf??floor.windows.heightAboveShelf??4),Math.sin(angle)*18.1);window.rotation.y=-angle+Math.PI/2;scene.add(window);
-  window.userData.floorIndex=floor.index;window.userData.targetSection=item.s;
+  window.userData.floorIndex=floor.index;window.userData.targetSection=section;
   const width=item.width??floor.windows.width??2.3,height=item.height??floor.windows.height??5.8,columns=item.columns??floor.windows.columns??1,rows=item.rows??floor.windows.rows??4;
   box(width,height,.2,edgeMat,0,0,0,window);
   for(let x=0;x<columns;x++)for(let j=0;j<rows;j++)windowPanes.push(box((width-.3)/columns-.1,height/rows-.13,.24,glassMats[(columns>1?0:4)+(floor.index+x+j)%4],(x-(columns-1)/2)*(width-.3)/columns,(j-(rows-1)/2)*height/rows,-.1,window));
@@ -196,7 +199,7 @@ for(let s=0;s<=END+1;s++) {
     const lootRule=floorForSection(s).loot,lootItem=placementAt('loot',s),lootRng=randomManager.create('loot',floorForSection(s).id,s);
     const limit=lootItem.count??lootRule.gemsPerTile??RUN_UPGRADES.maxGemsPerTile;
     const count=lootItem.count??(lootRng.int(1,limit));
-    const spacing=Math.min(COLLECTIBLES.placement.spacing,(2*15*SHELF_HALF_ANGLE-1.1)/Math.max(1,count-1))/(15*Math.PI/14),floorY=route(s).y;
+    const spacing=Math.min(COLLECTIBLES.placement.spacing,(2*15*SHELF_HALF_ANGLE-1.1)/Math.max(1,count-1))/(15*ROUTE_ANGLE),floorY=route(s).y;
     for(let i=0;i<count;i++){
       const itemS=s+(i-(count-1)/2)*spacing;
       if(itemS>END||isGap(itemS))continue;
@@ -211,11 +214,9 @@ for(let s=0;s<=END+1;s++) {
   }
   if(placementAt('chests',s) && !isGap(s)) {
     const chestLane=placementAt('chests',s).lane??0,p=route(s,chestLane),o=new THREE.Group(),{width:w,height:h,depth:d}=INTERACTABLES.chest.model;o.position.set(p.x,p.y+.04,p.z);o.rotation.y=-p.theta;scene.add(o);
-    const chestWood=mat('#68452f',{roughness:.82}),chestTrim=mat('#b58a4e',{metalness:.28,roughness:.48});
-    box(w*.93,h*.52,chestTrim?d*.91:d*.91,chestWood,0,h*.275,0,o);box(w,.09*h/.8,d,chestTrim,0,.04*h/.8,0,o);
-    const lid=box(w*.98,h*.275,d*.97,chestWood,0,h*.6625,-.015*d/.66,o);lid.rotation.x=-.08;
-    box(w*.14,h*.2375,.035*d/.68,chestTrim,0,h*.375,d*.493,o);box(w*.0875,h*.125,.04*d/.68,edgeMat,0,h*.3875,d*.53,o);
-    chests.push({s,lane:chestLane,o,lid,broken:false,top:p.y+INTERACTABLES.chest.collision.topOffset,radius:INTERACTABLES.chest.collision.radius});
+    const tierId=placementAt('chests',s).tier??chooseChestTier(randomManager,floorForSection(s).id,s,INTERACTABLES.chest),tier=chestTier(INTERACTABLES.chest,tierId);
+    const {lid}=createChestModel(o,{width:w,height:h,depth:d},tier.visuals);
+    chests.push({s,lane:chestLane,o,lid,tierId,rewards:tier.rewards,broken:false,top:p.y+INTERACTABLES.chest.collision.topOffset,radius:INTERACTABLES.chest.collision.radius});
   }
   if(placementAt('bottles',s) && !isGap(s)) {
     const lane=placementAt('bottles',s).lane??0,p=route(s,lane);const o=new THREE.Group();o.position.set(p.x,p.y+.55,p.z);scene.add(o);
@@ -354,9 +355,10 @@ function toast(text){$('toast').textContent=text;$('toast').style.opacity=1;toas
 function beginRabbitFall(outward,message,launched=true){
   combo.end();
   if(!launched){
-    const p=playerRoute(s,lane),speed=motion.rail*15*Math.PI/14;
+    const p=playerRoute(s,lane),speed=motion.rail*15*ROUTE_ANGLE;
     rabbitState.startFall({x:p.x,y:p.y+.12+height,z:p.z},outward,false);
-    Object.assign(rabbitState.fall,{recoverable:true,vx:-Math.sin(p.theta)*speed,vz:Math.cos(p.theta)*speed,vy:velocity});
+    const fatalDrop=s<0||unsupportedThreat(threats,s,lane)?.type===ThreatType.HOLE;
+    Object.assign(rabbitState.fall,{recoverable:!fatalDrop,deathDuration:fatalDrop ? .85 : undefined,vx:-Math.sin(p.theta)*speed,vz:Math.cos(p.theta)*speed,vy:Math.min(0,velocity)});
     motion.reset();fallCameraOffset.copy(camera.position).sub(rabbit.position);
     abilities.phase=null;phasingFrame=false;currentVitralZone=null;vitralGlow.reset();return;
   }
@@ -373,7 +375,7 @@ function pause(){if(state==='playing'){state='paused';$('world').classList.add('
 function breakChest(c){
   if(c.broken)return false;c.broken=true;c.o.visible=false;
   const pool=Math.max(1,Math.min(RUN_UPGRADES.gemPoolTier,COLLECTIBLES.variants.length));
-  const loot=rollChestLoot(randomManager,floorForSection(c.s).id,c.s,INTERACTABLES.chest.rewardRange,pool),count=loot.length;
+  const loot=rollChestRewards(randomManager,floorForSection(c.s).id,c.s,c.rewards,{poolSize:pool}).map(reward=>{if(reward.type!=='gem')throw new Error('Missing chest reward consumer: '+reward.type);return reward.variant;}),count=loot.length;
   for(let i=0;i<count;i++){const itemS=c.s+(i-(count-1)/2)*.13,p=route(itemS,0),gem=createGemPickable(loot[i],{s:itemS,lane:0,position:new THREE.Vector3(p.x,p.y+.035,p.z)});scene.add(gem.o);towerHierarchy.worldDriven(gem.o,floorForSection(itemS).index);gem.fromChest=true;gem.drop={start:visualTime,originX:p.x,fromY:p.y+.035,velocity:2.2+RandomManager.graphics()*1.5,drift:(RandomManager.graphics()-.5)*1.5};gem.o.position.y+=.5;glints.push(gem);}
   combo.add('chest',c);tone(260,.16);return true;
 }
@@ -493,7 +495,7 @@ function landOnSecret(surface,position){
     const projected=shelfTravel.land(surface.section,position);s=projected.s;lane=projected.lane;
   }else{
   const theta=Math.atan2(position.z,position.x),reference=playerRoute(s).theta;
-  s+=Math.atan2(Math.sin(theta-reference),Math.cos(theta-reference))/(Math.PI/14);
+  s+=Math.atan2(Math.sin(theta-reference),Math.cos(theta-reference))/(ROUTE_ANGLE);
   lane=Math.hypot(position.x,position.z)-15;
   }
   height=surface.y-playerRoute(s,lane).y;velocity=0;
@@ -523,7 +525,7 @@ function update(dt){
   if(arenas.active){updateArena(dt);return;}
   if(rabbitState.mode===RabbitMode.FALLING){
     time+=dt;const beforeFall={...rabbitState.fall},fall=rabbitState.updateFall(dt);
-    const secret=secretLevels.land(beforeFall.y-.12,fall.y-.12,fall.vy,fall,beforeFall);
+    const secret=fall.deathDuration?null:secretLevels.land(beforeFall.y-.12,fall.y-.12,fall.vy,fall,beforeFall);
     const shelf=fall.recoverable?sweepShelfLanding(
       {x:beforeFall.x,y:beforeFall.y-.12,z:beforeFall.z},
       {x:fall.x,y:fall.y-.12,z:fall.z},walkableFloors.filter(o=>!o.userData.secretStep)):null;
@@ -566,7 +568,7 @@ function update(dt){
     s=Math.min(END,s+travel*dt);if(!passenger&&height<=.001)lane=THREE.MathUtils.damp(lane,0,12,dt);
   }
   if(shelfTravel.leavesFloor(beforeMoveS,s,lane)){
-    const angle=beforeMove.theta,speed=dash?dash.x/Math.max(dt,.0001):motion.rail*15*Math.PI/14;
+    const angle=beforeMove.theta,speed=dash?dash.x/Math.max(dt,.0001):motion.rail*15*ROUTE_ANGLE;
     const launchVelocity=velocity,departure=playerRoute(s,lane);
     // A gap between independently rotated floors is a normal fall, never a teleport.
     motion.reset();rabbitState.startFall({x:departure.x,y:beforeMove.y+.12+height,z:departure.z},false,false);
@@ -576,7 +578,7 @@ function update(dt){
     return;
   }
   const shadowDash=light/RUN_UPGRADES.maxHP*100<=SHADOW_LIGHT_THRESHOLD;
-  for(const c of chests){if(c.broken)continue;const radius=c.radius/(15*Math.PI/14),side=Math.sign(beforeMoveS-c.s)||-railFacing,crossed=(s-c.s)*side<radius&&(beforeMoveS-c.s)*side>=-radius,aligned=Math.abs(lane-c.lane)<c.radius;
+  for(const c of chests){if(c.broken)continue;const radius=c.radius/(15*ROUTE_ANGLE),side=Math.sign(beforeMoveS-c.s)||-railFacing,crossed=(s-c.s)*side<radius&&(beforeMoveS-c.s)*side>=-radius,aligned=Math.abs(lane-c.lane)<c.radius;
     if(!crossed||!aligned||height>c.top-playerRoute(s,lane).y)continue;
     if(dash&&!shadowDash){breakChest(c);continue;}
     if(!dash&&(velocity>0||motion.jumpBuffer>0))continue;
@@ -588,7 +590,7 @@ function update(dt){
     if(beast.stats.collider?.type==='sphere'){
       if(beast.dead)continue;
       const shape=beast.stats.collider,dy=height+.45-shape.centerY,dx=lane-beast.lane,radius=shape.radius+.28;
-      const reach=Math.sqrt(Math.max(0,radius*radius-dy*dy-dx*dx))/(15*Math.PI/14);
+      const reach=Math.sqrt(Math.max(0,radius*radius-dy*dy-dx*dx))/(15*ROUTE_ANGLE);
       const side=Math.sign(beforeMoveS-beast.s)||-railFacing;
       if(reach>0&&(s-beast.s)*side<reach&&(beforeMoveS-beast.s)*side>=0)s=beast.s+side*reach;
       continue;
@@ -652,13 +654,15 @@ function update(dt){
     if(c.broken)continue;
     const chestFoot=playerRoute(s,lane).y+height+.12;
     const crossedLid=velocity<=0&&previousFoot>=c.top&&chestFoot<=c.top;
-    const overlapsChest=Math.abs(s-c.s)<c.radius/(15*Math.PI/14)+.12&&Math.abs(lane-c.lane)<c.radius;
+    const overlapsChest=Math.abs(s-c.s)<c.radius/(15*ROUTE_ANGLE)+.12&&Math.abs(lane-c.lane)<c.radius;
     if(crossedLid&&overlapsChest){
       breakChest(c);
       height=Math.max(height,c.top-playerRoute(s,lane).y-.12);
-      const chestLaunchDirection=Math.sign(motion.rail)||railFacing;
-      velocity=JUMP_SPEED*RUN_UPGRADES.jump*(1.27+Math.min(1,Math.abs(motion.rail)/(1.6*RUN_UPGRADES.speed))*.035)*Math.sqrt(1.15);
-      motion.rail=chestLaunchDirection*1.6*RUN_UPGRADES.speed*1.75;
+      const chestLaunchDirection=Math.abs(motion.rail)>.12?Math.sign(motion.rail):1;
+      const previousLaunch=JUMP_SPEED*RUN_UPGRADES.jump*(1.27+Math.min(1,Math.abs(motion.rail)/(1.6*RUN_UPGRADES.speed))*.035)*Math.sqrt(1.15);
+      const nextSection=clamp(c.s+chestLaunchDirection,0,END),targetPoint=playerRoute(nextSection,lane);
+      const launch=chestBounce(previousLaunch,playerRoute(s,lane).y+height,targetPoint.y-.02,nextSection-s,forward*direction,(slow>0?.65:1.6)*RUN_UPGRADES.speed);
+      velocity=launch.velocity;motion.rail=launch.rail;
       rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;motion.jumpBuffer=0;abilities.resetAirJump();break;
     }
   }
@@ -871,7 +875,7 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
     scene.background.copy(new THREE.Color('#080c17').lerp(new THREE.Color('#303849'),daylight));
     scene.fog.density=.017+(1-daylight)*.003;
     scene.fog.color.set('#111827').lerp(new THREE.Color('#a18b72'),daylight*.7);
-    for(const glass of glassMats)glass.emissiveIntensity=.035+daylight*.615;
+    for(const glass of glassMats)glass.emissiveIntensity=.04+daylight*.60;
     windowLight.update(.22+daylight*.78,visualTime);
   }
   else windowLight.update(0);
@@ -991,7 +995,7 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
   windowLight.setArenaMask(arenaView,camera);
   towerMist.renderDepth(renderer,scene,camera);
   lanternLighting.setDepthSource(towerMist.depthTarget.depthTexture,camera,renderer);
-  catcherRay.update(dt,visualTime,rabbit,state!=='won'&&state!=='lost'&&!falling,camera);
+  catcherRay.update(state==='paused'?0:dt,visualTime,rabbit,state==='playing'&&!falling&&!!currentVitralZone&&!currentVitralZone.extinguished,camera);
   const fallFade=falling&&!rabbitState.fall.recoverable?Math.min(.94,(1-Math.exp(-rabbitState.fall.time*1.2))*.48+rabbitState.fall.dissolve*.46):0;
   atmosphericFocus.render(renderer,scene,camera,rabbit.position,depthLight(s),towerMist.depthTarget.depthTexture,fallFade,arenaView,phaseTrail,rabbitHitEffects);
 }
