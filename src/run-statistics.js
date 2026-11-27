@@ -1,5 +1,6 @@
 import {RunSummary,runTime} from './run-summary.js';
 import {tr,getLanguage} from './i18n.js';
+import {renderLocalized} from './localized-text.js';
 const node=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
 export class RunStatistics extends RunSummary {
   constructor(items,history,onBack){super(items,onBack,{id:'run-statistics'});this.archive=history;this.selected=0;this.compare=true;this.detail=new RunSummary(items,()=>{this.detail.close();this.element.hidden=false;this.render();},{id:'run-history-detail'});this.detail.continueLabel='Back';}
@@ -18,6 +19,21 @@ export class RunStatistics extends RunSummary {
     }else panel.append(node('p','summary-empty',tr('No completed runs yet')));
     panel.append(node('h3',null,tr('Collected items')));const list=node('div','summary-item-distribution'),entries=Object.entries(lifetime.items).sort((a,b)=>b[1]-a[1]),total=entries.reduce((sum,[,count])=>sum+count,0);
     for(const [id,count] of entries){const item=this.items.items.get(id),row=node('div','summary-distribution-row'),icon=node('span','summary-diamond'),info=node('div','summary-distribution-info'),head=node('div','summary-distribution-heading');row.style.setProperty('--item-color',item?this.items.rarity(id).color:'#dfcf9c');icon.append(node('span',null,item?.symbol??'◇'));const share=count/total*100;head.append(node('strong',null,item?tr(item.name):id),node('small',null,count+' · '+share.toFixed(1)+'%'));const bar=node('div','summary-distribution-track'),fill=node('span');fill.style.width=share+'%';bar.setAttribute('role','meter');bar.setAttribute('aria-label',item?tr(item.name):id);bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');bar.setAttribute('aria-valuenow',String(share));bar.append(fill);info.append(head,bar);row.append(icon,info);list.append(row);}
+    for(const [index,row] of [...list.children].entries()){
+      const item=this.items.items.get(entries[index][0]);
+      if(!item)continue;
+      const diamond=row.querySelector('.summary-diamond');
+      const trigger=node('button','summary-distribution-trigger');
+      const tooltip=node('div','summary-distribution-tooltip');
+      tooltip.id=`distribution-effect-${index}`;
+      tooltip.setAttribute('role','tooltip');
+      trigger.setAttribute('aria-label',tr(item.name));
+      trigger.setAttribute('aria-describedby',tooltip.id);
+      renderLocalized(tooltip,item.description);
+      diamond.replaceWith(trigger);
+      trigger.append(diamond);
+      trigger.after(tooltip);
+    }
     if(!entries.length)list.append(node('p','summary-empty',tr('No items collected')));panel.append(list);const back=node('button','summary-continue',tr('Back'));back.onclick=()=>{this.close();this.onContinue();};panel.append(back);this.element.append(panel);back.focus({preventScroll:true});
   }
 }

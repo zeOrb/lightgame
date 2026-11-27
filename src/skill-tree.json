@@ -317,64 +317,6 @@
       ]
     },
     {
-      "id": "tower",
-      "name": "Tower",
-      "nodes": [
-        {
-          "id": "floors",
-          "name": "Taller Tower",
-          "description": "Next run: 2 more floors with shelves and hazards.",
-          "cost": 4,
-          "requires": "source",
-          "icon": "tower",
-          "effects": {
-            "extraFloors": {
-              "add": 2
-            }
-          }
-        },
-        {
-          "id": "floors2",
-          "name": "Endless Spiral",
-          "description": "2 more floors: 16 in total.",
-          "cost": 10,
-          "requires": "floors",
-          "icon": "spiral",
-          "effects": {
-            "extraFloors": {
-              "add": 2
-            }
-          }
-        },
-        {
-          "id": "abundance",
-          "name": "Glint Constellation",
-          "description": "Shards appear more often: every 4 sections instead of 5.",
-          "cost": 20,
-          "requires": "floors2",
-          "icon": "constellation",
-          "effects": {
-            "glintSpacing": {
-              "set": 4
-            }
-          }
-        },
-        {
-          "id": "lastLight",
-          "name": "Last Spark",
-          "description": "Once per run, restores 30% Light when HP runs out. Does not prevent falls.",
-          "cost": 38,
-          "requires": "abundance",
-          "icon": "flame",
-          "effects": {
-            "lastLight": {
-              "set": true
-            }
-          }
-        }
-      ]
-    },
-    {
       "id": "rays",
       "name": "Sun Rays",
       "nodes": [

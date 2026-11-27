@@ -194,44 +194,6 @@ msgid "New Flare ability: destroys shadows within 3 m. Cooldown: 8 s."
 msgstr "New Flare ability: destroys shadows within 3 m. Cooldown: 8 s."
 
 #: src/skill-tree.json
-msgid "Tower"
-msgstr "Tower"
-
-#: src/skill-tree.json
-msgid "Taller Tower"
-msgstr "Taller Tower"
-
-#: src/skill-tree.json
-msgid "Next run: 2 more floors with shelves and hazards."
-msgstr "Next run: 2 more floors with shelves and hazards."
-
-#: src/skill-tree.json
-msgid "Endless Spiral"
-msgstr "Endless Spiral"
-
-#: src/skill-tree.json
-msgid "2 more floors: 16 in total."
-msgstr "2 more floors: 16 in total."
-
-#: src/skill-tree.json
-msgid "Glint Constellation"
-msgstr "Glint Constellation"
-
-#: src/skill-tree.json
-msgid "Shards appear more often: every 4 sections instead of 5."
-msgstr "Shards appear more often: every 4 sections instead of 5."
-
-#: src/skill-tree.json
-msgid "Last Spark"
-msgstr "Last Spark"
-
-#: src/skill-tree.json
-msgid ""
-"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
-msgstr ""
-"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
-
-#: src/skill-tree.json
 msgid "Sun Rays"
 msgstr "Sun Rays"
 
@@ -483,6 +445,45 @@ msgstr "Lucky Charm 5"
 msgctxt "skill.treasuryLuck5.description"
 msgid "{Luck} +20."
 msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Tower"
+msgstr "Tower"
+
+#: src/treasury-tree.json
+msgid "Taller Tower"
+msgstr "Taller Tower"
+
+#: src/treasury-tree.json
+msgid "Next run: 1 more stage (10 floors)."
+msgstr "Next run: 1 more stage (10 floors)."
+
+#: src/treasury-tree.json
+msgid "Endless Spiral"
+msgstr "Endless Spiral"
+
+#: src/skill-tree.json
+msgctxt "skill.floors2.description"
+msgid "Next run: 1 more stage (10 floors)."
+msgstr "Next run: 1 more stage (10 floors)."
+
+#: src/treasury-tree.json
+msgid "Glint Constellation"
+msgstr "Glint Constellation"
+
+#: src/treasury-tree.json
+msgid "Shards appear more often: every 4 sections instead of 5."
+msgstr "Shards appear more often: every 4 sections instead of 5."
+
+#: src/treasury-tree.json
+msgid "Last Spark"
+msgstr "Last Spark"
+
+#: src/treasury-tree.json
+msgid ""
+"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
+msgstr ""
+"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
 
 #: src/settings.js
 #. Stable UI key: dash

@@ -188,43 +188,6 @@ msgid "New Flare ability: destroys shadows within 3 m. Cooldown: 8 s."
 msgstr ""
 
 #: src/skill-tree.json
-msgid "Tower"
-msgstr ""
-
-#: src/skill-tree.json
-msgid "Taller Tower"
-msgstr ""
-
-#: src/skill-tree.json
-msgid "Next run: 2 more floors with shelves and hazards."
-msgstr ""
-
-#: src/skill-tree.json
-msgid "Endless Spiral"
-msgstr ""
-
-#: src/skill-tree.json
-msgid "2 more floors: 16 in total."
-msgstr ""
-
-#: src/skill-tree.json
-msgid "Glint Constellation"
-msgstr ""
-
-#: src/skill-tree.json
-msgid "Shards appear more often: every 4 sections instead of 5."
-msgstr ""
-
-#: src/skill-tree.json
-msgid "Last Spark"
-msgstr ""
-
-#: src/skill-tree.json
-msgid ""
-"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
-msgstr ""
-
-#: src/skill-tree.json
 msgid "Sun Rays"
 msgstr ""
 
@@ -467,6 +430,44 @@ msgstr ""
 #: src/treasury-tree.json
 msgctxt "skill.treasuryLuck5.description"
 msgid "{Luck} +20."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Tower"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Taller Tower"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Next run: 1 more stage (10 floors)."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Endless Spiral"
+msgstr ""
+
+#: src/skill-tree.json
+msgctxt "skill.floors2.description"
+msgid "Next run: 1 more stage (10 floors)."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Glint Constellation"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Shards appear more often: every 4 sections instead of 5."
+msgstr ""
+
+#: src/treasury-tree.json
+msgid "Last Spark"
+msgstr ""
+
+#: src/treasury-tree.json
+msgid ""
+"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
 msgstr ""
 
 #: src/settings.js

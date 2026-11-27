@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72" fill="none">
+ <defs>
+  <linearGradient id="fade" x2="0" y2="1">
+   <stop stop-color="#d5c9a8"/><stop offset=".5" stop-color="#a99a79" stop-opacity=".8"/><stop offset="1" stop-color="#a99a79" stop-opacity="0"/>
+  </linearGradient>
+ </defs>
+ <g stroke="#121310" stroke-width="3" stroke-linecap="round">
+  <path d="M19 0C18 15 7 16 13 29C17 38 24 43 24 67M29 0C31 12 40 18 34 29C30 39 24 47 24 67"/>
+ </g>
+ <g stroke="url(#fade)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M19 0C18 15 7 16 13 29C17 38 24 43 24 67M29 0C31 12 40 18 34 29C30 39 24 47 24 67M24 2V69M13 22C6 20 5 14 7 10M35 25C43 23 43 17 41 14M18 38C11 38 8 34 9 30M29 43C36 41 38 36 37 32"/>
+  <g fill="url(#fade)" stroke-width=".7">
+   <path d="M17 10C9 11 7 4 8 1C14 3 18 5 17 10Z"/>
+   <path d="M30 12C30 5 37 5 40 2C40 9 36 13 30 12Z"/>
+   <path d="M12 26C4 26 3 20 2 17C8 19 12 21 12 26Z"/>
+   <path d="M35 29C35 22 40 22 45 19C43 27 40 30 35 29Z"/>
+   <path d="M19 38C12 38 11 33 11 29C17 31 20 34 19 38Z"/>
+   <path d="M29 42C28 36 34 35 37 32C37 39 33 43 29 42Z"/>
+   <path d="M23 51C18 50 16 45 17 42C21 44 24 47 23 51Z"/>
+   <path d="M25 57C25 51 29 50 31 47C32 53 29 57 25 57Z"/>
+  </g>
+  <path d="M20 17L24 22L28 17M21 29L24 34L27 29M22 57L24 63L26 57"/>
+ </g>
+</svg>

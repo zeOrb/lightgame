@@ -10,6 +10,8 @@ function eventIcon(kind,x=0,y=0){
   const group=svgNode('g',{transform:'translate('+x+' '+y+')',class:'summary-event-icon'});
   if(kind==='kill'){
     group.append(svgNode('circle',{r:10,fill:'#672e2b',stroke:'#e18477','stroke-width':1.5}),svgNode('path',{d:'M-6-2L-7-7L-2-5Q0-6 2-5L7-7L6-2Q8 6 0 7Q-8 6-6-2Z',fill:'#231b1a'}),svgNode('path',{d:'M-5-1L-1 0L-2 2L-5 1ZM5-1L1 0L2 2L5 1Z',fill:'#ffe6d4'}));
+  }else if(kind==='chest'){
+    group.append(svgNode('circle',{r:10,fill:'#55401f',stroke:'#e9c574','stroke-width':1.5}),svgNode('path',{d:'M-6-2Q-6-6 0-6T6-2V5H-6Z',fill:'#b7803b',stroke:'#f6db9a','stroke-width':1}),svgNode('path',{d:'M-6-1H6M0-2V2',fill:'none',stroke:'#f6db9a','stroke-width':1.2}));
   }else if(kind==='death'){
     group.append(svgNode('path',{d:'M-8-2C-8-13 8-13 8-2Q8 3 5 4L5 9L-5 9L-5 4Q-8 3-8-2Z',fill:'#eee8d7',stroke:'#201b17','stroke-width':1.2}),svgNode('ellipse',{cx:-3.5,cy:-1,rx:2.2,ry:2.7,fill:'#28201a'}),svgNode('ellipse',{cx:3.5,cy:-1,rx:2.2,ry:2.7,fill:'#28201a'}),svgNode('path',{d:'M0 2L-1.8 5L1.8 5ZM-2 6V9M2 6V9',fill:'#28201a',stroke:'#28201a','stroke-width':1}));
   }else group.append(svgNode('path',{d:'M9-16Q3-8-1 3L-9 17Q-6 2-2-6Z',fill:'#fffaf0',stroke:'#fffaf0','stroke-width':1.2}));
@@ -28,13 +30,22 @@ export class RunSummary {
     const snapshot=this.snapshot;this.element.replaceChildren();const panel=node('div','run-summary-panel');const title=node('h2',null,tr('Run summary'));title.id=this.element.id+'-title';panel.append(title,node('div','summary-ornament'),node('p','summary-outcome',tr(snapshot.outcome==='won'?'Crystal awakened':'Run ended')));
     const metrics=node('div','summary-metrics');for(const [label,value] of [[tr('Run time'),runTime(snapshot.duration)],[tr('Gems collected'),snapshot.totals.gems],[tr('Run points'),snapshot.totals.points],[tr('Enemies defeated'),snapshot.totals.kills]]){const metric=node('div');metric.append(node('strong',null,String(value)),node('span',null,label));metrics.append(metric);}panel.append(metrics);
     panel.append(node('h3',null,tr('Run points')));this.drawChart(panel);
-    const legend=node('div','summary-legend');for(const [kind,label] of [['kill',tr('Enemy defeated')],['floor',tr('Floor completed')],...(snapshot.outcome==='lost'?[['death',tr('Death')]]:[])]){const entry=node('span'),icon=svgNode('svg',{viewBox:'-12 -12 24 24','aria-hidden':'true'});icon.append(eventIcon(kind));entry.append(icon,document.createTextNode(label));legend.append(entry);}panel.append(legend,node('h3',null,tr('Collected items')));
+    const legend=node('div','summary-legend');for(const [kind,label] of [['kill',tr('Enemy defeated')],['chest',tr('Chest opened')],['floor',tr('Floor completed')],...(snapshot.outcome==='lost'?[['death',tr('Death')]]:[])]){const entry=node('span'),icon=svgNode('svg',{viewBox:'-12 -12 24 24','aria-hidden':'true'});icon.append(eventIcon(kind));entry.append(icon,document.createTextNode(label));legend.append(entry);}panel.append(legend,node('h3',null,tr('Collected items')));
     const inventory=node('div','summary-inventory'),counts=new Map();for(const event of snapshot.events)if(event.type==='item.acquired')counts.set(event.data.id,(counts.get(event.data.id)??0)+1);
     const detail=node('div','summary-item-detail');detail.setAttribute('aria-live','polite');let hovered=null,focused=null;
     const show=id=>{detail.classList.toggle('is-visible',!!id);if(!id)return;const item=this.items.items.get(id);detail.style.setProperty('--item-color',this.items.rarity(id).color);detail.replaceChildren(node('strong',null,tr(item.name)));const effect=node('p');renderLocalized(effect,item.description);detail.append(effect,node('small',null,'×'+counts.get(id)));};
     for(const [id,count] of counts){const item=this.items.items.get(id);if(!item)continue;const button=node('button','summary-item');button.style.setProperty('--item-color',this.items.rarity(id).color);button.setAttribute('aria-label',tr(item.name)+' ×'+count);const icon=node('span','summary-diamond');icon.append(node('span',null,item.symbol));button.append(icon);button.onclick=()=>button.focus();button.onpointerenter=()=>{hovered=id;show(id)};button.onpointerleave=()=>{hovered=null;show(focused)};button.onfocus=()=>{focused=id;show(id)};button.onblur=()=>{focused=null;show(hovered)};inventory.append(button);}
     if(!counts.size)inventory.append(node('p','summary-empty',tr('No items collected')));panel.append(inventory,detail);
     if(this.history?.state.recent.length>1){const compare=node('button','summary-compare',tr('Compare recent runs'));compare.onclick=()=>this.onCompare?.();panel.append(compare);}
+    if(this.onRestart){
+      const restart=node('button','summary-compare',tr('Restart run'));
+      restart.onclick=()=>{
+        if(restart.disabled)return;
+        for(const button of this.buttons())button.disabled=true;
+        this.onRestart();
+      };
+      panel.append(restart);
+    }
     const next=node('button','summary-continue',tr(this.continueLabel??'Continue to upgrades'));next.onclick=()=>{this.close();this.onContinue();};panel.append(next);this.element.append(panel);next.focus({preventScroll:true});
   }
   drawChart(panel,comparisons=[]){
@@ -66,7 +77,8 @@ export class RunSummary {
     const ribbon=svgNode('g',{mask:'url(#summary-edge-mask)'});ribbon.append(svgNode('path',{d:curve.path+' L '+x(snap.duration)+' 232 L 36 232 Z',fill:'url(#summary-fill)'}),svgNode('path',{d:curve.path,class:'summary-line-halo'}),svgNode('path',{d:curve.path,class:'summary-line-edge'}),svgNode('path',{d:curve.path,class:'summary-line'}));svg.append(ribbon);
     for(const event of snap.events){const px=x(event.time),py=curve.at(event.time);
       if(event.type==='floor.completed'){glows.append(svgNode('circle',{cx:px,cy:py,r:19,fill:'url(#summary-glow-floor)'}));const tick=eventIcon('floor',px,py),title=svgNode('title');title.textContent=tr('Floor {floor}',{floor:event.data.label})+' · '+runTime(event.time);const key=(snap.meta?.runId??snap.meta?.seed??'')+':'+event.data.id+':'+event.time;if(!this.floorAngles.has(key))this.floorAngles.set(key,-RandomManager.graphics()*15);tick.querySelector('path').setAttribute('transform','rotate('+this.floorAngles.get(key)+')');tick.prepend(title);svg.append(tick);continue;}
-      if(event.type!=='enemy.killed')continue;
+      if(event.type!=='enemy.killed'&&event.type!=='chest.opened')continue;
+      if(event.type==='chest.opened'){const icon=eventIcon('chest',px,py),title=svgNode('title');title.textContent=tr('Chest opened')+' · '+runTime(event.time);icon.prepend(title);svg.append(icon);continue;}
       glows.append(svgNode('circle',{cx:px,cy:py,r:25,fill:'url(#summary-glow-kill)'}));
       const icon=eventIcon('kill',px,py),title=svgNode('title');title.textContent=tr('Enemy defeated')+' · '+runTime(event.time);icon.prepend(title);svg.append(icon);
     }

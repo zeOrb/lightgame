@@ -196,45 +196,6 @@ msgid "New Flare ability: destroys shadows within 3 m. Cooldown: 8 s."
 msgstr "Новая способность E: уничтожает тени в радиусе 3 м. Кулдаун 8 с."
 
 #: src/skill-tree.json
-msgid "Tower"
-msgstr "Башня"
-
-#: src/skill-tree.json
-msgid "Taller Tower"
-msgstr "Выше башня"
-
-#: src/skill-tree.json
-msgid "Next run: 2 more floors with shelves and hazards."
-msgstr "Следующий забег: ещё 2 этажа с полками и угрозами."
-
-#: src/skill-tree.json
-msgid "Endless Spiral"
-msgstr "Бесконечная спираль"
-
-#: src/skill-tree.json
-msgid "2 more floors: 16 in total."
-msgstr "Ещё 2 этажа: всего 16."
-
-#: src/skill-tree.json
-msgid "Glint Constellation"
-msgstr "Созвездие бликов"
-
-#: src/skill-tree.json
-msgid "Shards appear more often: every 4 sections instead of 5."
-msgstr "Осколки встречаются чаще: каждые 4 секции вместо 5."
-
-#: src/skill-tree.json
-msgid "Last Spark"
-msgstr "Последний огонёк"
-
-#: src/skill-tree.json
-msgid ""
-"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
-msgstr ""
-"Один раз за забег при исчерпании HP возвращает 30% света. Не спасает от "
-"падения."
-
-#: src/skill-tree.json
 msgid "Sun Rays"
 msgstr "Солнечные лучи"
 
@@ -487,6 +448,46 @@ msgstr "Счастливый талисман 5"
 msgctxt "skill.treasuryLuck5.description"
 msgid "{Luck} +20."
 msgstr "{Luck} +20."
+
+#: src/treasury-tree.json
+msgid "Tower"
+msgstr "Башня"
+
+#: src/treasury-tree.json
+msgid "Taller Tower"
+msgstr "Выше башня"
+
+#: src/treasury-tree.json
+msgid "Next run: 1 more stage (10 floors)."
+msgstr "Следующий забег: ещё 1 ярус (10 этажей)."
+
+#: src/treasury-tree.json
+msgid "Endless Spiral"
+msgstr "Бесконечная спираль"
+
+#: src/skill-tree.json
+msgctxt "skill.floors2.description"
+msgid "Next run: 1 more stage (10 floors)."
+msgstr "Следующий забег: ещё 1 ярус (10 этажей)."
+
+#: src/treasury-tree.json
+msgid "Glint Constellation"
+msgstr "Созвездие бликов"
+
+#: src/treasury-tree.json
+msgid "Shards appear more often: every 4 sections instead of 5."
+msgstr "Осколки встречаются чаще: каждые 4 секции вместо 5."
+
+#: src/treasury-tree.json
+msgid "Last Spark"
+msgstr "Последний огонёк"
+
+#: src/treasury-tree.json
+msgid ""
+"Once per run, restores 30% Light when HP runs out. Does not prevent falls."
+msgstr ""
+"Один раз за забег при исчерпании HP возвращает 30% света. Не спасает от "
+"падения."
 
 #: src/settings.js
 #. Stable UI key: dash

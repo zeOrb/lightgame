@@ -2,6 +2,12 @@ import * as THREE from 'three';
 import { createVisualRandom } from './random-manager.js';
 const random=createVisualRandom('ground-smoke');
 
+export function contactShadowMaterial(){
+  return new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,fog:false,polygonOffset:true,polygonOffsetFactor:-1,
+    vertexShader:'varying vec2 shadowUV; void main(){shadowUV=uv;vec3 transformed=position;\n#include <project_vertex>\n}',
+    fragmentShader:'varying vec2 shadowUV; void main(){float r=length((shadowUV-.5)*2.0);float alpha=(1.0-smoothstep(.08,.98,r))*.76;gl_FragColor=vec4(.012,.009,.014,alpha);}'});
+}
+
 export function softShadowMaterial(){
   return new THREE.ShaderMaterial({
     uniforms:{clock:{value:0}},transparent:true,depthWrite:false,side:THREE.DoubleSide,

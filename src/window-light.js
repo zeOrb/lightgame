@@ -59,7 +59,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       const sourceTangent=new THREE.Vector3(-Math.sin(angle),0,Math.cos(angle));
       const settings={...projectionDefaults,...window?.userData.lightProjection};
       const inner=floor?shelfInnerRadius(floor.userData.s)*Math.cos(SHELF_HALF_ANGLE):0;
-      const center=floor?radial.clone().multiplyScalar(settings.fitToStep?(inner+SHELF_OUTER_RADIUS)/2:ROUTE_RADIUS+.55).setY(floor.userData.y+.035):new THREE.Vector3(0,Math.max(2,origin.y-9),0);
+      const center=floor?radial.clone().multiplyScalar(settings.fitToStep?(inner+SHELF_OUTER_RADIUS)/2:ROUTE_RADIUS+.55).setY(floor.userData.y+.035+(floor.userData.lightProjectionLift??0)):new THREE.Vector3(0,Math.max(2,origin.y-9),0);
       const patch=new THREE.Group();group.add(patch);
       const bounds={minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity};
       for(const sibling of panes)if(sibling.parent===window)for(const corner of paneBeam(sibling).corners){
@@ -74,7 +74,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       data.projectionMap=projectionMosaic(panes,window,origin,sourceTangent,bounds);
       const sourceAspect=(bounds.maxX-bounds.minX)/(bounds.maxY-bounds.minY),targetAspect=((bounds.maxX-bounds.minX)*scaleX)/((bounds.maxY-bounds.minY)*scaleY);
       data.imageCrop=new THREE.Vector2(Math.min(1,targetAspect/sourceAspect),Math.min(1,sourceAspect/targetAspect));
-      if(floor){data.zone={s:floor.userData.s,lane:0,o:patch,taken:false,center:center.clone(),radial:radial.clone(),tangent:tangent.clone(),width:(bounds.maxX-bounds.minX)*scaleX,length:(bounds.maxY-bounds.minY)*scaleY,palette:pane.material.userData.glowPalette??[beam.color],extinguished:false};zones.push(data.zone);}
+      if(floor){data.zone={s:floor.userData.s,lane:0,o:patch,taken:false,floorY:floor.userData.y,center:center.clone(),radial:radial.clone(),tangent:tangent.clone(),width:(bounds.maxX-bounds.minX)*scaleX,length:(bounds.maxY-bounds.minY)*scaleY,palette:pane.material.userData.glowPalette??[beam.color],extinguished:false};zones.push(data.zone);}
     }
     const data=windows.get(window);
     data.panes.push(pane);
@@ -119,16 +119,16 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
       const footprint=[[-.5,.5],[.5,.5],[.5,-.5],[-.5,-.5]].map(([x,y])=>data.center.clone().addScaledVector(data.tangent,x*data.zone.width).addScaledVector(data.radial,y*data.zone.length));
       const floorGeometry=new THREE.BufferGeometry();floorGeometry.setAttribute('position',new THREE.Float32BufferAttribute(footprint.flatMap(p=>[p.x,p.y,p.z]),3));floorGeometry.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,1,1,0,1],2));floorGeometry.setIndex([0,1,2,0,2,3]);
       const floorMaterial=new THREE.ShaderMaterial({
-        uniforms:{beamColor:{value:beam.color},glassMap:{value:data.projectionMap},hasGlassMap:{value:!!data.projectionMap},strength:{value:.8},clock:{value:0},floorAngle:{value:data.floor.userData.theta},floorBounds:{value:new THREE.Vector3(shelfInnerRadius(data.floor.userData.s)+.012,SHELF_OUTER_RADIUS-.012,SHELF_HALF_ANGLE-.001)},projectionDepth:{value:null},depthResolution:{value:new THREE.Vector2(1,1)},depthRange:{value:new THREE.Vector2(.1,240)},depthEnabled:{value:false}},
+        uniforms:{beamColor:{value:beam.color},glassMap:{value:data.projectionMap},hasGlassMap:{value:!!data.projectionMap},strength:{value:.8},clock:{value:0},floorAngle:{value:data.floor.userData.theta},floorBounds:{value:new THREE.Vector3(shelfInnerRadius(data.floor.userData.s)+.012,SHELF_OUTER_RADIUS-.012,SHELF_HALF_ANGLE-.001)},projectionDepth:{value:null},depthResolution:{value:new THREE.Vector2(1,1)},depthRange:{value:new THREE.Vector2(.1,240)},depthEnabled:{value:false},surfaceTolerance:{value:data.floor.userData.lightProjectionLift?new THREE.Vector2(.23,.39):new THREE.Vector2(.08,.22)}},
         vertexShader:'varying vec2 tileUV; varying vec3 tileWorld; void main(){tileUV=uv;tileWorld=(modelMatrix*vec4(position,1.0)).xyz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-        fragmentShader:`uniform vec3 beamColor;uniform sampler2D glassMap;uniform bool hasGlassMap;uniform float strength;uniform float clock;uniform float floorAngle;uniform vec3 floorBounds;uniform sampler2D projectionDepth;uniform vec2 depthResolution;uniform vec2 depthRange;uniform bool depthEnabled;varying vec2 tileUV;varying vec3 tileWorld;
+        fragmentShader:`uniform vec3 beamColor;uniform sampler2D glassMap;uniform bool hasGlassMap;uniform float strength;uniform float clock;uniform float floorAngle;uniform vec3 floorBounds;uniform sampler2D projectionDepth;uniform vec2 depthResolution;uniform vec2 depthRange;uniform bool depthEnabled;uniform vec2 surfaceTolerance;varying vec2 tileUV;varying vec3 tileWorld;
           void main(){float r=length(tileWorld.xz);float angle=atan(tileWorld.z,tileWorld.x)-floorAngle;angle=atan(sin(angle),cos(angle));if(r<floorBounds.x||r>floorBounds.y||abs(angle)>floorBounds.z)discard;
           float surfaceMask=1.0;
           if(depthEnabled){
             float depth=texture2D(projectionDepth,gl_FragCoord.xy/depthResolution).r;
             float solidDistance=depthRange.x*depthRange.y/(depthRange.y-depth*(depthRange.y-depthRange.x));
             float decalDistance=depthRange.x*depthRange.y/(depthRange.y-gl_FragCoord.z*(depthRange.y-depthRange.x));
-            surfaceMask=1.0-smoothstep(.08,.22,abs(solidDistance-decalDistance));
+            surfaceMask=1.0-smoothstep(surfaceTolerance.x,surfaceTolerance.y,abs(solidDistance-decalDistance));
             if(depth>.99999||surfaceMask<.001)discard;
           }
           vec2 q=tileUV-.5;float border=smoothstep(0.0,.07,min(min(tileUV.x,1.0-tileUV.x),min(tileUV.y,1.0-tileUV.y)));
@@ -166,7 +166,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
     sampleLight(position,jumpHeight=0){
       if(jumpHeight>3.5)return null;
       for(const zone of zones){
-        if(Math.abs(position.y-zone.center.y)>.36)continue;
+        if(Math.abs(position.y-zone.floorY)>.36)continue;
         const radius=Math.hypot(position.x,position.z);
         const angle=Math.atan2(position.z,position.x)-Math.atan2(zone.radial.z,zone.radial.x);
         if(radius<shelfInnerRadius(zone.s)+.012||radius>SHELF_OUTER_RADIUS-.012||Math.abs(Math.atan2(Math.sin(angle),Math.cos(angle)))>SHELF_HALF_ANGLE-.001)continue;

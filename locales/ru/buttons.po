@@ -76,7 +76,7 @@ msgstr "Пауза"
 msgid "Pause menu"
 msgstr "Меню паузы"
 
-#: src/main.js:363
+#: src/main.js:377
 msgid "Preparing run…"
 msgstr "Готовим забег…"
 

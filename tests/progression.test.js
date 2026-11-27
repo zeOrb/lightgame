@@ -17,7 +17,7 @@ test('only the dormant source is visible until its one-point unlock',()=>{
   assert.equal(SKILLS.filter(s=>isSkillPreview(p.state,s.id)).length,0);
   p.award();assert.equal(p.canBuy('heart'),false);assert.equal(p.canBuy('source'),true);
   assert.equal(p.buy('source'),true);assert.equal(p.state.points,0);assert.equal(p.buy('source'),false);
-  assert.equal(SKILLS.filter(s=>isSkillVisible(p.state,s.id)&&!s.isRoot).length,6);
+  assert.equal(SKILLS.filter(s=>isSkillVisible(p.state,s.id)&&!s.isRoot).length,SKILL_BRANCH_COUNT);
   assert.equal(p.canBuy('heart'),false);p.award(4);assert.equal(p.buy('heart'),true);
   assert.equal(isSkillVisible(p.state,'heart2'),true);assert.equal(isSkillVisible(p.state,'lasting'),false);
 });
@@ -44,7 +44,7 @@ test('corrupt saves are contained and all nodes purchase once without negative p
   for(let i=0;i<SKILLS.reduce((sum,s)=>sum+s.cost,0);i++)p.award();
   while(p.state.owned.length<SKILLS.length){const next=SKILLS.find(s=>p.canBuy(s.id));assert.ok(next);assert.ok(p.buy(next.id));}
   assert.equal(p.state.points,0);for(const s of SKILLS)assert.equal(p.buy(s.id),false);
-  const stats=skillStats(p.state);assert.equal(stats.extraFloors,4);assert.equal(stats.glintSpacing,4);assert.equal(stats.flare,true);assert.equal(stats.doubleJump,true);
+  const stats=skillStats(p.state);assert.equal(stats.extraFloors,20);assert.equal(stats.glintSpacing,4);assert.equal(stats.flare,true);assert.equal(stats.doubleJump,true);
 });
 
 test('debug reset clears banked points and all upgrades durably without touching other saves',()=>{

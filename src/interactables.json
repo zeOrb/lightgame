@@ -1,5 +1,6 @@
 {
   "chest": {
+    "shadowRadius": 2,
     "type": "breakable",
     "rewardRange": [
       3,

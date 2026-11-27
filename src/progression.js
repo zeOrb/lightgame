@@ -13,7 +13,7 @@ export function cleanProgress(value={}){
   const owned=[];for(const skill of SKILLS)if(Array.isArray(value?.owned)&&value.owned.includes(skill.id))owned.push(skill.id);
   // Existing learned trees keep their upgrades without paying a new entry fee.
   if(ROOT_SKILL&&owned.some(id=>SKILLS.some(s=>s.id===id&&s.treeId==='light'&&!s.isRoot))&&!owned.includes(ROOT_SKILL.id))owned.unshift(ROOT_SKILL.id);
-  if(owned.some(id=>id.startsWith('shardMultiplier'))&&!owned.includes('treasurySource'))owned.push('treasurySource');
+  if(owned.some(id=>id.startsWith('shardMultiplier')||['floors','floors2','abundance','lastLight'].includes(id))&&!owned.includes('treasurySource'))owned.push('treasurySource');
   return {points:Number.isFinite(value?.points)?Math.min(100000,Math.max(0,Math.floor(value.points))):0,owned};
 }
 export function skillStats(progress){return evaluateSkillEffects(BASE_STATS,SKILLS,progress.owned);}

@@ -1,6 +1,6 @@
-/* Keep the gameplay HUD to light and the current-run points counter. */
+/* Top-left gameplay HUD for light and current-run points. */
 body.playing :is(body>header,footer,#touch,#toast),
-body.playing #hud :is(.eyebrow,#light-value,#effect,#floor,.progress-track){display:none!important}
+body.playing #hud :is(.eyebrow,#light-value,#effect){display:none!important}
 body.playing #hud{inset:42px auto auto 36px;width:320px;transform:scale(var(--hud-scale,1));transform-origin:top left;display:flex;flex-direction:column;align-items:stretch;gap:6px}
 body.playing #hud .light-stat,body.playing #hud .objective{display:block;position:relative;inset:auto;width:100%;min-width:0;padding:0;margin:0}
 body.playing #hud .light-track{grid-area:auto;width:100%;min-width:0;max-width:100%;height:8px;margin:0;border:0;box-shadow:none;background:#111820;--frame-overhang:22px;--frame-height:21px}
@@ -13,3 +13,14 @@ body.playing #shards .shard-counter-gain{left:0;right:auto;text-align:left}
 
 body.playing #hud .shadow-band{height:100%;max-height:100%;overflow:hidden;clip-path:inset(0);z-index:1}
 body.playing #hud #light-fill{height:100%;box-shadow:none}
+.light-track-tail{
+  position:absolute;
+  left:calc(100% - 12px);
+  top:50%;
+  width:64px;
+  height:32px;
+  translate:0 calc(-50% - 4px);
+  background:url('./light-bar-tail.svg') left center/100% 100% no-repeat;
+  pointer-events:none;
+  z-index:4;
+}

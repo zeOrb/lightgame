@@ -4,11 +4,26 @@ import {applyTowerDepth} from './tower-depth.js';
 import {setObjectAura} from './object-aura.js';
 
 let shared;
+function shadeChestBase(material){
+  const previous=material.onBeforeCompile;
+  material.onBeforeCompile=function(shader,...args){
+    previous.call(this,shader,...args);
+    shader.vertexShader='attribute float chestHeight; varying float chestAmbientHeight;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nchestAmbientHeight=chestHeight;');
+    shader.fragmentShader='varying float chestAmbientHeight;\n'+shader.fragmentShader.replace('#include <opaque_fragment>',`#include <opaque_fragment>
+      float chestAmbient=smoothstep(.03,.75,chestAmbientHeight);
+      gl_FragColor.rgb*=mix(vec3(.48,.43,.40),vec3(1.0),chestAmbient);`);
+  };
+  material.customProgramCacheKey=()=> 'tower-height-muted-blue-chest-ambient-v1';
+  return material;
+}
 function chestAssets(){
   if(shared)return shared;
   const base=[[],[],[]],lid=[[],[],[]];
   function add(parts,kind,g,x=0,y=0,z=0,tint=1){
     g.translate(x,y,z);const geometry=g.index?g.toNonIndexed():g;if(g.index)g.dispose();
+    const position=geometry.attributes.position,heights=new Float32Array(position.count);
+    for(let i=0;i<position.count;i++)heights[i]=position.getY(i)+(parts===lid?.60:0);
+    geometry.setAttribute('chestHeight',new THREE.Float32BufferAttribute(heights,1));
     if(kind===0){const colors=[];for(let i=0;i<geometry.attributes.position.count;i++)colors.push(tint,tint*.97,tint*.91);geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));}
     parts[kind].push(geometry);
   }
@@ -70,7 +85,7 @@ function chestAssets(){
 
 export function createChestModel(parent,{width,height,depth},visuals={}){
   const assets=chestAssets(),model=new THREE.Group(),lid=new THREE.Group();model.name='Forged oak chest';model.scale.set(width,height,depth);parent.add(model);
-  const materials=assets.materials.map((material,i)=>{if(!i||!visuals.metal)return material;const copy=material.clone();copy.color.set(i===1?visuals.metal.color:visuals.metal.accent);copy.emissive.copy(copy.color);return copy;});
+  const materials=assets.materials.map((material,i)=>{const copy=material.clone();copy.onBeforeCompile=material.onBeforeCompile;if(i&&visuals.metal){copy.color.set(i===1?visuals.metal.color:visuals.metal.accent);copy.emissive.copy(copy.color);}return shadeChestBase(copy);});
   for(const [geometries,target] of [[assets.base,model],[assets.lid,lid]])geometries.forEach((g,i)=>{if(g)target.add(new THREE.Mesh(g,materials[i]));});
   lid.position.y=.60;lid.rotation.x=-.08;lid.name='Domed chest lid';model.add(lid);
   setObjectAura(model,visuals);return {model,lid};

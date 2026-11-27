@@ -17,19 +17,30 @@ function amount(value,stream,capacity=Infinity){
 }
 export function buildFloorLayout(source,extraFloors=0,seed=randomManager.seed){
   if(!Number.isInteger(source.baseFloors)||source.baseFloors<1||!Number.isInteger(extraFloors)||extraFloors<0)throw new Error('floors.json: invalid floor count');
+  const stageSize=source.stageSize??10;
+  if(!Number.isInteger(stageSize)||stageSize<1)throw new Error('floors.json: invalid stageSize');
   readPlacementRules(source.defaults.placementRules);
   const manager=new RandomManager(seed),result=[];let start=0;
   for(let index=0;index<source.baseFloors+extraFloors;index++){
     const custom=source.floors[index]??{};
     if(Object.hasOwn(custom,'placementRules'))readPlacementRules(custom.placementRules);
-    const rule=merge(source.defaults,custom),count=rule.steps.count;
+    const stageIndex=Math.floor(index/stageSize);
+    const stage=stageIndex===0?source.stages?.first:source.stages?.later;
+    const rule=merge(merge(source.defaults,stage),custom);
+    if(stage?.stairTheme)rule.stairTheme=stage.stairTheme;
+    const count=rule.steps.count;
+    const props=rule.backgroundProps??{density:.78,types:['books','scrolls','lantern']};
+    const propTypes=['books','scrolls','lantern','arch','stone','candles','urn','hourglass','candlestick','brick'];
+    if(!Number.isFinite(props.density)||props.density<0||props.density>1||!Array.isArray(props.types)||props.types.some(type=>!propTypes.includes(type)))throw new Error('floors.json: invalid backgroundProps');
+    if(props.weights!==undefined&&(!props.weights||typeof props.weights!=='object'||Array.isArray(props.weights)||Object.entries(props.weights).some(([type,weight])=>!propTypes.includes(type)||!Number.isFinite(weight)||weight<0)))throw new Error('floors.json: invalid backgroundProps weights');
+    if(!['wood','stone'].includes(rule.stairTheme??'wood'))throw new Error('floors.json: unknown stairTheme '+rule.stairTheme);
     if(!Number.isInteger(count)||count<4||count>128)throw new Error('floors.json: steps.count must be 4..128');
     if(!Number.isFinite(rule.rotationYDegrees??0))throw new Error('floors.json: invalid rotation');
     if(rule.lighting?.daylight!==null&&rule.lighting?.daylight!==undefined&&(!Number.isFinite(rule.lighting.daylight)||rule.lighting.daylight<0||rule.lighting.daylight>1))throw new Error('floors.json: daylight must be 0..1 or null');
     const checkStep=item=>{if(item.innerRadius!==undefined&&(!Number.isFinite(item.innerRadius)||item.innerRadius<1||item.innerRadius>=16.5))throw new Error('floors.json: invalid step innerRadius');if(item.style!==undefined&&!['carved','plain'].includes(item.style))throw new Error('floors.json: unknown step style '+item.style);};
     checkStep(rule.steps);if(rule.steps.styles?.some(style=>!['carved','plain'].includes(style))||rule.steps.styles?.length===0)throw new Error('floors.json: invalid step styles');
     const placementRules=readPlacementRules(rule.placementRules);
-    const floor={...rule,id:custom.id??'floor-'+(index+1),index,start,count,end:start+count-1,rotationYDegrees:rule.rotationYDegrees??0,placements:{}};
+    const floor={...rule,id:custom.id??'floor-'+(index+1),index,stageIndex,start,count,end:start+count-1,rotationYDegrees:rule.rotationYDegrees??0,placements:{}};
     if(result.some(f=>f.id===floor.id))throw new Error('floors.json: duplicate floor id '+floor.id);
     let stream=manager.create('layout',String(source.seed),floor.id,'steps');
     const used=new Set();

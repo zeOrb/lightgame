@@ -9,7 +9,7 @@ export class ComboHUD {
   update(combo,visible){
     this.element.hidden=!visible||!combo.enabled||!combo.count;if(this.element.hidden)return;
     this.title.textContent=tr('Combo')+' ×'+combo.multiplier;this.count.textContent=combo.count;
-    const names={airGem:tr('Air gem'),stomp:tr('Stomp'),dashKill:tr('Dash kill'),vitral:tr('Stained-glass crossing'),chest:tr('Chest break')};
+    const names={gem:tr('Gem pickup'),stomp:tr('Stomp'),dashKill:tr('Dash kill'),vitral:tr('Stained-glass crossing'),chest:tr('Chest break')};
     this.action.textContent=names[combo.lastAction]??'';this.bar.style.transform=`scaleX(${combo.fraction})`;
     this.element.dataset.boosted=String(combo.multiplier>1);
   }

@@ -15,6 +15,7 @@ import {chestBounce} from './chest-bounce.js';
 import {wallBayCenter,windowSteps} from './wall-layout.js';
 import {createChestModel} from './chest-model.js';
 import {ComboHUD} from './combo-hud.js';
+import {TowerDescentHUD} from './tower-descent-hud.js';
 import {tr,onLanguageChange,localizeDOM} from './i18n.js';
 import {InputManager} from './input/input-manager.js';
 import {FocusIndicator} from './input/focus-indicator.js';
@@ -66,14 +67,14 @@ import {createEnemy,damageEnemy as applyEnemyDamage} from './enemy-factory.js';
 import {nextRunURL} from './run-navigation.js';
 import {FrameClock} from './frame-clock.js';
 import {fadeToNextRun,revealNextRun} from './run-transition.js';
-import { END, FLOOR_COUNT, TOWER_TOP, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, floorAt, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, MOVEMENT_LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
+import { END, FLOOR_COUNT, TOWER_TOP, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, MOVEMENT_LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
 import { cameraPose, smoothCameraAnchor, railCameraHeight, LandingCameraBlend } from './camera.js';
 import { PickupEffects } from './pickup-effects.js';
 import { ShadowEffects } from './shadow-effects.js';
 import { animateShadowBeast, resetShadowBeast, animateBeastDeath } from './shadow-beast.js';
 import { createWindowLight, SUN_RAY_DIRECTION } from './window-light.js';
 import { createGlassTextures } from './stained-glass.js';
-import { softShadowMaterial, GroundShadowSmoke } from './ground-shadows.js';
+import { softShadowMaterial, contactShadowMaterial, GroundShadowSmoke } from './ground-shadows.js';
 import { TowerMist } from './tower-mist.js';
 import { applyTowerDepth } from './tower-depth.js';
 import { RabbitAnimation } from './rabbit-animation.js';
@@ -82,9 +83,10 @@ import { shelfInnerRadius,ROUTE_ANGLE } from './game.js';
 import { VitralGlow } from './vitral-glow.js';
 import { ThreatType, ThreatInfo, updateThreats, resetThreats, consumeThreatHit, hasShelfSupport,unsupportedThreat,platformPassenger,carryPlatformPassenger } from './threats.js';
 import { ThreatVisuals } from './threat-visuals.js';
-import {RabbitState,RabbitMode,traceVitralPath} from './rabbit-state.js';
+import {RabbitState,RabbitMode} from './rabbit-state.js';
 import {FallingShadows} from './falling-shadows.js';
 import {createStairMaterials,createEnchantedStep} from './enchanted-stairs.js';
+import {createStoneStairs} from './stone-stairs.js';
 import {Abilities,AbilityType,AbilityInfo,applySpiralPhase,phaseHitsTarget} from './abilities.js';
 import {PhaseTrail} from './phase-trail.js';
 import {createAncientLibrary} from './ancient-library.js';
@@ -93,7 +95,7 @@ import {RUN_UPGRADES,progression,skillStats} from './progression.js';
 import {SkillTree} from './skill-tree.js';
 import {BeastVitralBurst} from './beast-vitral-burst.js';
 import { CatcherRay } from './catcher-ray.js';
-import {createShelfDecorations} from './shelf-decorations.js';
+import {createBackgroundProps} from './background-props.js';
 import {FloatingParchment} from './floating-parchment.js';
 import {BeastKnockback,canDamageDashCancel} from './beast-knockback.js';
 import {AtmosphericFocus} from './atmospheric-focus.js';
@@ -184,23 +186,28 @@ const springboards=new Springboards(scene,threats);
 for(const threat of threats)if(threat.type===ThreatType.THORNS)threat.lane=0;
 const movingPlatforms=threats.filter(threat=>threat.type===ThreatType.MOVING_PLATFORM);
 const walkableFloors=[];
+const chestShadowMaterial=contactShadowMaterial();
+const chestShadowGeometry=new THREE.PlaneGeometry(1,1);
 const shadowMat=softShadowMaterial();
 const glintMat=new THREE.MeshBasicMaterial({color:'#ffe4a0'});
 const stairMaterials=createStairMaterials();
+const buildStoneStair=FLOORS.some(floor=>floor.stairTheme==='stone')?createStoneStairs():null;
 const shelfRelics=new UnderShelfRelics(scene);
-const decorateShelf=createShelfDecorations();
+const decorateShelf=createBackgroundProps();
 // Each shelf has a stable, slightly different inward reach.
 function shelfSegment(s) {
   const p=route(s); const group=new THREE.Group();group.position.y=p.y;group.rotation.y=-p.theta;scene.add(group);
-  const floor=createEnchantedStep(group,s,stairMaterials);group.userData.floorIndex=floorForSection(s).index;floor.userData={s,theta:p.theta,y:p.y-.02};walkableFloors.push(floor);
+  const tier=floorForSection(s),step=stepAt(s),stone=tier.stairTheme==='stone';
+  const floor=stone?buildStoneStair(group,s,step.style):createEnchantedStep(group,s,stairMaterials);
+  group.userData.floorIndex=tier.index;Object.assign(floor.userData,{s,theta:p.theta,y:p.y-.02});walkableFloors.push(floor);
   const platform=movingPlatforms.find(threat=>threat.s===s);
-  shelfRelics.addShelf(group,s,!!platform);
+  if(!stone)shelfRelics.addShelf(group,s,!!platform);
   if(platform){
     platform.group=group;
     platform.indicator=mesh(lipGeo,new THREE.MeshBasicMaterial({color:'#ff8750',transparent:true,opacity:0,depthWrite:false}),0,.015,0,group);
     platform.indicator.visible=false;
   }
-  if(stepAt(s).decorations!==false)decorateShelf(group,s);
+  if(step.decorations!==false)decorateShelf(group,s,tier.backgroundProps,stone);
 }
 for(const floor of FLOORS){
   for(const id of [...(floor.loot.pool??[]),...floor.placements.loot.map(p=>p.id).filter(Boolean)])if(!COLLECTIBLES.variants.some(v=>v.id===id))throw new Error('floors.json: unknown gem '+id);
@@ -211,11 +218,14 @@ for(let s=0;s<=END+1;s++) {
     const lootRule=floorForSection(s).loot,lootItem=placementAt('loot',s),lootRng=randomManager.create('loot',floorForSection(s).id,s);
     const limit=lootItem.count??lootRule.gemsPerTile??RUN_UPGRADES.maxGemsPerTile;
     const count=lootItem.count??(lootRng.int(1,limit));
-    const spacing=Math.min(COLLECTIBLES.placement.spacing,(2*15*SHELF_HALF_ANGLE-1.1)/Math.max(1,count-1))/(15*ROUTE_ANGLE),floorY=route(s).y;
+    const rows=count>3?2:1,columns=Math.ceil(count/rows);
+    const spacing=Math.min(COLLECTIBLES.placement.spacing,(2*15*SHELF_HALF_ANGLE-1.1)/Math.max(1,columns-1))/(15*ROUTE_ANGLE),floorY=route(s).y;
     for(let i=0;i<count;i++){
-      const itemS=s+(i-(count-1)/2)*spacing;
+      const row=Math.floor(i/columns),rowCount=Math.min(columns,count-row*columns);
+      const itemS=s+(i%columns-(rowCount-1)/2)*spacing;
+      const itemLane=(lootItem.lane??0)+(rows===2?(row===0?-.48:.48):0);
       if(itemS>END||isGap(itemS))continue;
-      const p=route(itemS,lootItem.lane??0),item=createGemPickable((lootItem.id?COLLECTIBLES.variants.findIndex(v=>v.id===lootItem.id):lootRule.pool?.length?COLLECTIBLES.variants.findIndex(v=>v.id===lootRng.pick(lootRule.pool)):lootRng.int(0,Math.min(RUN_UPGRADES.gemPoolTier,COLLECTIBLES.variants.length)-1)),{s:itemS,lane:lootItem.lane??0,position:new THREE.Vector3(p.x,floorY+.035,p.z)});
+      const p=route(itemS,itemLane),item=createGemPickable((lootItem.id?COLLECTIBLES.variants.findIndex(v=>v.id===lootItem.id):lootRule.pool?.length?COLLECTIBLES.variants.findIndex(v=>v.id===lootRng.pick(lootRule.pool)):lootRng.int(0,Math.min(RUN_UPGRADES.gemPoolTier,COLLECTIBLES.variants.length)-1)),{s:itemS,lane:itemLane,position:new THREE.Vector3(p.x,floorY+.035,p.z)});
       scene.add(item.o);glints.push(item);
     }
   }
@@ -229,6 +239,11 @@ for(let s=0;s<=END+1;s++) {
     const chestLane=chestPlacement.lane??0,p=route(s,chestLane),o=new THREE.Group(),{width:w,height:h,depth:d}=INTERACTABLES.chest.model;o.position.set(p.x,p.y+.04,p.z);o.rotation.y=-p.theta;scene.add(o);
     const tierId=chestPlacement.tier??chooseChestTier(randomManager,floorForSection(s).id,s,INTERACTABLES.chest),tier=chestTier(INTERACTABLES.chest,tierId);
     const {lid}=createChestModel(o,{width:w,height:h,depth:d},tier.visuals);
+    const shadow=new THREE.Mesh(chestShadowGeometry,chestShadowMaterial);
+    const shadowRadius=chestPlacement.shadowRadius??tier.shadowRadius??INTERACTABLES.chest.shadowRadius;
+    shadow.rotation.x=-Math.PI/2;shadow.scale.setScalar(shadowRadius*2);
+    shadow.position.y=floorForSection(s).stairTheme==='stone'?.045:.005;
+    shadow.renderOrder=1;o.add(shadow);
     chests.push({s,lane:chestLane,o,lid,tierId,rewards:chestPlacement.rewards??tier.rewards,broken:false,top:p.y+INTERACTABLES.chest.collision.topOffset,radius:INTERACTABLES.chest.collision.radius});
   }
   if(placementAt('bottles',s) && !isGap(s)) {
@@ -348,7 +363,8 @@ const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f8d8a1',si
 let state='intro',s=0,lane=0,height=0,velocity=0,light=RUN_UPGRADES.maxHP,collected=0,invert=0,slow=0,time=0,toastTime=0,currentVitralZone=null;
 const lightBarRecovery=new LightBarRecovery(light);
 const shardCounter=new ShardCounter($('shards'));
-const combo=new Combo(undefined,{enabled:RUN_UPGRADES.comboEnabled}),comboHUD=new ComboHUD($('hud'));
+const combo=new Combo(undefined,{enabled:RUN_UPGRADES.comboEnabled}),comboHUD=new ComboHUD(document.body);
+const towerDescent=new TowerDescentHUD($('tower-descent'),FLOORS);
 function healFromShard(amount=RUN_UPGRADES.shardHeal){
   light=clamp(light+amount,0,RUN_UPGRADES.maxHP);
   lightBarRecovery.receive(light);
@@ -363,6 +379,7 @@ const keys=new Set();const inputManager=new InputManager();let inputDevices;let 
 const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent=tr("Preparing run…");fadeToNextRun(()=>location.assign(nextRunURL(location.href)));});
 const runItems=new RunItems(runItemConfig,randomManager);
 const runSummary=new RunSummary(runItems,()=>{keys.clear();inputDevices?.clear();inputManager.clear();skillTree.open(state==='won',collected,state==='won'?VICTORY_BONUS:0);});
+runSummary.onRestart=()=>{progression.save();fadeToNextRun(()=>location.assign(nextRunURL(location.href)));};
 let statisticsReturn='menu';
 const statisticsUI=new RunStatistics(runItems,runHistory,()=>{keys.clear();inputDevices?.clear();inputManager.clear();if(statisticsReturn==='summary'){runSummary.element.hidden=false;runSummary.render();}else document.getElementById('intro-statistics')?.focus();});
 runSummary.history=runHistory;runSummary.onCompare=()=>{statisticsReturn='summary';runSummary.element.hidden=true;statisticsUI.open();inputManager.clear();};
@@ -405,7 +422,7 @@ function beginRabbitFall(outward,message,launched=true){
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
   abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent=tr("Falling");
 }
-function reset(){runSummary.close();statisticsUI.close();runTelemetry.reset({seed:randomManager.seed,runId:crypto.randomUUID()});runItems.reset(skillStats(progression.state),progression.state.owned);runItems.apply(RUN_UPGRADES);runItemUI.sync();combo.reset();secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent=tr("along the spiral");for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
+function reset(){runSummary.close();statisticsUI.close();runTelemetry.reset({seed:randomManager.seed,runId:crypto.randomUUID()});runItems.reset(skillStats(progression.state),progression.state.owned);runItems.apply(RUN_UPGRADES);runItemUI.sync();combo.reset(RUN_UPGRADES.comboEnabled);towerDescent.reset();secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent=tr("along the spiral");for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
 function start({boss=false}={}){if(debugOptions().chestEveryStep!==generatedDebugOptions.chestEveryStep){const url=new URL(location.href);url.searchParams.set('sunny-run','1');if(boss)url.searchParams.set('sunny-boss','1');location.assign(url.href);return;}frameClock.reset();skillTree.element.hidden=true;reset();if(boss&&arenas.arenas.length){const a=arenas.arenas[0];s=a.s;arenas.enter(a.s-.01,a.s,route(a.s));}state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';$('world').classList.add('is-paused');keys.clear();inputDevices?.clear();inputManager.clear();showModal('',t('pause'),'',t('resume'));$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('world').classList.remove('is-paused');$('modal').hidden=true;}}
@@ -414,6 +431,7 @@ function breakChest(c){
   const pool=Math.max(1,Math.min(RUN_UPGRADES.gemPoolTier,COLLECTIBLES.variants.length));
   const rewards=rollChestRewards(randomManager,floorForSection(c.s).id,c.s,c.rewards,{poolSize:pool});
   chestRewardConsumers.consume(rewards,{chest:c});
+  recordRun('chest.opened',{section:c.s,tier:c.tierId});
   combo.add('chest',c);tone(260,.16);return true;
 }
 function finish(won){if(state==='won'||state==='lost')return;if(won)progression.award(VICTORY_BONUS);state=won?'won':'lost';keys.clear();inputDevices?.clear();inputManager.clear();phaseQueued=jumpQueued=flareQueued=false;$('modal').hidden=true;$('hud').hidden=true;pauseItems.sync(false);tone(won?1046:164,won?1.8:.6);if(won)recordRun('points.earned',{amount:VICTORY_BONUS,source:'victory'});const report=runTelemetry.finish(won?'won':'lost');runHistory.record(report);runSummary.open(report);}
@@ -457,7 +475,7 @@ function updateHUD(dt=0){
   lightFill.parentElement.style.setProperty('--sun-px',lightFill.parentElement.clientWidth*barPercent/100+'px');
   lightFill.parentElement.style.setProperty('--shadow-cut',lightFill.parentElement.clientWidth*SHADOW_LIGHT_THRESHOLD/100+'px');
   lightFill.parentElement.style.setProperty('--sun-power',light>0?'1':'0');
-  $('progress').style.width=s/END*100+'%';$('floor').textContent=tr("Floor {floor} / {total}",{floor:floorAt(s),total:FLOOR_COUNT});
+  towerDescent.update(s,floorForSection(s));
 }
 function updateArena(dt){
   time+=dt;invert=slow=0;
@@ -590,7 +608,7 @@ function update(dt){
   const forward=damageInputLocked?0:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
   const direction=invert>0?-1:1;
   if(forward)railFacing=Math.sign(forward*direction);
-  const beforeMoveS=s,beforeMove=playerRoute(s,lane);
+  const beforeMoveS=s,beforeMoveLane=lane,beforeMove=playerRoute(s,lane);
   const movementHeight=heightAboveSurface(height,beforeMove.y,oldSurface);
   const knocked=beastKnockback.advance(dt);
   if(phaseQueued&&!knocked){
@@ -704,9 +722,32 @@ function update(dt){
       rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;motion.jumpBuffer=0;abilities.resetAirJump();break;
     }
   }
-  for(const g of glints)if(!g.taken&&g.s>Math.min(beforeMoveS,s)-RUN_UPGRADES.magnet&&g.s<Math.max(beforeMoveS,s)+RUN_UPGRADES.magnet&&Math.abs(lane-g.lane)<1.15&&height<1.8){if(!g.collect())continue;if(height>.12||velocity>0)combo.add('airGem',g);const comboPoints=combo.reward(g.definition.points*RUN_UPGRADES.shardPointsMultiplier);rabbitAnimation.pickup();const amount=g.lightValue(RUN_UPGRADES.shardHeal);pickupEffects.collect(g.o,()=>{if(state!=='playing'&&state!=='won')return;healFromShard(amount);collected++;recordRun('gem.collected');const previousPoints=progression.state.points;progression.award(comboPoints);shardCounter.add(progression.state.points-previousPoints,g.definition.textColor);recordRun('points.earned',{amount:progression.state.points-previousPoints,source:'gem'});tone(800+collected%4*90);updateHUD(0);},pickupSpace(g.s));}
+  let sampledZone=currentVitralZone;
+  const lightSteps=Math.max(1,Math.ceil(Math.abs(s-beforeMoveS)/.08));
+  const traceDashLight=phasingFrame&&(RUN_UPGRADES.rayEntryHeal||RUN_UPGRADES.gleamDash);
+  for(let i=1;i<=lightSteps;i++){
+    const t=i/lightSteps,point=playerRoute(THREE.MathUtils.lerp(beforeMoveS,s,t),THREE.MathUtils.lerp(beforeMoveLane,lane,t));
+    const zone=windowLight.sampleLight(new THREE.Vector3(point.x,point.y,point.z),height);
+    combo.crossVitral(sampledZone,zone);
+    vitralEntryEffects.sample({x:point.x,y:point.y+height,z:point.z},zone);
+    if(traceDashLight)rabbitState.setVitral(zone,true,height>.025);
+    sampledZone=zone;
+  }
+  for(const g of glints){
+    if(g.taken||height>=1.8||Math.abs(lane-g.lane)>=1.15||g.s<=Math.min(beforeMoveS,s)-RUN_UPGRADES.magnet||g.s>=Math.max(beforeMoveS,s)+RUN_UPGRADES.magnet||!g.collect())continue;
+    combo.add('gem',g);
+    const comboPoints=combo.reward(g.definition.points*RUN_UPGRADES.shardPointsMultiplier),amount=g.lightValue(RUN_UPGRADES.shardHeal);
+    rabbitAnimation.pickup();
+    pickupEffects.collect(g.o,()=>{
+      if(state!=='playing'&&state!=='won')return;
+      healFromShard(amount);collected++;recordRun('gem.collected');
+      const previousPoints=progression.state.points;progression.award(comboPoints);
+      shardCounter.add(progression.state.points-previousPoints,g.definition.textColor);
+      recordRun('points.earned',{amount:progression.state.points-previousPoints,source:'gem'});
+      tone(800+collected%4*90);updateHUD(0);
+    },pickupSpace(g.s));
+  }
   for(const b of bottles){b.cooldown=Math.max(0,b.cooldown-dt);if(!phasingFrame&&Math.abs(s-b.s)<.65&&Math.abs(lane-b.lane)<.7&&height<1&&b.cooldown===0){b.cooldown=7;if(b.s%2){invert=2.5*RUN_UPGRADES.potionScale;toast(tr("Refraction! Controls reversed for 2.5 seconds"));}else{slow=3*RUN_UPGRADES.potionScale;toast(tr("Thick light · slowed for 3 seconds"));}tone(270,.2);}}
-  if(phasingFrame&&(RUN_UPGRADES.rayEntryHeal||RUN_UPGRADES.gleamDash))traceVitralPath(rabbitState,beforeMoveS,s,lane,height,(point,h)=>windowLight.sampleLight(new THREE.Vector3(point.x,point.y,point.z),h));
   for(const b of beasts){
     if(b.dead){animateBeastDeath(b,dt);continue;}
     b.hurt=Math.max(0,b.hurt-dt);
@@ -739,16 +780,8 @@ function update(dt){
     }
   }
   for(const b of books){const cycle=(time+b.phase)%5;const p=route(b.s);b.o.position.set(p.x,p.y+(cycle<3?6:Math.max(.25,6-(cycle-3)*8)),p.z);b.o.rotation.set(cycle*.3,cycle,.25);b.warning.visible=cycle>2.2;b.warning.material.opacity=.2+Math.sin(time*12)*.1;if(cycle>3.6&&Math.abs(s-b.s)<.65&&height<.8)inShadow=true;}
-  const wasInVitral=!!currentVitralZone,lightPosition=playerRoute(s,lane);
-  const lightSteps=Math.max(1,Math.ceil(Math.abs(s-beforeMoveS)/.08));
-  for(let i=1;i<=lightSteps;i++){
-    const point=route(beforeMoveS+(s-beforeMoveS)*i/lightSteps,lane);
-    const zone=windowLight.sampleLight(new THREE.Vector3(point.x,point.y,point.z),height);
-    vitralEntryEffects.sample({x:point.x,y:point.y+height,z:point.z},zone);
-  }
-
-  currentVitralZone=windowLight.sampleLight(new THREE.Vector3(lightPosition.x,lightPosition.y,lightPosition.z),height);
-  if(currentVitralZone&&!wasInVitral){if(height>.12||phasingFrame)combo.add('vitral',currentVitralZone);if(!RUN_UPGRADES.rayEntryHeal)tone(1100,.3);toastLocalized("{StainedGlassLight} · healing accelerates while you stay in the light");}
+  if(sampledZone&&!sampledZone.extinguished&&sampledZone!==currentVitralZone){if(!RUN_UPGRADES.rayEntryHeal)tone(1100,.3);toastLocalized("{StainedGlassLight} · healing accelerates while you stay in the light");}
+  currentVitralZone=sampledZone;
   rabbitState.setVitral(currentVitralZone,phasingFrame,height>.025||velocity>0);
   if(phasingFrame||rescueInvul>0)inShadow=false;
   const absorbedVitral=rabbitState.pendingHeal>0;
@@ -761,7 +794,7 @@ function update(dt){
   if(inShadow)combo.end();
   shadowEffects.setDamage(inShadow);
   $('effect').textContent=inShadow?tr("Shadow drains your light!"):currentVitralZone?(RUN_UPGRADES.rayEntryHeal?tr("Stained glass · burst healing"):tr("Stained glass · +{amount}/s",{amount:(Math.min(50,rabbitState.vitralTime*12.5)*RUN_UPGRADES.regen).toFixed(0)})):invert>0?tr("Controls reversed"):slow>0?tr("Slowed by refraction"):tr("In the sunset light");
-  if(height<3.8){const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){const floor=floorForSection(gate.plank);runTelemetry.floorCompleted(floor.id,FLOORS.length-floor.index);tone(880,.35);toast(gate.plank===END?tr("Final arch · the crystal is close"):tr("Entering floor {floor}",{floor:gate.nextFloor}));}}
+  if(height<3.8){const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){const floor=floorForSection(gate.plank);towerDescent.completeFloor(floor);runTelemetry.floorCompleted(floor.id,FLOORS.length-floor.index);tone(880,.35);toast(gate.plank===END?tr("Final arch · the crystal is close"):tr("Entering floor {floor}",{floor:gate.nextFloor}));}}
   if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;rescueInvul=1;light=RUN_UPGRADES.maxHP*.3;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+.5,afterMove.z),glassGlowPalette);toast(tr("Last Spark · light restored!"));}
   if(light<=0)finish(false);else if(s>=END-.1)finish(true);
   updateHUD(dt);

@@ -1,4 +1,5 @@
-import {FLOORS} from './floor-config.js';
+import {FLOORS,floorForSection} from './floor-config.js';
+import {contactShadowMaterial} from './ground-shadows.js';
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {ROUTE_RADIUS,END,FLOOR_COUNT,SHELF_OUTER_RADIUS,shelfInnerRadius,route} from './game.js';
@@ -10,6 +11,25 @@ export function gateCrossed(gate,previous,s,previousLane,lane){
   if(gate.passed||s<=previous||previous>=gate.s||s<gate.s)return false;
   const t=(gate.s-previous)/(s-previous),radius=ROUTE_RADIUS+previousLane+(lane-previousLane)*t;
   return radius>shelfInnerRadius(gate.plank)+.12&&radius<SHELF_OUTER_RADIUS-.12;
+}
+function lampMetal(color){
+  const material=applyTowerDepth(new THREE.MeshPhysicalMaterial({color,metalness:.58,roughness:.56,clearcoat:.35,clearcoatRoughness:.48,emissive:'#9b7c5b',emissiveIntensity:.12}));
+  const previous=material.onBeforeCompile;
+  material.onBeforeCompile=function(shader,...args){
+    previous.call(this,shader,...args);
+    shader.vertexShader='varying float lampHeight;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nlampHeight=position.y;');
+    shader.fragmentShader='varying float lampHeight;\n'+shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      float bronze=smoothstep(.12,3.3,lampHeight);
+      diffuseColor.rgb*=mix(vec3(1.65,1.70,1.76),vec3(1.0,.79,.55),bronze);
+      float baseShade=1.0-smoothstep(.05,2.35,lampHeight);
+      diffuseColor.rgb*=mix(1.0,.42,baseShade);`).replace('#include <lights_fragment_end>',`#include <lights_fragment_end>
+      float lampRim=pow(1.0-abs(dot(normalize(normal),normalize(vViewPosition))),2.0);
+      float lampBaseFade=mix(.45,1.0,smoothstep(.04,2.15,lampHeight));
+      reflectedLight.indirectDiffuse+=diffuseColor.rgb*vec3(.13,.10,.075)*(.7+.3*lampRim)*lampBaseFade;`).replace('#include <opaque_fragment>',`#include <opaque_fragment>
+      gl_FragColor.rgb*=mix(.60,1.0,smoothstep(.05,2.2,lampHeight));`);
+  };
+  material.customProgramCacheKey=()=> 'gothic-lamp-bronze-gradient-dark-base-v5';
+  return material;
 }
 function gothicLampGeometry(){
   const iron=[],bronze=[];
@@ -46,13 +66,19 @@ export class FloorGates {
     this.gates=floorGateLayout();this.palette=['#ff963e','#ffbd69','#ffe0a0'].map(color=>new THREE.Color(color));this.clock=0;
     this.player=new THREE.Vector3();this.source=new THREE.Vector3();this.shake=0;
     this.reducedMotion=globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
-    const iron=applyTowerDepth(new THREE.MeshStandardMaterial({color:'#51483b',metalness:.65,roughness:.7}));
-    const bronze=applyTowerDepth(new THREE.MeshStandardMaterial({color:'#96784d',metalness:.55,roughness:.65}));
+    const iron=lampMetal('#6b6c6b');
+    const bronze=lampMetal('#a18a70');
+    const shadowMaterial=contactShadowMaterial();
+    const shadowGeometry=new THREE.PlaneGeometry(1.85,1.5);
     const model=gothicLampGeometry();
     for(const gate of this.gates){
-      const inner=shelfInnerRadius(gate.plank)+.45;
-      const p=route(gate.positionS,inner-ROUTE_RADIUS),group=new THREE.Group();group.position.set(p.x,route(gate.plank).y-.02,p.z);group.rotation.y=-p.theta;scene.add(group);gate.group=group;
+      const stone=floorForSection(gate.plank).stairTheme==='stone';
+      const inner=shelfInnerRadius(gate.plank)+(stone?.85:.45);
+      const p=route(stone?gate.plank+.30:gate.positionS,inner-ROUTE_RADIUS),group=new THREE.Group();
+      group.position.set(p.x,route(gate.plank).y+(stone?.065:-.02),p.z);
+      group.rotation.y=-p.theta;scene.add(group);gate.group=group;
       function part(geometry,material,x,y,z){const mesh=new THREE.Mesh(geometry,material);mesh.position.set(x,y,z);group.add(mesh);return mesh;}
+      const shadow=part(shadowGeometry,shadowMaterial,0,stone?.022:.045,0);shadow.rotation.x=-Math.PI/2;shadow.renderOrder=1;
       part(model[0],iron,0,0,0).name='Gothic lamp ironwork';part(model[1],bronze,0,0,0).name='Gothic lamp carved brass';
       gate.glass=part(new THREE.CylinderGeometry(.24,.21,.65,6),applyTowerDepth(new THREE.MeshStandardMaterial({color:'#48483d',emissive:'#ffd584',emissiveIntensity:0,roughness:.35})),0,3.10,0);
       gate.halo=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,color:'#ffe0a0',transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));gate.halo.position.set(0,3.10,0);gate.halo.scale.setScalar(1.65);group.add(gate.halo);

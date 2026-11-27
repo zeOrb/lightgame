@@ -30,6 +30,9 @@ test('window mosaic creates a persistent walkable projection on a real shelf',()
   assert.equal(light.sampleLight(new THREE.Vector3(15,100,0)),light.zones[0]);
   assert.equal(light.sampleLight(new THREE.Vector3(15,100,3)),null);
   assert.equal(light.sampleLight(new THREE.Vector3(15,100,0),4),null);
+  floor.userData.lightProjectionLift=.11;
+  const raisedProjection=createWindowLight([pane],[floor]);
+  assert.equal(raisedProjection.sampleLight(new THREE.Vector3(15,99.74,0)),raisedProjection.zones[0]);
   const pattern=light.zones[0].o.children[0];assert.ok(pattern.material.uniforms.beamColor.value.equals(pane.material.color));
   const bounds=pattern.material.uniforms.floorBounds.value;
   assert.equal(bounds.x,shelfInnerRadius(0)+.012);

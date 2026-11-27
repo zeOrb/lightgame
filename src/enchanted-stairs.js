@@ -31,9 +31,22 @@ export function createStairMaterials(){
   };
   weatherStairWood(materials.wood);weatherStairWood(materials.carved);return materials;
 }
-function wedge(inner,outer,angle,depth,bevel=0){
-  const shape=new THREE.Shape();shape.absarc(0,0,outer,-angle,angle,false);shape.absarc(0,0,inner,angle,-angle,true);shape.closePath();
-  const geometry=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:bevel>0,bevelThickness:bevel,bevelSize:bevel,bevelSegments:2,curveSegments:12});geometry.rotateX(-Math.PI/2);return geometry;
+function wedge(inner,outer,angle,depth,bevel=0,bevelSegments=2,bevelThickness=bevel,cornerCut=0){
+  const shape=new THREE.Shape();
+  if(cornerCut){
+    const point=(radius,t)=>[radius*Math.cos(t),radius*Math.sin(t)];
+    const outerCut=Math.min(angle*.34,cornerCut/outer),innerCut=Math.min(angle*.34,cornerCut/inner);
+    shape.moveTo(...point(outer-cornerCut,-angle));
+    shape.absarc(0,0,outer,-angle+outerCut,angle-outerCut,false);
+    shape.lineTo(...point(outer-cornerCut,angle));
+    shape.lineTo(...point(inner+cornerCut,angle));
+    shape.absarc(0,0,inner,angle-innerCut,-angle+innerCut,true);
+    shape.lineTo(...point(inner+cornerCut,-angle));
+  }else{
+    shape.absarc(0,0,outer,-angle,angle,false);shape.absarc(0,0,inner,angle,-angle,true);
+  }
+  shape.closePath();
+  const geometry=new THREE.ExtrudeGeometry(shape,{depth,bevelEnabled:bevel>0,bevelThickness,bevelSize:bevel,bevelSegments,curveSegments:12});geometry.rotateX(-Math.PI/2);return geometry;
 }
 function gothicTread(inner,outer,a,profile){
   // Shield-shaped nose and clipped shoulders belong to the tread itself.
@@ -68,6 +81,11 @@ function gothicTread(inner,outer,a,profile){
   g.userData.frontEdge=frontEdge;
   g.computeVertexNormals();return g;
 }
+export function attachStairCollision(floor,collision){
+  const collider=new THREE.Mesh(collision,floor.material);floor.userData.collisionGeometry=collision;
+  floor.raycast=function(raycaster,hits){collider.matrixWorld.copy(this.matrixWorld);const contacts=[];collider.raycast(raycaster,contacts);for(const hit of contacts){hit.object=this;hits.push(hit);}};
+}
+export {wedge as stairWedge};
 export function createEnchantedStep(parent,section,materials,random=createVisualRandom()){
   const inner=shelfInnerRadius(section),outer=SHELF_OUTER_RADIUS,a=SHELF_HALF_ANGLE;
   let kind=Math.floor(random()*4);if(kind===previousProfiles.get(materials))kind=(kind+1+Math.floor(random()*3))%4;previousProfiles.set(materials,kind);
@@ -76,8 +94,7 @@ export function createEnchantedStep(parent,section,materials,random=createVisual
   const floor=new THREE.Mesh(tread,materials.wood);floor.position.y=-.355;parent.add(floor);
   woodEdge(tread,inner);
   // All landing and support rays retain the exact original wedge, including its bevel.
-  const collider=new THREE.Mesh(collision,materials.wood);floor.userData.collisionGeometry=collision;
-  floor.raycast=function(raycaster,hits){collider.matrixWorld.copy(this.matrixWorld);const contacts=[];collider.raycast(raycaster,contacts);for(const hit of contacts){hit.object=this;hits.push(hit);}};
+  attachStairCollision(floor,collision);
   if(stepAt(section).style==='plain')return floor;
   // Three different sections form a projecting lip, recessed waist and lower bead.
   const carved=[];
