@@ -28,8 +28,6 @@ export class RunItemUI {
     const opening=this.element.hidden;if(opening)this.onOpen();this.element.hidden=false;this.element.replaceChildren();
     const panel=document.createElement('div');panel.className='run-item-panel';
     const title=document.createElement('h2');title.id='run-item-title';title.textContent=tr('Choose an item');panel.append(title);
-    const ornament=document.createElement('div');ornament.className='run-item-ornament';panel.append(ornament);
-    const note=document.createElement('p');note.className='run-item-note';note.textContent=tr('For this run · effects stack');panel.append(note);
     const options=document.createElement('div');options.className='run-item-options';
     for(const [index,id] of pending.options.entries()){const item=this.items.items.get(id),button=document.createElement('button');button.className='run-item-option';button.dataset.rarity=item.rarity;button.dataset.leaves=String(1+(index+[...String(pending.source)].reduce((sum,c)=>sum+c.charCodeAt(0),0))%4);button.style.setProperty('--rarity-color',this.items.rarity(id).color);
       const icon=document.createElement('span');icon.className='run-item-icon';const glyph=document.createElement('span');glyph.textContent=item.symbol;icon.append(glyph);icon.setAttribute('aria-hidden','true');
