@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" fill="none">
+ <defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f0d8a6"/><stop offset="1" stop-color="#a88a55"/></linearGradient><g id="leaf" stroke="url(#gold)" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"><path d="M100 18C78 14 64 26 42 20S17 17 3 18M89 19C75 20 69 33 55 30C67 28 70 18 89 19Z" fill="#100e0a"/><path d="M72 19C61 17 58 7 47 8C52 16 60 22 72 19Z" fill="#81718c"/><path d="M47 22C35 27 25 24 23 21C32 20 36 23 47 22Z" fill="#648d83"/><path d="M83 19C78 12 75 9 71 11C68 13 71 16 73 14M72 19Q58 16 47 8M89 19Q68 27 55 30" stroke-width=".65"/></g></defs>
+ <use href="#leaf"/><use href="#leaf" transform="translate(200 0) scale(-1 1)"/>
+ <path d="M100 9C91 16 92 24 100 32C108 24 109 16 100 9Z" fill="#100e0a" stroke="url(#gold)" stroke-width="1.3"/>
+ <path d="M100 14 103 20 100 26 97 20Z" fill="#d9b873"/>
+</svg>

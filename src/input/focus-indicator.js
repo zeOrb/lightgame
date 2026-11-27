@@ -10,11 +10,13 @@ export class FocusIndicator{
     const controller=scheme==='xbox'||scheme==='playstation';
     // Graph nodes render their own diamond highlight beneath the detail card.
     const node=target?.matches?.('.skill-node');
+    const selfRendered=target?.matches?.('[data-focus-presentation="self"]');
     const eligible=!node&&(controller||target?.matches?.(':focus-visible'))&&target?.matches?.('button,select,input')&&target.getClientRects().length>0;
-    this.element.hidden=!!node;
+    this.element.hidden=!!(node||selfRendered);
     if(this.target!==target||!eligible){this.target?.classList.remove('has-input-focus');this.target=null;}
     if(!eligible){this.element.classList.remove('is-visible');this.visible=false;this.previousRect='';return;}
     this.target=target;target.classList.add('has-input-focus');
+    if(selfRendered){this.element.classList.remove('is-visible');this.visible=false;this.previousRect='';return;}
     const rect=target.getBoundingClientRect(),key=[rect.left,rect.top,rect.width,rect.height].join(':');
     if(key===this.previousRect&&this.visible)return;
     this.previousRect=key;

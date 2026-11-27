@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -2 600 24" fill="none">
+ <defs>
+  <linearGradient id="thread" x1="0" y1="10" x2="600" y2="10" gradientUnits="userSpaceOnUse"><stop stop-color="#7abbb2" stop-opacity="0"/><stop offset=".23" stop-color="#7abbb2" stop-opacity=".4"/><stop offset=".5" stop-color="#ad8fbb" stop-opacity=".5"/><stop offset=".76" stop-color="#d9b873" stop-opacity=".4"/><stop offset="1" stop-color="#d9b873" stop-opacity="0"/></linearGradient>
+  <linearGradient id="glass" x1="276" y1="10" x2="324" y2="10" gradientUnits="userSpaceOnUse"><stop stop-color="#7abbb2" stop-opacity=".2"/><stop offset=".2" stop-color="#819ac4"/><stop offset=".43" stop-color="#ad8fbb"/><stop offset=".65" stop-color="#bd86a7"/><stop offset=".85" stop-color="#d9b873"/><stop offset="1" stop-color="#7fafa0" stop-opacity=".2"/></linearGradient>
+ </defs>
+ <path d="M0 13C70 13 107 4 154 7S230 16 276 10M324 10C373 4 409 5 454 11S535 9 600 7" stroke="url(#thread)" stroke-width=".95"/>
+ <path d="M68 14C124 8 157 12 188 13S241 14 276 10M324 10C356 7 389 12 423 13S482 11 524 9" stroke="url(#thread)" stroke-width=".45" opacity=".3"/>
+ <path d="M276 10C287 10 293 8 300 3C307 8 313 10 324 10C313 10 307 12 300 17C293 12 287 10 276 10Z" fill="url(#glass)" opacity=".6"/>
+ <path d="M281 10Q293 10 300 6Q308 10 319 10" stroke="#ead4a6" stroke-width=".3" opacity=".3"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" preserveAspectRatio="none">
+ <defs>
+  <linearGradient id="fade" x1="0" y1="0" x2="0" y2="800" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="white"/><stop offset=".53" stop-color="white"/><stop offset=".67" stop-color="white" stop-opacity=".88"/><stop offset=".78" stop-color="white" stop-opacity=".65"/><stop offset=".9" stop-color="white" stop-opacity=".3"/><stop offset=".97" stop-color="white" stop-opacity=".07"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+  <mask id="bristles" mask-type="luminance">
+   <rect width="600" height="800" fill="white"/>
+   <g fill="black" opacity=".45">
+    <path d="M0 800V633L9 650 5 697 17 675 9 734 24 708 15 769 30 743 21 800ZM600 800V652L591 677 595 719 583 691 589 751 573 723 582 778 566 756 573 800Z"/>
+    <path d="M26 800 48 714 42 778 67 750 57 800ZM100 800 119 746 115 789 139 766 130 800ZM193 800 214 714 208 774 231 750 220 800ZM282 800 303 740 297 783 325 762 312 800ZM372 800 399 728 389 783 416 750 400 800ZM472 800 490 749 487 787 516 760 503 800ZM537 800 556 705 552 768 573 741 562 800Z" opacity=".65"/>
+   </g>
+  </mask>
+ </defs>
+ <rect width="600" height="800" fill="url(#fade)" mask="url(#bristles)"/>
+</svg>
+
+

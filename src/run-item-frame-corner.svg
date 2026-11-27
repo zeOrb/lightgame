@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" fill="none">
+ <defs><linearGradient id="gold" x1="8" y1="8" x2="94" y2="94" gradientUnits="userSpaceOnUse"><stop stop-color="#f1dbab"/><stop offset=".5" stop-color="#bfa16d"/><stop offset="1" stop-color="#8c7750" stop-opacity=".25"/></linearGradient><linearGradient id="enamel" x1="10" y1="88" x2="88" y2="10" gradientUnits="userSpaceOnUse"><stop stop-color="#39786a"/><stop offset=".28" stop-color="#31546c"/><stop offset=".53" stop-color="#655078"/><stop offset=".76" stop-color="#79495f"/><stop offset="1" stop-color="#75603b"/></linearGradient><linearGradient id="glass" x1="3" y1="3" x2="71" y2="73" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#7abbb2"><animate attributeName="stop-color" values="#7abbb2;#819ac4;#bd86a7;#d9b873;#7abbb2" dur="4s" repeatCount="indefinite"/></stop>
+   <stop offset=".5" stop-color="#ad8fbb"><animate attributeName="stop-color" values="#ad8fbb;#d9b873;#7abbb2;#819ac4;#ad8fbb" dur="4s" repeatCount="indefinite"/></stop>
+   <stop offset="1" stop-color="#d9b873"><animate attributeName="stop-color" values="#d9b873;#bd86a7;#819ac4;#7abbb2;#d9b873" dur="4s" repeatCount="indefinite"/></stop>
+  </linearGradient><filter id="leaf-glow" x="-60%" y="-30%" width="220%" height="160%" color-interpolation-filters="sRGB">
+   <feGaussianBlur in="SourceGraphic" stdDeviation="1.7" result="light"/>
+   <feComponentTransfer in="light" result="soft"><feFuncA type="linear" slope=".5"/></feComponentTransfer>
+   <feMerge><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter></defs>
+ <g stroke="url(#gold)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M66 12H98V18H74C70 18 68 15 66 12ZM12 66V98H18V74C18 70 15 68 12 66Z" fill="#18150e" stroke="none"/><path d="M76 12H34C20 12 12 20 12 34V76C12 71 17 70 17 64V36C17 24 24 17 36 17H64C70 17 71 12 76 12Z" fill="url(#enamel)" stroke="none"/><path d="M97 12H90M76 12H34C20 12 12 20 12 34V76M12 90V97M64 17H36C24 17 17 24 17 36V64C17 70 12 71 12 76M64 17C70 17 71 12 76 12"/>
+  <path d="M56 12C45 12 40 3 32 5C25 7 28 14 32 12C35 10 31 8 30 10M12 59C12 46 3 42 5 34C7 27 14 30 12 34C10 37 8 33 10 32"/>
+  <path d="M44 12C33 11 28 6 22 3C24 11 32 17 44 12Z" fill="url(#glass)" filter="url(#leaf-glow)"/>
+  <path d="M12 45C11 33 6 29 3 23C11 25 17 33 12 45Z" fill="url(#glass)" filter="url(#leaf-glow)"/>
+  <path d="M71 12C64 12 61 7 55 8C58 13 64 16 71 12ZM12 73C12 65 7 62 8 56C13 59 16 65 12 73Z" fill="url(#glass)" filter="url(#leaf-glow)"/>
+  <path d="M24 23C25 19 21 17 19 19C17 21 19 24 22 24C27 24 32 20 37 17M23 24C19 25 17 21 19 19" stroke-width=".65"/>
+  <path d="M22 3Q30 12 44 12M3 23Q12 33 12 45M55 8 66 12M8 56 12 67" stroke-width=".55"/>
+  <path d="M12 76 16 83 12 90 8 83ZM76 12 83 8 90 12 83 16Z" fill="#100e0a"/>
+  <g fill="#e1c58c" stroke="none"><circle cx="83" cy="12" r="1.3"/><circle cx="12" cy="83" r="1.3"/><circle cx="19" cy="44" r=".9"/><circle cx="44" cy="19" r=".9"/></g>
+ </g>
+</svg>

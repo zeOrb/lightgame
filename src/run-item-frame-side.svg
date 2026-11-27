@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 96" fill="none">
+ <defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e5cb93" stop-opacity=".3"/><stop offset=".45" stop-color="#ead4a6"/><stop offset="1" stop-color="#c4a570" stop-opacity=".3"/></linearGradient></defs>
+ <defs>
+  <linearGradient id="glass" x1="4" y1="13" x2="24" y2="55" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#7abbb2"><animate attributeName="stop-color" values="#7abbb2;#819ac4;#bd86a7;#d9b873;#7abbb2" dur="4s" repeatCount="indefinite"/></stop>
+   <stop offset=".5" stop-color="#ad8fbb"><animate attributeName="stop-color" values="#ad8fbb;#d9b873;#7abbb2;#819ac4;#ad8fbb" dur="4s" repeatCount="indefinite"/></stop>
+   <stop offset="1" stop-color="#d9b873"><animate attributeName="stop-color" values="#d9b873;#bd86a7;#819ac4;#7abbb2;#d9b873" dur="4s" repeatCount="indefinite"/></stop>
+  </linearGradient>
+  <filter id="leaf-glow" x="-60%" y="-30%" width="220%" height="160%" color-interpolation-filters="sRGB">
+   <feGaussianBlur in="SourceGraphic" stdDeviation="1.7" result="light"/>
+   <feComponentTransfer in="light" result="soft"><feFuncA type="linear" slope=".5"/></feComponentTransfer>
+   <feMerge><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+ </defs>
+ <g stroke="url(#gold)" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M13 1V23C13 37 18 43 13 59V95" stroke-width=".9"/>
+  <g fill="url(#glass)" filter="url(#leaf-glow)">
+   <path d="M13 39C11 28 3 24 4 13C11 19 17 27 13 39Z" stroke-width=".8"/>
+   <path d="M14 55C16 43 24 43 24 32C18 36 12 42 14 55Z" stroke-width=".8"/>
+  </g>
+  <path d="M13 39Q11 23 4 13M14 55Q17 41 24 32" stroke-width=".45"/>
+  <path d="M13 58C12 66 4 63 5 69C6 73 11 72 10 69" stroke-width=".65"/>
+  <path d="M13 75 16 80 13 85 10 80Z" fill="#18150e" stroke-width=".85"/>
+  <circle cx="13" cy="80" r=".9" fill="#e5cb93" stroke="none"/>
+ </g>
+</svg>

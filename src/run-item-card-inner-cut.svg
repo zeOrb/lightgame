@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 180" preserveAspectRatio="none">
+ <defs>
+  <!-- A continuous rounded metal band with shallow hand-worked inner edges. -->
+  <path id="cut" d="M25 7
+  L59 7 84 6.4 108 7.5 132 7 166 6.5 197 7.5 228 7 260 6.7
+  296 7.3 330 7 362 6.5 399 7.4 431 7 468 6.7 504 7.4 540 7
+  576 6.5 612 7.4 648 7 686 6.6 722 7.3 775 7
+  Q793 7 793 25 L793 58 792.4 78 793 99 792.6 126 793 155
+  Q793 173 775 173
+  L733 173 704 173.5 671 172.6 638 173 604 173.4 570 172.6
+  536 173 500 173.4 467 172.7 431 173 397 173.5 363 172.7
+  328 173 294 173.4 259 172.7 225 173 190 173.5 155 172.6
+  120 173 85 173.4 58 172.8 25 173
+  Q7 173 7 155 L7 124 7.5 102 7 78 7.4 52 7 25 Q7 7 25 7Z"/>
+  <mask id="inner-fade" mask-type="luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="800" height="180">
+   <rect width="800" height="180" fill="white"/>
+   <use href="#cut" fill="none" stroke="black" stroke-width="2" opacity=".18"/>
+   <use href="#cut" fill="none" stroke="black" stroke-width=".8" opacity=".5"/>
+   <use href="#cut" fill="black"/>
+  </mask>
+ </defs>
+ <rect width="800" height="180" fill="white" mask="url(#inner-fade)"/>
+</svg>
