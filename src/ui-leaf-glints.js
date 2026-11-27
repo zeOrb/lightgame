@@ -5,15 +5,18 @@ let nextId=0;
 function node(name,attributes){const element=document.createElementNS(SVG,name);for(const [key,value] of Object.entries(attributes))element.setAttribute(key,String(value));return element;}
 
 // The gradient moves through the leaf itself. Its blurred SourceGraphic supplies
-// the matching rainbow halo; the underlying neutral artwork is never replaced.
-export function addLeafGlint(svg,host,shape,direction='up'){
+// the matching halo; the underlying neutral artwork is never replaced.
+export function addLeafGlint(svg,host,shape,direction='up',palette='rainbow'){
   const id=`ui-leaf-glint-${nextId++}`,horizontal=direction==='left'||direction==='right';
   const forward=direction==='up'||direction==='left';
   const from=forward?1.35:-.35,to=forward?-.35:1.35;
   const point=value=>horizontal?`${value} 0`:`0 ${value}`;
   const defs=svg.querySelector('defs');
   const gradient=node('linearGradient',{id:id+'-color',x1:horizontal?'-.24':'0',y1:horizontal?'0':'-.24',x2:horizontal?'.24':'0',y2:horizontal?'0':'.24'});
-  for(const [offset,color,alpha] of [[0,'#7ae4cf',0],[.18,'#7ae4cf',.9],[.36,'#96baff',1],[.51,'#fff5e1',1],[.65,'#d3a2f3',1],[.81,'#ffc5d9',.95],[1,'#ffe7a4',0]])gradient.append(node('stop',{offset,'stop-color':color,'stop-opacity':alpha}));
+  const colors=palette==='rarity'
+    ?[[0,'currentColor',0],[.18,'currentColor',.9],[.36,'color-mix(in srgb,currentColor 70%,white)',1],[.51,'color-mix(in srgb,currentColor 35%,white)',1],[.65,'color-mix(in srgb,currentColor 65%,white)',1],[.81,'currentColor',.95],[1,'currentColor',0]]
+    :[[0,'#7ae4cf',0],[.18,'#7ae4cf',.9],[.36,'#96baff',1],[.51,'#fff5e1',1],[.65,'#d3a2f3',1],[.81,'#ffc5d9',.95],[1,'#ffe7a4',0]];
+  for(const [offset,color,alpha] of colors)gradient.append(node('stop',{offset,'stop-color':color,'stop-opacity':alpha}));
   const period=5.5+RandomManager.graphics()*4.5;
   gradient.append(node('animateTransform',{attributeName:'gradientTransform',type:'translate',values:`${point(from)};${point(from)};${point(to)};${point(to)}`,keyTimes:'0;.68;.88;1',dur:`${period}s`,begin:`${-RandomManager.graphics()*period}s`,repeatCount:'indefinite'}));
   const glow=node('filter',{id:id+'-glow',x:'-150%',y:'-100%',width:'400%',height:'300%','color-interpolation-filters':'sRGB'});

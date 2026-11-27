@@ -9,7 +9,7 @@
    <feMerge><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge>
   </filter></defs>
  <g stroke="url(#gold)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M66 12H98V18H74C70 18 68 15 66 12ZM12 66V98H18V74C18 70 15 68 12 66Z" fill="#18150e" stroke="none"/><path d="M76 12H34C20 12 12 20 12 34V76C12 71 17 70 17 64V36C17 24 24 17 36 17H64C70 17 71 12 76 12Z" fill="url(#enamel)" stroke="none"/><path d="M97 12H90M76 12H34C20 12 12 20 12 34V76M12 90V97M64 17H36C24 17 17 24 17 36V64C17 70 12 71 12 76M64 17C70 17 71 12 76 12"/>
+  <path d="M76 12H34C20 12 12 20 12 34V76C12 71 17 70 17 64V36C17 24 24 17 36 17H64C70 17 71 12 76 12Z" fill="url(#enamel)" stroke="none"/><path d="M97 12H90M76 12H34C20 12 12 20 12 34V76M12 90V108M64 17H36C24 17 17 24 17 36V64C17 70 12 71 12 76M64 17C70 17 71 12 76 12"/>
   <path d="M56 12C45 12 40 3 32 5C25 7 28 14 32 12C35 10 31 8 30 10M12 59C12 46 3 42 5 34C7 27 14 30 12 34C10 37 8 33 10 32"/>
   <path d="M44 12C33 11 28 6 22 3C24 11 32 17 44 12Z" fill="url(#glass)" filter="url(#leaf-glow)"/>
   <path d="M12 45C11 33 6 29 3 23C11 25 17 33 12 45Z" fill="url(#glass)" filter="url(#leaf-glow)"/>

@@ -32,10 +32,10 @@ export class RunItemBranch{
       if(element.dataset.tip){
         const [tx,ty]=element.dataset.tip.split(' ').map(Number),gradientId=prefix+'leaf-'+index;
         const gradient=node('linearGradient',{id:gradientId,gradientUnits:'userSpaceOnUse',x1:anchor[0],y1:anchor[1],x2:tx,y2:ty});
-        gradient.append(node('stop',{offset:0,'stop-color':'currentColor','stop-opacity':0}),node('stop',{offset:'.5','stop-color':'currentColor','stop-opacity':'.3'}),node('stop',{offset:1,'stop-color':'#fff3ce'}));definitions.append(gradient);
+        gradient.append(node('stop',{offset:0,'stop-color':'currentColor','stop-opacity':0}),node('stop',{offset:'.5','stop-color':'currentColor','stop-opacity':'.3'}),node('stop',{offset:1,'stop-color':'color-mix(in srgb,currentColor 40%,white)'}));definitions.append(gradient);
         birthLight=node('path',{d:element.querySelector('path').getAttribute('d'),fill:`url(#${gradientId})`,'fill-opacity':1,stroke:`url(#${gradientId})`,'stroke-width':'.8',filter:`url(#${glowId})`,opacity:0});
         element.insertBefore(birthLight,element.children[1]??null);
-        ambientLight=addLeafGlint(this.element,element,element.querySelector('path'));
+        ambientLight=addLeafGlint(this.element,element,element.querySelector('path'),'up','rarity');
       }
       return {element,kind,anchor,start,duration,birthLight,ambientLight};
     });
