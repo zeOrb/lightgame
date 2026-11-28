@@ -170,6 +170,25 @@ body:has(#run-item-choice:not([hidden])) #modal{visibility:hidden;pointer-events
 #run-item-choice .run-item-option:not([data-rarity=common])[data-active]:before{opacity:1}
 #run-item-choice .run-item-option .run-item-icon{filter:drop-shadow(0 0 5px color-mix(in srgb,var(--card-metal) 16%,transparent));transition:filter .3s ease-in-out,transform .35s ease-in-out,box-shadow .35s ease-in-out,border-color .35s ease-in-out}
 #run-item-choice .run-item-option[data-active] .run-item-icon{filter:drop-shadow(0 0 8px color-mix(in srgb,var(--card-metal) 36%,transparent))}
+/* Center each glyph independently of its font bearings inside the rotated diamond. */
+#run-item-choice .run-item-icon{position:relative;z-index:1}
+#run-item-choice .run-item-icon>span{position:absolute;inset:0;width:100%;height:100%;display:grid;place-items:center;line-height:1;text-align:center;transform:rotate(-45deg);transform-origin:50% 50%}
+/* Rarity changes the construction of the setting, as well as its pigment. */
+#run-item-choice .run-item-option[data-rarity=common] .run-item-icon:before{opacity:1;inset:-7px}
+#run-item-choice .run-item-option[data-rarity=common] .run-item-icon{border-width:3px;box-shadow:inset 0 0 0 1px #0b090c;text-shadow:none}
+#run-item-choice .run-item-option[data-rarity=common][data-active] .run-item-icon{box-shadow:0 0 10px #dfcf9c35}
+#run-item-choice .run-item-option:is([data-rarity=rare],[data-rarity=legendary]) .run-item-icon:before{display:none}
+#run-item-choice .run-item-rarity-art{position:absolute;left:calc(50% - 58px);top:calc(50% - 58px);width:116px;height:116px;transform:rotate(-45deg);overflow:visible;pointer-events:none;stroke-width:.85;color:var(--card-metal);filter:drop-shadow(0 0 3px color-mix(in srgb,currentColor 40%,transparent))}
+#run-item-choice .rim-leaf{fill:currentColor;stroke:none}
+#run-item-choice .rim-jewel{fill:color-mix(in srgb,currentColor 70%,white);stroke-width:.6}
+#run-item-choice .run-item-option[data-rarity=rare] .rim-jewel{animation:run-item-jewel-breathe 4s ease-in-out infinite alternate}
+#run-item-choice .run-item-option[data-rarity=legendary] .run-item-rarity-art{stroke-width:1.1;filter:drop-shadow(0 0 2px currentColor) drop-shadow(0 0 4px color-mix(in srgb,currentColor 30%,transparent))}
+#run-item-choice .run-item-option[data-rarity=legendary] .rim-leaf{fill:currentColor;stroke:none}
+#run-item-choice .rim-light{stroke:color-mix(in srgb,currentColor 30%,#fff2ce);stroke-width:2.4;stroke-dasharray:7 93;animation:run-item-crown-light 4s linear infinite;filter:drop-shadow(0 0 3px currentColor)}
+#run-item-choice .run-item-option[data-rarity=legendary][data-active] .run-item-rarity-art{filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 6px color-mix(in srgb,currentColor 50%,transparent))}
+@keyframes run-item-crown-light{to{stroke-dashoffset:-100}}
+@keyframes run-item-jewel-breathe{from{filter:drop-shadow(0 0 1px currentColor)}to{filter:drop-shadow(0 0 4px currentColor)}}
+@media(prefers-reduced-motion:reduce){#run-item-choice .rim-light,#run-item-choice .run-item-option[data-rarity=rare] .rim-jewel{animation:none}}
 /* Broad, soft light runs behind the icon and the full text area. */
 #run-item-choice .run-item-option:before,
 #run-item-choice .run-item-option:not([data-rarity=common]):before{inset:4px -18px;background:radial-gradient(ellipse at 50% 52%,color-mix(in srgb,var(--card-metal) 17%,transparent) 0%,color-mix(in srgb,var(--card-metal) 11%,transparent) 35%,transparent 76%);filter:blur(12px);opacity:.44}
@@ -185,7 +204,7 @@ body:has(#run-item-choice:not([hidden])) #modal{visibility:hidden;pointer-events
 
 /* The branch now grows as independent SVG geometry; no whole-image fade or wipe. */
 #run-item-choice .run-item-option:after{content:none;display:none}
-#run-item-choice .run-item-branch{position:absolute;left:47px;bottom:0;width:min(400px,calc(100% - 70px));height:46px;display:block;overflow:visible;pointer-events:none;color:var(--card-metal);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--card-metal) 25%,transparent))}
+#run-item-choice .run-item-branch{position:absolute;z-index:0;left:47px;bottom:0;width:min(400px,calc(100% - 70px));height:46px;display:block;overflow:visible;pointer-events:none;color:var(--card-metal);filter:drop-shadow(0 0 3px color-mix(in srgb,var(--card-metal) 25%,transparent))}
 @media(max-width:1000px){#run-item-choice .run-item-branch{left:39px;width:min(360px,calc(100% - 60px))}}
 /* Hand-shaped side rails: tiny clean bends, with fixed-width geometry at every height. */
 #run-item-choice .run-item-frame:before{border-left-color:transparent;border-right-color:transparent;box-shadow:0 12px 65px #0009;mask:none}
@@ -202,3 +221,8 @@ body:has(#run-item-choice:not([hidden])) #modal{visibility:hidden;pointer-events
 #run-item-choice .run-item-frame-art{display:block;width:100%;height:100%;overflow:visible}
 #run-item-choice .ui-leaf-glint{pointer-events:none}
 @media(prefers-reduced-motion:reduce){#run-item-choice .ui-leaf-glint{display:none}}
+/* The travelling highlight uses the exact CSS border box, not a second SVG rim. */
+@property --rim-light-angle{syntax:'<angle>';inherits:false;initial-value:0deg}
+#run-item-choice .rim-border-light{position:absolute;inset:-3px;padding:3px;border-radius:inherit;pointer-events:none;background:conic-gradient(from var(--rim-light-angle),transparent 0deg 302deg,color-mix(in srgb,var(--card-metal) 40%,#fff2ce) 330deg,#fff2ce 342deg,transparent 360deg);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;animation:run-item-border-light 4s linear infinite}
+@keyframes run-item-border-light{to{--rim-light-angle:360deg}}
+@media(prefers-reduced-motion:reduce){#run-item-choice .rim-border-light{animation:none}}

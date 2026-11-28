@@ -1,6 +1,7 @@
 import {tr,onLanguageChange} from './i18n.js';
 import {renderLocalized} from './localized-text.js';
 import {RunItemBranch} from './run-item-branch.js';
+import {createRarityRim} from './run-item-rarity-rim.js';
 import {createGlintOrnament} from './ui-leaf-glints.js';
 import cornerArt from './run-item-frame-corner.svg?raw';
 import lowerArt from './run-item-frame-lower.svg?raw';
@@ -44,7 +45,8 @@ export class RunItemUI {
     for(const [index,id] of pending.options.entries()){const item=this.items.items.get(id),button=document.createElement('button');button.className='run-item-option';button.dataset.rarity=item.rarity;button.dataset.leaves=String(1+(index+[...String(pending.source)].reduce((sum,c)=>sum+c.charCodeAt(0),0))%4);button.style.setProperty('--rarity-color',this.items.rarity(id).color);
       if(index>0){const divider=document.createElement('div');divider.className='run-item-divider';divider.setAttribute('aria-hidden','true');options.append(divider);}
       button.dataset.focusPresentation='self';button.dataset.trim=String(index%3);const trim=document.createElement('i');trim.className='run-item-card-trim';trim.setAttribute('aria-hidden','true');for(const side of ['upper','lower']){const branch=document.createElement('i');branch.className=side;trim.append(branch);}button.append(trim);
-      const icon=document.createElement('span');icon.className='run-item-icon';const glyph=document.createElement('span');glyph.textContent=item.symbol;icon.append(glyph);icon.setAttribute('aria-hidden','true');
+      const icon=document.createElement('span');icon.className='run-item-icon';const glyph=document.createElement('span');glyph.textContent=item.symbol;icon.append(glyph);const rarityRim=createRarityRim(item.rarity);if(rarityRim)icon.append(rarityRim);icon.setAttribute('aria-hidden','true');
+      if(item.rarity==='legendary'){const light=document.createElement('i');light.className='rim-border-light';light.setAttribute('aria-hidden','true');icon.append(light);}
       const name=document.createElement('strong');name.className='run-item-name';name.textContent=tr(item.name);const rarity=document.createElement('small');rarity.className='run-item-rarity';rarity.textContent=tr(this.items.rarity(id).name);name.append(rarity);const effect=document.createElement('span');effect.className='run-item-effect';renderLocalized(effect,item.description);
       button.append(icon,name,effect);
       const branch=new RunItemBranch();this.branches.set(button,branch);button.append(branch.element);
