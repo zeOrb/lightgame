@@ -2,6 +2,8 @@ import {Preparation} from './preparation.js';
 import {localizeDOM,tr} from './i18n.js';
 import {preferences,t} from './settings.js';
 import './bootstrap.css';
+import {initializeMenuBackground} from './menu-background.js';
+initializeMenuBackground();
 localizeDOM();document.getElementById('intro-settings').textContent=t('settings');
 const overlay=document.createElement('div');overlay.id='game-preparation';overlay.hidden=true;overlay.setAttribute('role','status');overlay.setAttribute('aria-live','polite');
 const label=document.createElement('span'),retry=document.createElement('button');retry.textContent=preferences.language==='ru'?'Повторить':'Retry';retry.hidden=true;retry.onclick=()=>location.reload();overlay.append(label,retry);document.body.append(overlay);

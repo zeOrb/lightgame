@@ -1,0 +1,20 @@
+#menu-background{position:fixed;inset:0;z-index:1;overflow:hidden;pointer-events:none;contain:strict;background:radial-gradient(ellipse at 32% 113%,#b3873533,transparent 58%),radial-gradient(ellipse at 90% 87%,#387d7530,transparent 61%),linear-gradient(0deg,#29291c 0%,#142024 27%,#0b111a 54%,#04060b 82%,#020305 100%)}
+#menu-background[hidden]{display:none}
+#intro{z-index:2}
+#menu-background::before{content:'';position:absolute;left:-12%;right:-12%;bottom:-4vh;height:37vh;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 18% 75%,#b0bbae38,transparent 56%),radial-gradient(ellipse at 68% 91%,#c8ba922e,transparent 61%),radial-gradient(ellipse at 89% 48%,#8cb8b426,transparent 48%);mask-image:linear-gradient(to top,#000 0%,#000d 35%,#0005 65%,transparent 100%);filter:blur(12px);will-change:transform;animation:menu-mist-drift 19s ease-in-out infinite alternate}
+#menu-background[data-running="false"]::before{animation-play-state:paused}
+@keyframes menu-mist-drift{from{transform:translate3d(-2%,1vh,0) scale(1.02)}to{transform:translate3d(3%,-1vh,0) scale(1.06)}}
+#menu-background::after{content:'';position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse at 50% 42%,#02030445 0%,#0203040d 38%,#01020460 100%);pointer-events:none}
+.menu-firefly{position:absolute;left:var(--x);top:100%;display:block;width:var(--size);height:var(--size);border-radius:50%;background:radial-gradient(circle,#fff7dc 0%,hsl(var(--hue) 72% 82% / .95) 15%,hsl(var(--hue) 66% 64% / .42) 34%,hsl(var(--hue) 62% 52% / .1) 58%,transparent 74%);filter:blur(var(--blur));opacity:0;will-change:transform,opacity;animation:menu-firefly-rise var(--duration) var(--delay) linear infinite}
+#menu-background[data-running="false"] .menu-firefly{animation-play-state:paused}
+@keyframes menu-firefly-rise{
+  0%{transform:translate3d(0,7vh,0) scale(.72);opacity:0}
+  12%{opacity:var(--alpha)}
+  34%{transform:translate3d(var(--sway),-31vh,0) scale(.88)}
+  67%{transform:translate3d(var(--drift),-69vh,0) scale(1);opacity:var(--alpha)}
+  90%{opacity:0}
+  100%{transform:translate3d(calc(var(--drift) - var(--sway)),-114vh,0) scale(.82);opacity:0}
+}
+@media(max-width:600px){.menu-firefly[data-depth="far"]:nth-child(even){display:none}}
+@media(prefers-reduced-motion:reduce){.menu-firefly{animation:none;will-change:auto;transform:translateY(calc(-1 * var(--rest)));opacity:calc(var(--alpha) * .5)}.menu-firefly[data-depth="near"]{display:none}}
+@media(prefers-reduced-motion:reduce){#menu-background::before{animation:none;will-change:auto}}
