@@ -5,7 +5,9 @@ import {SHELF_HALF_ANGLE,SHELF_OUTER_RADIUS,shelfInnerRadius} from './game.js';
 import {applyTowerDepth} from './tower-depth.js';
 import {createVisualRandom} from './random-manager.js';
 
+const stoneTextures=new Map(),pavingTextures=new Map();
 function stoneTexture(columns=0,courses=4){
+  const key=columns+':'+courses;if(stoneTextures.has(key))return stoneTextures.get(key);
   const size=256,canvas=document.createElement('canvas');
   canvas.width=canvas.height=size;
   const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(size,size);
@@ -33,10 +35,11 @@ function stoneTexture(columns=0,courses=4){
   texture.colorSpace=THREE.SRGBColorSpace;
   texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
   texture.anisotropy=4;
-  return texture;
+  texture.userData.persistentRunResource=true;stoneTextures.set(key,texture);return texture;
 }
 
 export function pavingTexture(variant){
+  if(pavingTextures.has(variant))return pavingTextures.get(variant);
   const size=256,canvas=document.createElement('canvas');
   canvas.width=canvas.height=size;
   const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(size,size);
@@ -104,7 +107,7 @@ export function pavingTexture(variant){
   const texture=new THREE.CanvasTexture(canvas);
   texture.colorSpace=THREE.SRGBColorSpace;
   texture.anisotropy=4;
-  return texture;
+  texture.userData.persistentRunResource=true;pavingTextures.set(variant,texture);return texture;
 }
 
 function shadeStoneDepth(material,lowerArch=false){

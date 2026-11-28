@@ -11,7 +11,7 @@ import './bestiary.css';
 import {BESTIARY_THREATS,createThreatExhibit} from './bestiary-threats.js';
 
 export function initializeBestiary(){
-  const trigger=document.createElement('button');trigger.textContent=tr("Bestiary");trigger.dataset.i18n="Bestiary";trigger.className='text-button';
+  const trigger=document.getElementById('intro-bestiary')??document.createElement('button');trigger.id='intro-bestiary';trigger.textContent=tr("Bestiary");trigger.dataset.i18n="Bestiary";trigger.className='text-button';
   document.getElementById('start').after(trigger);
   const panel=document.createElement('section');panel.id='bestiary';panel.hidden=true;
   panel.setAttribute('aria-label',tr("Bestiary"));panel.innerHTML='<header><h1 data-i18n="Bestiary">Bestiary</h1><button type="button" data-i18n="Back to menu · Esc">Back to menu · Esc</button></header><div class="bestiary-stage"></div><div class="bestiary-name" aria-live="polite"></div>';

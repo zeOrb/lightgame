@@ -1,4 +1,5 @@
 .run-report[hidden]{display:none}
+.summary-legend>[hidden]{display:none}
 .run-report{position:fixed;inset:0;z-index:86;display:grid;place-items:center;overflow:auto;padding:28px;box-sizing:border-box;background:#08070688;backdrop-filter:blur(5px) brightness(.6);color:#d8d2c5;font:17px/1.4 Georgia,serif}
 .run-report .run-summary-panel{box-sizing:border-box;width:min(100%,1060px);margin:auto;padding:28px 40px;text-align:center;border:3px solid #b9a06a99;border-radius:26px 8px;background:linear-gradient(130deg,#302619f5,#100f0df7 60%);box-shadow:0 20px 80px #000b,inset 0 0 0 5px #100d0999;animation:summary-enter .45s ease-in-out both}
 .run-report h2{margin:0;color:#ede1be;font:400 clamp(26px,3vw,38px) Georgia,serif;letter-spacing:.04em}

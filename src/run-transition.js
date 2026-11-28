@@ -2,7 +2,7 @@ const FADE_MS=750;
 export async function fadeToNextRun(navigate){
   document.documentElement.classList.add('run-leaving');
   await new Promise(resolve=>setTimeout(resolve,FADE_MS));
-  navigate();
+  return await navigate();
 }
 
 // Called after the first real 3D frame. Keep black across document loading,

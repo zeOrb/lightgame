@@ -144,9 +144,13 @@ export function buildFloorLayout(source,extraFloors=0,seed=randomManager.seed){
   }
   return result;
 }
-export const FLOORS=buildFloorLayout(config,RUN_UPGRADES.extraFloors);
-export const LEVEL_DIAGNOSTICS=FLOORS.flatMap(floor=>floor.placementWarnings);
-export const TOTAL_SECTIONS=FLOORS.reduce((n,f)=>n+f.count,0);
+export let FLOORS=buildFloorLayout(config,RUN_UPGRADES.extraFloors);
+export let LEVEL_DIAGNOSTICS=FLOORS.flatMap(floor=>floor.placementWarnings);
+export let TOTAL_SECTIONS=FLOORS.reduce((n,f)=>n+f.count,0);
+export function rebuildFloorLayout(){
+  const floors=buildFloorLayout(config,RUN_UPGRADES.extraFloors);
+  FLOORS=floors;LEVEL_DIAGNOSTICS=floors.flatMap(floor=>floor.placementWarnings);TOTAL_SECTIONS=floors.reduce((n,f)=>n+f.count,0);
+}
 export function floorForSection(s){return FLOORS.find(f=>s<f.start+f.count)??FLOORS.at(-1);}
 export function floorForHeight(y,top=100+(TOTAL_SECTIONS-140)*.5){return floorForSection((top-y)*2);}
 export function placementAt(category,s){return floorForSection(s).placements[category].find(item=>item.s===s);}

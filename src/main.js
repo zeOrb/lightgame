@@ -1,9 +1,14 @@
+import {runResources,releaseRunResources} from './run-resources.js';
+import {rebuildFloorLayout} from './floor-config.js';
+import {refreshRunGeometry} from './game.js';
+import {preparationStep} from './preparation.js';
+import {UIPreparation,decodeUIImages} from './ui-preparation.js';
 import {PropBatches} from './prop-batches.js';
 import {StairBatches} from './stair-batches.js';
 import {RenderCulling,freezeStaticKit} from './render-culling.js';
 import {createPerformanceProbe} from './performance-probe.js';
 import {debugOptions,initializeDebugOptions} from './debug-options.js';
-const generatedDebugOptions=debugOptions();
+let generatedDebugOptions=debugOptions();
 import {runHistory} from './run-history.js';
 import {RunStatistics} from './run-statistics.js';
 import {runTelemetry} from './run-telemetry.js';
@@ -34,7 +39,7 @@ import {SecretDirtParticles} from './secret-dirt-particles.js';
 import {VineLeafParticles} from './vine-leaf-particles.js';
 import {showLevelDiagnostics} from './level-diagnostics.js';
 import './level-diagnostics.css';
-import {RandomManager,randomManager,createVisualRandom} from './random-manager.js';
+import {RandomManager,randomManager,createVisualRandom,freshRunSeed} from './random-manager.js';
 import {chestTier,chooseChestTier,rollChestRewards,ChestRewardDispatcher} from './chest-rewards.js';
 import {ShelfTravel,sweepShelfLanding,shelfSupport} from './shelf-travel.js';
 import {FLOOR_CONFIG,FLOORS,LEVEL_DIAGNOSTICS,TOTAL_SECTIONS,floorForSection,placementAt,stepAt} from './floor-config.js';
@@ -69,7 +74,7 @@ import * as THREE from 'three';
 import {CatcherAura} from './catcher-aura.js';
 import {spiralEnemyAt} from './enemy-config.js';
 import {createEnemy,damageEnemy as applyEnemyDamage} from './enemy-factory.js';
-import {nextRunURL} from './run-navigation.js';
+
 import {FrameClock} from './frame-clock.js';
 import {fadeToNextRun,revealNextRun} from './run-transition.js';
 import { END, FLOOR_COUNT, TOWER_TOP, gaps, clamp, isGap, lightStep, route, cameraAnchor, turnTowards, depthLight, canStomp, SHELF_HALF_ANGLE, SHELF_INNER_RADIUS, SHELF_OUTER_RADIUS, MOVEMENT_LANE_LIMIT, JUMP_SPEED, advanceJump } from './game.js';
@@ -107,6 +112,7 @@ import {AtmosphericFocus} from './atmospheric-focus.js';
 import {UnderShelfRelics} from './under-shelf-relics.js';
 
 const $ = id => document.getElementById(id);
+const menuScene=new THREE.Scene();menuScene.background=new THREE.Color('#000000');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#000000');
 scene.fog = new THREE.FogExp2('#303849', .015);
@@ -119,20 +125,9 @@ renderer.setClearColor('#000000',1);
 renderer.clear();
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.25;
-const towerMist=new TowerMist(scene);
-const floatingParchment=new FloatingParchment(scene);
 const atmosphericFocus=new AtmosphericFocus();
 const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, .1, 240);
-const lanternLighting=new LanternLighting(scene);
-const ambient=new THREE.HemisphereLight('#a1bdcc', '#5a3849', 2.1);scene.add(ambient);
-const sun = new THREE.DirectionalLight('#ffcf87', 4.1);sun.target.position.set(0,TOWER_TOP,0);sun.position.copy(sun.target.position).addScaledVector(SUN_RAY_DIRECTION,-40);
-scene.add(sun,sun.target);
-const warm = new THREE.PointLight('#ffa769', 140, 65, 1.2); warm.position.set(0, TOWER_TOP-5, -12); scene.add(warm);
 const mat = (color, extra = {}) => applyTowerDepth(new THREE.MeshStandardMaterial({ color, roughness: .75, ...extra }));
-const wood = mat('#66534b'), edgeMat = mat('#b39469', { metalness: .5, roughness: .4 });
-const stone = mat('#454c5a'), dark = mat('#20212e');
-const colors = ['#92785f','#4f7378','#877490','#8b4f56','#b59a69','#53627b'];
-const bookMats=colors.map(c=>mat(c));
 const random=createVisualRandom('decoration');
 const dustRandom=createVisualRandom('dust');
 const sunRandom=createVisualRandom('hud-sun');
@@ -143,63 +138,6 @@ function box(w,h,d,m,x,y,z,parent) { return mesh(new THREE.BoxGeometry(w,h,d),m,
 function ring(radius,y,thickness,color) {
   const o = mesh(new THREE.TorusGeometry(radius,thickness,8,96),color,0,y,0); o.rotation.x = Math.PI/2; return o;
 }
-// The tower is open at its heart: all architecture is genuine 3D geometry.
-mesh(new THREE.CylinderGeometry(19,19,132+(TOWER_TOP-100),64,1,true), mat('#38404d',{side:THREE.BackSide}),0,65+(TOWER_TOP-100)/2,0);
-for(let i=0;i<16;i++) {
-  const a=i*Math.PI/8;
-  mesh(new THREE.CylinderGeometry(.26,.38,130+(TOWER_TOP-100),7),wood,18.5*Math.cos(a),65+(TOWER_TOP-100)/2,18.5*Math.sin(a));
-}
-for(let level=0;level<FLOOR_COUNT;level++) {
-  const y=TOWER_TOP-FLOORS[level].start*.5;
-  ring(18.6,y,.14,edgeMat).userData.floorIndex=level;
-}
-const towerHierarchy=new TowerHierarchy(scene);
-for(const floor of FLOORS){const library=createAncientLibrary(scene,{minY:floor.index===FLOORS.length-1?-Infinity:TOWER_TOP-(floor.end+1)*.5,maxY:floor.index===0?Infinity:TOWER_TOP-floor.start*.5});towerHierarchy.add(library,floor.index);freezeStaticKit(library);}
-// Tall jewel windows, lead lattice and sunset beyond the panes.
-const glassTextures=createGlassTextures();
-const glassGlowPalette=glassTextures.palette.map(color=>new THREE.Color(color));
-const glassMats=[...glassTextures.mosaics,...glassTextures.wideMosaics].map((texture,i)=>{const material=mat('#303030',{map:texture,emissive:'#ffffff',emissiveMap:texture,emissiveIntensity:.9,fog:false,transparent:true,opacity:1,side:THREE.DoubleSide});material.userData.beamColor=new THREE.Color(['#f52c9e','#7244ff','#22bfff','#ffcf38'][i%4]);return material;});
-const roseMat=new THREE.MeshBasicMaterial({map:glassTextures.rose,transparent:true,side:THREE.DoubleSide,depthWrite:false});
-for(const glass of glassMats)glass.userData.glowPalette=glassGlowPalette;
-const windowPanes=[];
-for(const floor of FLOORS)for(const {item,section} of windowSteps(floor)){
-  const p=route(section),angle=wallBayCenter(item.angleDegrees===undefined?p.theta:item.angleDegrees*Math.PI/180);
-  const window=new THREE.Group();window.position.set(Math.cos(angle)*18.1,p.y+(item.heightAboveShelf??floor.windows.heightAboveShelf??4),Math.sin(angle)*18.1);window.rotation.y=-angle+Math.PI/2;scene.add(window);
-  window.userData.floorIndex=floor.index;window.userData.targetSection=section;
-  const width=item.width??floor.windows.width??2.3,height=item.height??floor.windows.height??5.8,columns=item.columns??floor.windows.columns??1,rows=item.rows??floor.windows.rows??4;
-  box(width,height,.2,edgeMat,0,0,0,window);
-  for(let x=0;x<columns;x++)for(let j=0;j<rows;j++)windowPanes.push(box((width-.3)/columns-.1,height/rows-.13,.24,glassMats[(columns>1?0:4)+(floor.index+x+j)%4],(x-(columns-1)/2)*(width-.3)/columns,(j-(rows-1)/2)*height/rows,-.1,window));
-  if(columns>1){mesh(new THREE.TorusGeometry(width*.49,.13,6,24,Math.PI),edgeMat,0,height*.5,0,window);mesh(new THREE.CircleGeometry(width*.44,48),roseMat,0,height*.5+.6,-.18,window);}
-}
-const catcher=new THREE.Group();catcher.position.set(12,TOWER_TOP+7,0);scene.add(catcher);
-const catcherGold=new THREE.MeshBasicMaterial({color:new THREE.Color('#ffe2a0').multiplyScalar(1.65),fog:false,toneMapped:false});
-const catcherRing=mesh(new THREE.TorusGeometry(1.65,.055,8,64),catcherGold,0,0,0,catcher);
-const catcherGems=[],catcherGlows=[];
-for(let i=0;i<7;i++) {
-  const a=i*Math.PI*2/7; const gem=mesh(new THREE.OctahedronGeometry(.35),new THREE.MeshBasicMaterial({map:glassMats[i%4].map,color:new THREE.Color(2.8,2.8,2.8),fog:false,toneMapped:false}),Math.cos(a)*1.3,Math.sin(a)*1.3,0,catcher);gem.rotation.z=a;
-  gem.material.userData.beamColor=glassMats[i%4].userData.beamColor;
-  catcherGems.push(gem);
-  box(.025,1.8,.025,catcherGold,Math.cos(a)*1.3,Math.sin(a)*1.3-1.2,0,catcher);
-}
-catcher.traverse(object=>object.layers.set(2));
-const architecture=[...scene.children];
-const lipGeo = new THREE.CylinderGeometry(SHELF_OUTER_RADIUS+.05,SHELF_OUTER_RADIUS+.05,.1,12,1,true,Math.PI/2-SHELF_HALF_ANGLE,SHELF_HALF_ANGLE*2);
-const hazards=[], glints=[], bottles=[], beasts=[], books=[], chests=[];
-const threats=FLOORS.flatMap(f=>f.placements.threats.map(item=>({type:item.id,s:item.s,lane:item.lane??0,offset:0,phase:item.phase??item.s*.371,lastHit:-Infinity,introduced:false,notified:false})));
-updateThreats(threats,0);
-const springboards=new Springboards(scene,threats);
-for(const threat of threats)if(threat.type===ThreatType.THORNS)threat.lane=0;
-const movingPlatforms=threats.filter(threat=>threat.type===ThreatType.MOVING_PLATFORM);
-const walkableFloors=[];
-const chestShadowMaterial=contactShadowMaterial();
-const chestShadowGeometry=new THREE.PlaneGeometry(1,1);
-const shadowMat=softShadowMaterial();
-const glintMat=new THREE.MeshBasicMaterial({color:'#ffe4a0'});
-const stairMaterials=createStairMaterials();
-const buildStoneStair=FLOORS.some(floor=>floor.stairTheme==='stone')?createStoneStairs():null;
-const shelfRelics=new UnderShelfRelics(scene);
-const decorateShelf=createBackgroundProps();
-// Each shelf has a stable, slightly different inward reach.
 function shelfSegment(s) {
   const p=route(s); const group=new THREE.Group();group.position.y=p.y;group.rotation.y=-p.theta;scene.add(group);
   const tier=floorForSection(s),step=stepAt(s),stone=tier.stairTheme==='stone';
@@ -216,10 +154,93 @@ function shelfSegment(s) {
   if(step.decorations!==false)decorateShelf(group,s,tier.backgroundProps,stone);
   freezeStaticKit(group);
 }
+// Run-owned scene objects are replaced; renderer, postprocessing and UI stay alive.
+let towerMist,floatingParchment,lanternLighting,ambient,sun,warm,edgeMat,wood,dark,stone,colors,bookMats,towerHierarchy,glassTextures,glassGlowPalette,glassMats,roseMat,windowPanes,catcher,catcherGold,catcherRing,catcherGlows,catcherGems,architecture,lipGeo,chests,books,beasts,bottles,glints,hazards,threats,springboards,movingPlatforms,walkableFloors,chestShadowMaterial,chestShadowGeometry,shadowMat,glintMat,stairMaterials,buildStoneStair,shelfRelics,decorateShelf,shadowShelves,threatVisuals,windowLight,arenaShelfVisibility,arenaCameraCutaway,floorSmoke,groundSmoke,glowCanvas,ctx,gradient,glowTexture,catcherAura,floorGates,arenas,secretLevels,vineLeaves,grassExitParticles,secretDirtParticles,arenaFacing,arenaForward,arenaCameraReturn,landingCamera,pickupEffects,pickupSpace,vitralEntryEffects,bossHitEffects,landingEffects,hitStop,shadowEffects,rabbit,catcherRay,rabbitVisual,rabbitShadowCanvas,rabbitShadowContext,rabbitShadowGradient,rabbitShadowTexture,rabbitShadowMaterial,rabbitShadow,shadowRayDown,shadowRayOrigin,shadowRaycaster,rabbitMat,rabbitHPFade,rabbitDissolve,rabbitGlow,eyeMat,eyeSparkMat,eyeSparkBaseColor,eyeBaseColor,traveler,rabbitHitEffects,rabbitShadowForm,rabbitTail,rabbitPaws,rabbitEars,rabbitAnimation,vitralGlow,phaseTrailHead,phaseTrailColor,phaseTrail,abilities,flareBurst,rescueInvul,rescueUsed,flareFrame,flareQueued,flareAge,damageInputLocked,railFacing,phasingFrame,phaseQueued,rabbitState,fallingShadows,fallCameraOffset,crystalGroup,end,crystalMat,crystal,crystalLight,dustArray,dustCount,dustGeo,dust;
+async function buildRunWorld(){
+scene.matrixWorldAutoUpdate=true;LanternLighting.resetRegistry();
+towerMist=new TowerMist(scene);
+floatingParchment=new FloatingParchment(scene);
+
+
+lanternLighting=new LanternLighting(scene);
+ambient=new THREE.HemisphereLight('#a1bdcc', '#5a3849', 2.1);scene.add(ambient);
+sun=new THREE.DirectionalLight('#ffcf87', 4.1);sun.target.position.set(0,TOWER_TOP,0);sun.position.copy(sun.target.position).addScaledVector(SUN_RAY_DIRECTION,-40);
+scene.add(sun,sun.target);
+warm=new THREE.PointLight('#ffa769', 140, 65, 1.2); warm.position.set(0, TOWER_TOP-5, -12); scene.add(warm);
+
+wood=mat('#66534b');edgeMat=mat('#b39469', { metalness: .5, roughness: .4 });
+stone=mat('#454c5a');dark=mat('#20212e');
+colors=['#92785f','#4f7378','#877490','#8b4f56','#b59a69','#53627b'];
+bookMats=colors.map(c=>mat(c));
+
+
+
+
+
+
+// The tower is open at its heart: all architecture is genuine 3D geometry.
+mesh(new THREE.CylinderGeometry(19,19,132+(TOWER_TOP-100),64,1,true), mat('#38404d',{side:THREE.BackSide}),0,65+(TOWER_TOP-100)/2,0);
+for(let i=0;i<16;i++) {
+  const a=i*Math.PI/8;
+  mesh(new THREE.CylinderGeometry(.26,.38,130+(TOWER_TOP-100),7),wood,18.5*Math.cos(a),65+(TOWER_TOP-100)/2,18.5*Math.sin(a));
+}
+for(let level=0;level<FLOOR_COUNT;level++) {
+  const y=TOWER_TOP-FLOORS[level].start*.5;
+  ring(18.6,y,.14,edgeMat).userData.floorIndex=level;
+}
+towerHierarchy=new TowerHierarchy(scene);
+for(const floor of FLOORS){await preparationStep('library');const library=createAncientLibrary(scene,{minY:floor.index===FLOORS.length-1?-Infinity:TOWER_TOP-(floor.end+1)*.5,maxY:floor.index===0?Infinity:TOWER_TOP-floor.start*.5});towerHierarchy.add(library,floor.index);freezeStaticKit(library);}
+// Tall jewel windows, lead lattice and sunset beyond the panes.
+glassTextures=createGlassTextures();
+glassGlowPalette=glassTextures.palette.map(color=>new THREE.Color(color));
+glassMats=[...glassTextures.mosaics,...glassTextures.wideMosaics].map((texture,i)=>{const material=mat('#303030',{map:texture,emissive:'#ffffff',emissiveMap:texture,emissiveIntensity:.9,fog:false,transparent:true,opacity:1,side:THREE.DoubleSide});material.userData.beamColor=new THREE.Color(['#f52c9e','#7244ff','#22bfff','#ffcf38'][i%4]);return material;});
+roseMat=new THREE.MeshBasicMaterial({map:glassTextures.rose,transparent:true,side:THREE.DoubleSide,depthWrite:false});
+for(const glass of glassMats)glass.userData.glowPalette=glassGlowPalette;
+windowPanes=[];
+for(const floor of FLOORS)for(const {item,section} of windowSteps(floor)){
+  const p=route(section),angle=wallBayCenter(item.angleDegrees===undefined?p.theta:item.angleDegrees*Math.PI/180);
+  const window=new THREE.Group();window.position.set(Math.cos(angle)*18.1,p.y+(item.heightAboveShelf??floor.windows.heightAboveShelf??4),Math.sin(angle)*18.1);window.rotation.y=-angle+Math.PI/2;scene.add(window);
+  window.userData.floorIndex=floor.index;window.userData.targetSection=section;
+  const width=item.width??floor.windows.width??2.3,height=item.height??floor.windows.height??5.8,columns=item.columns??floor.windows.columns??1,rows=item.rows??floor.windows.rows??4;
+  box(width,height,.2,edgeMat,0,0,0,window);
+  for(let x=0;x<columns;x++)for(let j=0;j<rows;j++)windowPanes.push(box((width-.3)/columns-.1,height/rows-.13,.24,glassMats[(columns>1?0:4)+(floor.index+x+j)%4],(x-(columns-1)/2)*(width-.3)/columns,(j-(rows-1)/2)*height/rows,-.1,window));
+  if(columns>1){mesh(new THREE.TorusGeometry(width*.49,.13,6,24,Math.PI),edgeMat,0,height*.5,0,window);mesh(new THREE.CircleGeometry(width*.44,48),roseMat,0,height*.5+.6,-.18,window);}
+}
+catcher=new THREE.Group();catcher.position.set(12,TOWER_TOP+7,0);scene.add(catcher);
+catcherGold=new THREE.MeshBasicMaterial({color:new THREE.Color('#ffe2a0').multiplyScalar(1.65),fog:false,toneMapped:false});
+catcherRing=mesh(new THREE.TorusGeometry(1.65,.055,8,64),catcherGold,0,0,0,catcher);
+catcherGems=[];catcherGlows=[];
+for(let i=0;i<7;i++) {
+  const a=i*Math.PI*2/7; const gem=mesh(new THREE.OctahedronGeometry(.35),new THREE.MeshBasicMaterial({map:glassMats[i%4].map,color:new THREE.Color(2.8,2.8,2.8),fog:false,toneMapped:false}),Math.cos(a)*1.3,Math.sin(a)*1.3,0,catcher);gem.rotation.z=a;
+  gem.material.userData.beamColor=glassMats[i%4].userData.beamColor;
+  catcherGems.push(gem);
+  box(.025,1.8,.025,catcherGold,Math.cos(a)*1.3,Math.sin(a)*1.3-1.2,0,catcher);
+}
+catcher.traverse(object=>object.layers.set(2));
+architecture=[...scene.children];
+lipGeo=new THREE.CylinderGeometry(SHELF_OUTER_RADIUS+.05,SHELF_OUTER_RADIUS+.05,.1,12,1,true,Math.PI/2-SHELF_HALF_ANGLE,SHELF_HALF_ANGLE*2);
+hazards=[];glints=[];bottles=[];beasts=[];books=[];chests=[];
+threats=FLOORS.flatMap(f=>f.placements.threats.map(item=>({type:item.id,s:item.s,lane:item.lane??0,offset:0,phase:item.phase??item.s*.371,lastHit:-Infinity,introduced:false,notified:false})));
+updateThreats(threats,0);
+springboards=new Springboards(scene,threats);
+for(const threat of threats)if(threat.type===ThreatType.THORNS)threat.lane=0;
+movingPlatforms=threats.filter(threat=>threat.type===ThreatType.MOVING_PLATFORM);
+walkableFloors=[];
+chestShadowMaterial=contactShadowMaterial();
+chestShadowGeometry=new THREE.PlaneGeometry(1,1);
+shadowMat=softShadowMaterial();
+glintMat=new THREE.MeshBasicMaterial({color:'#ffe4a0'});
+stairMaterials=createStairMaterials();
+buildStoneStair=FLOORS.some(floor=>floor.stairTheme==='stone')?createStoneStairs():null;
+shelfRelics=new UnderShelfRelics(scene);
+decorateShelf=createBackgroundProps();
+// Each shelf has a stable, slightly different inward reach.
+
 for(const floor of FLOORS){
   for(const id of [...(floor.loot.pool??[]),...floor.placements.loot.map(p=>p.id).filter(Boolean)])if(!COLLECTIBLES.variants.some(v=>v.id===id))throw new Error('floors.json: unknown gem '+id);
 }
 for(let s=0;s<=END+1;s++) {
+  await preparationStep('stairs');
   if(!gaps.includes(s)) shelfSegment(s);
   if(placementAt('loot',s) && !isGap(s)) {
     const lootRule=floorForSection(s).loot,lootItem=placementAt('loot',s),lootRng=randomManager.create('loot',floorForSection(s).id,s);
@@ -279,94 +300,98 @@ for(const material of bookMats){
   instances.instanceMatrix.needsUpdate=true;scene.add(instances);
 }
 scene.updateMatrixWorld(true);
-const shadowShelves=new Set([...hazards,...beasts,...books,...threats].map(object=>object.s));
-const threatVisuals=new ThreatVisuals(scene,threats);
-let windowLight=createWindowLight(windowPanes,walkableFloors,shadowShelves);scene.add(windowLight.group);
-const arenaShelfVisibility=new ArenaShelfVisibility(walkableFloors);
-const arenaCameraCutaway=new ArenaCameraCutaway(renderer);
+shadowShelves=new Set([...hazards,...beasts,...books,...threats].map(object=>object.s));
+threatVisuals=new ThreatVisuals(scene,threats);
+windowLight=createWindowLight(windowPanes,walkableFloors,shadowShelves);scene.add(windowLight.group);
+arenaShelfVisibility=new ArenaShelfVisibility(walkableFloors);
+arenaCameraCutaway=new ArenaCameraCutaway(renderer);
 windowLight.setDepthSource(towerMist.depthTarget.depthTexture,towerMist.material.uniforms.resolution.value,towerMist.material.uniforms.cameraRange.value);
-const floorSmoke=FLOORS.map(floor=>{
+floorSmoke=FLOORS.map(floor=>{
   const smoke=new GroundShadowSmoke(scene,hazards.filter(h=>floorForSection(h.s).index===floor.index).map(h=>({...route(h.s,h.lane),gap:false})));
   towerHierarchy.add(smoke.points,floor.index);return smoke;
 });
-const groundSmoke={update(time,pixelHeight){for(const smoke of floorSmoke)smoke.update(time,pixelHeight);}};
+groundSmoke={update(time,pixelHeight){for(const smoke of floorSmoke)smoke.update(time,pixelHeight);}};
 // Shared soft texture for VFX and the rabbit's small emissive halo.
-const glowCanvas=document.createElement('canvas');glowCanvas.width=128;glowCanvas.height=128;
-const ctx=glowCanvas.getContext('2d');const gradient=ctx.createRadialGradient(64,64,0,64,64,64);gradient.addColorStop(0,'rgba(255,244,195,1)');gradient.addColorStop(.15,'rgba(255,219,129,.7)');gradient.addColorStop(.5,'rgba(255,193,82,.13)');gradient.addColorStop(1,'rgba(255,193,82,0)');ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
-const glowTexture=new THREE.CanvasTexture(glowCanvas);
+glowCanvas=document.createElement('canvas');glowCanvas.width=128;glowCanvas.height=128;
+ctx=glowCanvas.getContext('2d');gradient=ctx.createRadialGradient(64,64,0,64,64,64);gradient.addColorStop(0,'rgba(255,244,195,1)');gradient.addColorStop(.15,'rgba(255,219,129,.7)');gradient.addColorStop(.5,'rgba(255,193,82,.13)');gradient.addColorStop(1,'rgba(255,193,82,0)');ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
+glowTexture=new THREE.CanvasTexture(glowCanvas);
 for(const [i,gem] of catcherGems.entries()){
   const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:glassGlowPalette[i%glassGlowPalette.length],transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false}));
   halo.position.copy(gem.position);halo.scale.setScalar(2.65);halo.layers.set(2);catcher.add(halo);catcherGlows.push(halo);
 }
-const catcherAura=new CatcherAura(catcher,glowTexture);
-const floorGates=new FloorGates(scene,glowTexture,glassGlowPalette);
-const arenas=new FloorArenas(scene,stairMaterials,glassGlowPalette);
-const secretLevels=new SecretLevels(scene,stairMaterials);
-const vineLeaves=new VineLeafParticles(scene,{camera});
-const grassExitParticles=new GrassExitParticles(scene,{camera});
-const secretDirtParticles=new SecretDirtParticles(scene,{camera});
+catcherAura=new CatcherAura(catcher,glowTexture);
+floorGates=new FloorGates(scene,glowTexture,glassGlowPalette);
+arenas=new FloorArenas(scene,stairMaterials,glassGlowPalette);
+secretLevels=new SecretLevels(scene,stairMaterials);
+vineLeaves=new VineLeafParticles(scene,{camera});
+grassExitParticles=new GrassExitParticles(scene,{camera});
+secretDirtParticles=new SecretDirtParticles(scene,{camera});
 for(const r of secretLevels.routes){r.road.mesh.userData.s=r.s+3;r.road.mesh.userData.routeSpan=4;walkableFloors.push(r.road.mesh);}
-const arenaForward=new THREE.Vector3(),arenaFacing={x:0,z:1};
-let arenaCameraReturn=0;
-const landingCamera=new LandingCameraBlend();
-const pickupEffects=new PickupEffects(scene,glowTexture,out=>{rabbit.getWorldPosition(out);out.y+=.45;return out;},camera);
-const pickupSpace=section=>({followTarget:!!(FLOOR_CONFIG.tower.rotationSpeedDegrees||floorForSection(section).rotationSpeedDegrees)});
-const vitralEntryEffects=new VitralEntryEffects(scene);
-const bossHitEffects=new BossHitEffects(scene,glowTexture);
-const landingEffects=new LandingEffects(scene,glowTexture);
-let hitStop=0;
-const shadowEffects=new ShadowEffects(scene,glowTexture,$('shadow-vfx'),matchMedia('(prefers-reduced-motion: reduce)').matches);
-const rabbit=new THREE.Group();scene.add(rabbit);
-const catcherRay=new CatcherRay(scene,catcherGems);
-const rabbitVisual=new THREE.Group();rabbit.add(rabbitVisual);
-const rabbitShadowCanvas=document.createElement('canvas');rabbitShadowCanvas.width=rabbitShadowCanvas.height=128;
-const rabbitShadowContext=rabbitShadowCanvas.getContext('2d');
-const rabbitShadowGradient=rabbitShadowContext.createRadialGradient(64,64,3,64,64,64);
+arenaForward=new THREE.Vector3();arenaFacing={x:0,z:1};
+arenaCameraReturn=0;
+landingCamera=new LandingCameraBlend();
+pickupEffects=new PickupEffects(scene,glowTexture,out=>{rabbit.getWorldPosition(out);out.y+=.45;return out;},camera);
+pickupSpace=section=>({followTarget:!!(FLOOR_CONFIG.tower.rotationSpeedDegrees||floorForSection(section).rotationSpeedDegrees)});
+vitralEntryEffects=new VitralEntryEffects(scene);
+bossHitEffects=new BossHitEffects(scene,glowTexture);
+landingEffects=new LandingEffects(scene,glowTexture);
+hitStop=0;
+shadowEffects=new ShadowEffects(scene,glowTexture,$('shadow-vfx'),matchMedia('(prefers-reduced-motion: reduce)').matches);
+rabbit=new THREE.Group();scene.add(rabbit);
+catcherRay=new CatcherRay(scene,catcherGems);
+rabbitVisual=new THREE.Group();rabbit.add(rabbitVisual);
+rabbitShadowCanvas=document.createElement('canvas');rabbitShadowCanvas.width=rabbitShadowCanvas.height=128;
+rabbitShadowContext=rabbitShadowCanvas.getContext('2d');
+rabbitShadowGradient=rabbitShadowContext.createRadialGradient(64,64,3,64,64,64);
 rabbitShadowGradient.addColorStop(0,'rgba(12,8,15,.78)');rabbitShadowGradient.addColorStop(.38,'rgba(12,8,15,.62)');rabbitShadowGradient.addColorStop(.72,'rgba(12,8,15,.24)');rabbitShadowGradient.addColorStop(1,'rgba(12,8,15,0)');
 rabbitShadowContext.fillStyle=rabbitShadowGradient;rabbitShadowContext.fillRect(0,0,128,128);
-const rabbitShadowTexture=new THREE.CanvasTexture(rabbitShadowCanvas);
-const rabbitShadowMaterial=new THREE.MeshBasicMaterial({map:rabbitShadowTexture,color:'#fff',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,fog:false,polygonOffset:true,polygonOffsetFactor:-1});
-const rabbitShadow=mesh(new THREE.PlaneGeometry(1,1),rabbitShadowMaterial,0,0,0);
+rabbitShadowTexture=new THREE.CanvasTexture(rabbitShadowCanvas);
+rabbitShadowMaterial=new THREE.MeshBasicMaterial({map:rabbitShadowTexture,color:'#fff',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,fog:false,polygonOffset:true,polygonOffsetFactor:-1});
+rabbitShadow=mesh(new THREE.PlaneGeometry(1,1),rabbitShadowMaterial,0,0,0);
 rabbitShadow.rotation.x=-Math.PI/2;rabbitShadow.scale.set(1.35,.92,1);rabbitShadow.renderOrder=1;
-const shadowRaycaster=new THREE.Raycaster(),shadowRayOrigin=new THREE.Vector3(),shadowRayDown=new THREE.Vector3(0,-1,0);shadowRaycaster.layers.enable(7);
-const rabbitMat=new THREE.MeshStandardMaterial({color:'#fff1bc',emissive:'#ffe4a0',emissiveIntensity:1,roughness:1});
-const rabbitHPFade={value:1};
-const rabbitDissolve={value:0};
+shadowRaycaster=new THREE.Raycaster();shadowRayOrigin=new THREE.Vector3();shadowRayDown=new THREE.Vector3(0,-1,0);shadowRaycaster.layers.enable(7);
+rabbitMat=new THREE.MeshStandardMaterial({color:'#fff1bc',emissive:'#ffe4a0',emissiveIntensity:1,roughness:1});
+rabbitHPFade={value:1};
+rabbitDissolve={value:0};
 rabbitMat.onBeforeCompile=shader=>{
   shader.uniforms.rabbitHPFade=rabbitHPFade;
   shader.uniforms.rabbitDissolve=rabbitDissolve;
   shader.fragmentShader='uniform float rabbitHPFade;uniform float rabbitDissolve;\n'+shader.fragmentShader.replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat dissolveGrain=fract(sin(dot(floor(gl_FragCoord.xy*.35),vec2(12.9898,78.233)))*43758.5453);if(dissolveGrain<rabbitDissolve)discard;').replace('#include <fog_fragment>','#include <fog_fragment>\ngl_FragColor.rgb *= rabbitHPFade;');
 };
-const rabbitGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:'#ffe7ac',transparent:true,opacity:.2,depthWrite:false,blending:THREE.AdditiveBlending}));
+rabbitGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:'#ffe7ac',transparent:true,opacity:.2,depthWrite:false,blending:THREE.AdditiveBlending}));
 rabbitGlow.position.y=.45;rabbitGlow.scale.set(1.3,1.55,1);rabbitVisual.add(rabbitGlow);
-const eyeMat=new THREE.MeshBasicMaterial({color:'#252137',fog:false});
-const eyeSparkMat=new THREE.MeshBasicMaterial({color:'#fff9e8',fog:false});
-const eyeBaseColor=eyeMat.color.clone(),eyeSparkBaseColor=eyeSparkMat.color.clone();
-const traveler=createRabbitTraveler(rabbitVisual,rabbitMat,eyeMat,eyeSparkMat);
-const rabbitHitEffects=new RabbitHitEffects(scene,rabbit,rabbitVisual);
-const rabbitShadowForm=new RabbitShadowForm(scene);
-const rabbitEars=traveler.ears,rabbitPaws=traveler.paws,rabbitTail=traveler.coat;
-const rabbitAnimation=new RabbitAnimation(rabbitVisual,rabbitEars,rabbitPaws,rabbitTail,traveler.arms,traveler.head);
-const vitralGlow=new VitralGlow(rabbitVisual,glowTexture);
-const abilities=new Abilities(RUN_UPGRADES),phaseTrail=new PhaseTrail(scene),phaseTrailColor=new THREE.Color(),phaseTrailHead=new THREE.Vector3();
-const flareBurst=new BeastVitralBurst(scene,glowTexture);
-let flareAge=2,flareQueued=false,flareFrame=false,rescueUsed=false,rescueInvul=0;
+eyeMat=new THREE.MeshBasicMaterial({color:'#252137',fog:false});
+eyeSparkMat=new THREE.MeshBasicMaterial({color:'#fff9e8',fog:false});
+eyeBaseColor=eyeMat.color.clone();eyeSparkBaseColor=eyeSparkMat.color.clone();
+traveler=createRabbitTraveler(rabbitVisual,rabbitMat,eyeMat,eyeSparkMat);
+await preparationStep('effects');
+rabbitHitEffects=new RabbitHitEffects(scene,rabbit,rabbitVisual);
+rabbitShadowForm=new RabbitShadowForm(scene);
+rabbitEars=traveler.ears;rabbitPaws=traveler.paws;rabbitTail=traveler.coat;
+rabbitAnimation=new RabbitAnimation(rabbitVisual,rabbitEars,rabbitPaws,rabbitTail,traveler.arms,traveler.head);
+vitralGlow=new VitralGlow(rabbitVisual,glowTexture);
+abilities=new Abilities(RUN_UPGRADES);phaseTrail=new PhaseTrail(scene);phaseTrailColor=new THREE.Color();phaseTrailHead=new THREE.Vector3();
+flareBurst=new BeastVitralBurst(scene,glowTexture);
+flareAge=2;flareQueued=false;flareFrame=false;rescueUsed=false;rescueInvul=0;
 
-let phaseQueued=false,phasingFrame=false,railFacing=1,damageInputLocked=false;
-const rabbitState=new RabbitState(RUN_UPGRADES);
-const fallingShadows=new FallingShadows(scene,glowTexture);
-const fallCameraOffset=new THREE.Vector3();
+phaseQueued=false;phasingFrame=false;railFacing=1;damageInputLocked=false;
+rabbitState=new RabbitState(RUN_UPGRADES);
+fallingShadows=new FallingShadows(scene,glowTexture);
+fallCameraOffset=new THREE.Vector3();
 mesh(new THREE.CylinderGeometry(18.6,18.6,.5,64),stone,0,-.25,0);
-const crystalGroup=new THREE.Group(); const end=route(END+1);crystalGroup.position.set(end.x,end.y,end.z);scene.add(crystalGroup);
+crystalGroup=new THREE.Group(); end=route(END+1);crystalGroup.position.set(end.x,end.y,end.z);scene.add(crystalGroup);
 mesh(new THREE.CylinderGeometry(1.5,1.9,.5,8),stone,0,0,0,crystalGroup);
-const crystalMat=mat('#b7dfdd',{metalness:.4,roughness:.12,emissive:'#62cfca',emissiveIntensity:.5});
-const crystal=mesh(new THREE.OctahedronGeometry(1.15),crystalMat,0,1.7,0,crystalGroup);crystal.scale.y=1.8;
-const crystalLight=new THREE.PointLight('#a2ffeb',20,35,1.3);crystalLight.position.copy(crystalGroup.position).add(new THREE.Vector3(0,3,0));scene.add(crystalLight);
+crystalMat=mat('#b7dfdd',{metalness:.4,roughness:.12,emissive:'#62cfca',emissiveIntensity:.5});
+crystal=mesh(new THREE.OctahedronGeometry(1.15),crystalMat,0,1.7,0,crystalGroup);crystal.scale.y=1.8;
+crystalLight=new THREE.PointLight('#a2ffeb',20,35,1.3);crystalLight.position.copy(crystalGroup.position).add(new THREE.Vector3(0,3,0));scene.add(crystalLight);
 ring(4,14,.07,edgeMat);
-const dustCount=650,dustArray=new Float32Array(dustCount*3);
+dustCount=650;dustArray=new Float32Array(dustCount*3);
 for(let i=0;i<dustCount;i++){const a=dustRandom()*Math.PI*2,r=4+dustRandom()*13;dustArray[i*3]=Math.cos(a)*r;dustArray[i*3+1]=dustRandom()*(TOWER_TOP+22);dustArray[i*3+2]=Math.sin(a)*r;}
-const dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute('position',new THREE.BufferAttribute(dustArray,3));
-const dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f8d8a1',size:.065,transparent:true,opacity:.65,depthWrite:false}));scene.add(dust);
+dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute('position',new THREE.BufferAttribute(dustArray,3));
+dust=new THREE.Points(dustGeo,new THREE.PointsMaterial({color:'#f8d8a1',size:.065,transparent:true,opacity:.65,depthWrite:false}));scene.add(dust);
+
+}
+await buildRunWorld();
 
 let state='intro',s=0,lane=0,height=0,velocity=0,light=RUN_UPGRADES.maxHP,collected=0,invert=0,slow=0,time=0,toastTime=0,currentVitralZone=null;
 const lightBarRecovery=new LightBarRecovery(light);
@@ -384,14 +409,30 @@ const shelfTravel=new ShelfTravel();
 const playerRoute=(s,lane=0)=>shelfTravel.position(s,lane);
 initializeMainMenu();initializeDebugOptions();
 const keys=new Set();const inputManager=new InputManager();let inputDevices;let jumpQueued=false;let audio=null,masterAudio=null,muted=preferences.volume===0;
-const skillTree=new SkillTree(()=>{progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent=tr("Preparing run…");fadeToNextRun(()=>location.assign(nextRunURL(location.href)));});
+const skillTree=new SkillTree(()=>nextRun());
 const runItems=new RunItems(runItemConfig,randomManager);
-const runSummary=new RunSummary(runItems,()=>{keys.clear();inputDevices?.clear();inputManager.clear();skillTree.open(state==='won',collected,state==='won'?VICTORY_BONUS:0);});
-runSummary.onRestart=()=>{progression.save();fadeToNextRun(()=>location.assign(nextRunURL(location.href)));};
+const runSummary=new RunSummary(runItems,async()=>{
+  keys.clear();inputDevices?.clear();inputManager.clear();
+  if(skillTree.preparation?.state!=='ready'){
+    runSummary.element.hidden=false;
+    const next=runSummary.element.querySelector('.summary-continue');next.disabled=true;next.textContent=tr('Preparing run…');
+    try{await skillTree.prepare();}catch(error){console.error('Skill tree preparation failed',error);next.disabled=false;next.textContent=tr('Continue to upgrades');return;}
+    runSummary.close();
+  }
+  skillTree.open(state==='won',collected,state==='won'?VICTORY_BONUS:0);
+});
+runSummary.onRestart=()=>nextRun();
 let statisticsReturn='menu';
 const statisticsUI=new RunStatistics(runItems,runHistory,()=>{keys.clear();inputDevices?.clear();inputManager.clear();if(statisticsReturn==='summary'){runSummary.element.hidden=false;runSummary.render();}else document.getElementById('intro-statistics')?.focus();});
 runSummary.history=runHistory;runSummary.onCompare=()=>{statisticsReturn='summary';runSummary.element.hidden=true;statisticsUI.open();inputManager.clear();};
-const statisticsButton=document.createElement('button');statisticsButton.id='intro-statistics';statisticsButton.className='text-button';statisticsButton.textContent=tr('Statistics');statisticsButton.dataset.i18n='Statistics';$('reset-progress').before(statisticsButton);statisticsButton.onclick=()=>{statisticsReturn='menu';keys.clear();inputDevices?.clear();inputManager.clear();statisticsUI.open();};
+const reportPreparation=new UIPreparation([
+  ()=>decodeUIImages([new URL('./menu-flourish.svg',import.meta.url).href]),
+  ()=>document.fonts.ready,
+  ()=>runSummary.prepare()
+]);
+// Common report UI is prepared in the menu; tree raster work continues in idle slots.
+reportPreparation.prepare().then(()=>skillTree.prepare()).catch(error=>console.error('Report UI preparation failed',error));
+const statisticsButton=document.getElementById('intro-statistics')??document.createElement('button');statisticsButton.id='intro-statistics';statisticsButton.className='text-button';statisticsButton.textContent=tr('Statistics');statisticsButton.dataset.i18n='Statistics';$('reset-progress').before(statisticsButton);statisticsButton.onclick=()=>{statisticsReturn='menu';keys.clear();inputDevices?.clear();inputManager.clear();statisticsUI.open();};
 function recordRun(type,data={}){runTelemetry.emit(type,{floorId:floorForSection(s).id,...data});}
 function damageEnemy(enemy,palette){const killed=applyEnemyDamage(enemy,palette);if(killed)recordRun('enemy.killed',{id:enemy.definition.id,boss:enemy.boss});return killed;}
 runItems.reset(skillStats(progression.state),progression.state.owned);
@@ -430,8 +471,42 @@ function beginRabbitFall(outward,message,launched=true){
   fallCameraOffset.copy(camera.position).sub(rabbit.position);fallCameraOffset.y=0;fallCameraOffset.setLength(7);fallCameraOffset.y=5;
   abilities.reset();phasingFrame=false;phaseQueued=false;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;moveSpeed=0;currentVitralZone=null;vitralGlow.reset();shadowEffects.setDamage(false);shadowEffects.hit();tone(110,.4);toast(message);$('effect').textContent=tr("Falling");
 }
+let rebuildingRun=false,nextRunTask=null;
+function nextRun(options={}){
+  if(nextRunTask)return nextRunTask;
+  nextRunTask=replaceRun(options).finally(()=>{nextRunTask=null;});return nextRunTask;
+}
+async function replaceRun(options){
+  progression.save();const button=skillTree.element.querySelector('#tree-next');button.disabled=true;button.textContent=tr('Preparing run…');
+  const started=performance.now(),context=renderer.getContext();let previous,oldDepthTarget;
+  try{
+    await fadeToNextRun(async()=>{
+      rebuildingRun=true;state='loading';skillTree.art.stop();keys.clear();inputDevices.clear();inputManager.clear();
+      performanceProbe?.dispose();performanceProbe=null;renderCulling.end();arenaCameraCutaway.update(null,camera,ARENA_RADIUS);
+      // Unbatch before collecting to avoid disposing BatchedMesh geometry twice.
+      stairBatches.dispose();propBatches.dispose();previous=runResources(scene);oldDepthTarget=towerMist.depthTarget;
+      scene.clear();scene.userData={};
+      Object.assign(RUN_UPGRADES,skillStats(progression.state));randomManager.reseed(freshRunSeed());
+      rebuildFloorLayout();refreshRunGeometry();generatedDebugOptions=debugOptions();
+      await buildRunWorld();towerDescent.setFloors(FLOORS);await prepareRunWorld();
+      releaseRunResources(previous,preparedResources);oldDepthTarget.dispose();previous=null;
+      renderer.renderLists.dispose();installPerformanceProbe();
+      const url=new URL(location.href);url.searchParams.set('seed',randomManager.seed);url.searchParams.delete('sunny-run');url.searchParams.delete('sunny-boss');history.replaceState(history.state,'',url.href);
+      start(options);update(0);state='loading';
+      document.documentElement.classList.add('boot-run');document.documentElement.classList.remove('run-leaving');
+      rebuildingRun=false;
+      document.documentElement.dataset.runPreparationMs=String(Math.round(performance.now()-started));
+      document.documentElement.dataset.retainedRenderer=String(context===renderer.getContext());
+      requestAnimationFrame(()=>requestAnimationFrame(()=>revealNextRun(()=>{frameClock.reset();state='playing';flashRunStart();})));
+    });
+  }catch(error){
+    rebuildingRun=true;console.error('Next run preparation failed',error);
+    document.documentElement.classList.remove('run-leaving','boot-run');
+    const overlay=$('game-preparation');overlay.hidden=false;overlay.querySelector('span').textContent=preferences.language==='ru'?'Не удалось подготовить забег':'Could not prepare the run';overlay.querySelector('button').hidden=false;
+  }
+}
 function reset(){runSummary.close();statisticsUI.close();runTelemetry.reset({seed:randomManager.seed,runId:crypto.randomUUID()});runItems.reset(skillStats(progression.state),progression.state.owned);runItems.apply(RUN_UPGRADES);runItemUI.sync();combo.reset(RUN_UPGRADES.comboEnabled);towerDescent.reset();secretDirtParticles.clear();grassExitParticles.clear();secretTransition.reset();vineLeaves.clear();randomManager.reset();landingCamera.reset();shelfTravel.reset();shardCounter.reset();rabbitShadowForm.reset();$('world').classList.remove('is-paused');damageInputLocked=false;rabbitHitEffects.reset();lightBarRecovery.reset(RUN_UPGRADES.maxHP);springboards.reset();motion.reset();arenas.reset();secretLevels.reset();$('arena-controls').hidden=true;$('movement-mode').textContent=tr("along the spiral");for(const button of document.querySelectorAll('.arena-touch'))button.hidden=true;arenaCameraReturn=0;beastKnockback.reset();windowLight.reset();flareQueued=false;flareFrame=false;flareAge=2;flareBurst.reset();rescueUsed=false;rescueInvul=0;railFacing=1;floorGates.reset();abilities.reset();phaseTrail.reset();phaseQueued=false;phasingFrame=false;rabbitState.reset();fallingShadows.reset();rabbitDissolve.value=0;rabbit.rotation.z=0;rabbit.visible=true;rabbitVisual.scale.setScalar(1);resetThreats(threats);vitralGlow.reset();rabbitAnimation.reset();moveSpeed=0;shadowEffects.clear();pickupEffects.clear();facing=0;facingTarget=0;viewAnchor=0;cameraLift=cameraLiftVelocity=cameraGroundLift=0;cameraNeedsReset=true;s=0;lane=0;height=0;velocity=0;light=RUN_UPGRADES.maxHP;collected=0;currentVitralZone=null;invert=0;slow=0;time=0;keys.clear();inputDevices?.clear();inputManager.clear();jumpQueued=false;for(let i=glints.length-1;i>=0;i--)if(glints[i].fromChest){glints[i].o.removeFromParent();glints.splice(i,1);}for(const g of glints)g.reset();for(const c of chests){c.broken=false;c.o.visible=true;c.lid.rotation.x=-.08;}for(const b of bottles)b.cooldown=0;for(const b of beasts){resetShadowBeast(b);}crystalMat.emissiveIntensity=.5;crystalLight.intensity=20;sun.intensity=4.1;scene.background.set('#303849');scene.fog.color.set('#303849');for(const m of glassMats)m.emissiveIntensity=.65;}
-function start({boss=false}={}){if(debugOptions().chestEveryStep!==generatedDebugOptions.chestEveryStep){const url=new URL(location.href);url.searchParams.set('sunny-run','1');if(boss)url.searchParams.set('sunny-boss','1');location.assign(url.href);return;}frameClock.reset();skillTree.element.hidden=true;reset();if(boss&&arenas.arenas.length){const a=arenas.arenas[0];s=a.s;arenas.enter(a.s-.01,a.s,route(a.s));}state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
+function start({boss=false}={}){if(debugOptions().chestEveryStep!==generatedDebugOptions.chestEveryStep){void nextRun({boss});return;}frameClock.reset();skillTree.element.hidden=true;reset();if(boss&&arenas.arenas.length){const a=arenas.arenas[0];s=a.s;arenas.enter(a.s-.01,a.s,route(a.s));}state='playing';$('intro').hidden=true;$('hud').hidden=false;$('modal').hidden=true;document.body.classList.add('playing');toastTime=0;$('toast').style.opacity=0;tone(523,.4);requestAnimationFrame(()=>{if(state==='playing')flashRunStart();});}
 function showModal(kicker,title,text,button){$('modal-kicker').textContent=kicker;$('modal-title').textContent=title;$('modal-text').textContent=text;$('resume').textContent=button;$('modal').hidden=false;}
 function pause(){if(state==='playing'){state='paused';$('world').classList.add('is-paused');keys.clear();inputDevices?.clear();inputManager.clear();showModal('',t('pause'),'',t('resume'));$('resume').focus({preventScroll:true});}else if(state==='paused'){state='playing';$('world').classList.remove('is-paused');$('modal').hidden=true;}}
 function breakChest(c){
@@ -891,7 +966,7 @@ registerInputContext('gameplay',()=>state==='playing',frame=>{
 inputDevices=new BrowserInput({preferences:()=>preferences,onRaw:control=>inputManager.dispatchRaw(control),captureKeyboard:()=>inputManager.resolve()?.map==='gameplay',onBlur:()=>{keys.clear();inputManager.clear();if(state==='playing')pause();}});
 const focusIndicator=new FocusIndicator();
 function updateInput(){keys.clear();inputManager.update(inputDevices.sample());if(document.body.dataset.inputDevice!==inputManager.scheme)document.body.dataset.inputDevice=inputManager.scheme;focusIndicator.update(document.activeElement,inputManager.scheme);}
-function frame(now){requestAnimationFrame(frame);performanceProbe?.begin(now,state);updateInput();const realDt=frameClock.step(now);runTelemetry.clock(now,state==='playing'&&!runItemUI.isOpen&&!runSummary.isOpen&&skillTree.element.hidden&&!document.body.classList.contains('bestiary-open'));if(runSummary.isOpen||statisticsUI.isOpen)return;pauseItems.sync(state==='paused');if(runItemUI.sync())return;towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
+function frame(now){requestAnimationFrame(frame);if(rebuildingRun)return;performanceProbe?.begin(now,state);updateInput();if(state==='intro'){if(!menuScene.userData.drawn){renderer.setRenderTarget(null);renderer.render(menuScene,camera);menuScene.userData.drawn=true;}return;}const realDt=frameClock.step(now);runTelemetry.clock(now,state==='playing'&&!runItemUI.isOpen&&!runSummary.isOpen&&skillTree.element.hidden&&!document.body.classList.contains('bestiary-open'));if(runSummary.isOpen||statisticsUI.isOpen)return;pauseItems.sync(state==='paused');if(runItemUI.sync())return;towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
   const stopped=state==='playing'&&hitStop>0,dt=stopped?0:realDt;
   hitStop=state==='playing'?Math.max(0,hitStop-realDt):0;
   const previousJumpHeight=height,landingVelocity=velocity,landingFrom=rabbit.position.clone(),summaryPreviousS=s;
@@ -1098,19 +1173,23 @@ function frame(now){requestAnimationFrame(frame);performanceProbe?.begin(now,sta
   }finally{renderCulling.end();}
   performanceProbe?.end();
 }
+let propBatches,stairBatches,renderCulling,preparedResources,chestGemWarmupAssets;
+async function prepareRunWorld(){
+lanternLighting.setDepthSource(towerMist.depthTarget.depthTexture,camera,renderer);
 $('phase-status').parentElement.hidden=!RUN_UPGRADES.dashEnabled;document.querySelector('[data-key=ShiftLeft]').hidden=!RUN_UPGRADES.dashEnabled;
 $('flare-hint').hidden=!RUN_UPGRADES.flare;$('flare-touch').hidden=!RUN_UPGRADES.flare;
 camera.position.set(3,TOWER_TOP+4,16);
 phaseTrail.update(.016,new THREE.Vector3(0,.5,0),true,camera,phaseTrail.color,true);
 phaseTrail.update(.016,new THREE.Vector3(.4,.5,0),true,camera,phaseTrail.color,true);
 landingEffects.land(new THREE.Vector3(),1);landingEffects.update(.08);
-const chestGemWarmup=COLLECTIBLES.variants.map((_,index)=>createGemPickable(index,{s:0,lane:0,position:new THREE.Vector3()}).o);
+const chestGemWarmup=chestGemWarmupAssets??=COLLECTIBLES.variants.map((_,index)=>createGemPickable(index,{s:0,lane:0,position:new THREE.Vector3()}).o);
 for(const root of chestGemWarmup)scene.add(root);
 const pickupWarmupRoots=pickupEffects.prepareWarmup(glints[0]?.o);
 const vineLeafWarmup=vineLeaves.prepareWarmup();
 const grassExitWarmup=grassExitParticles.prepareWarmup();
 const secretDirtWarmup=secretDirtParticles.prepareWarmup();
 towerHierarchy.add(crystalGroup,FLOORS.length-1);towerHierarchy.add(crystalLight,FLOORS.length-1);towerHierarchy.root.attach(dust);
+await preparationStep('hierarchy');
 towerHierarchy.organize({walkableFloors,beasts,glints,chests,bottles,books,hazards,arenas,secretLevels,floorGates,windowPanes,catcher,architecture,springboards,threatVisuals});
 Object.assign(end,route(END+1));
 windowLight.group.removeFromParent();
@@ -1124,10 +1203,13 @@ towerHierarchy.onRotate=({towerDelta=0,floorsChanged=false,floorDeltas=[]}={})=>
   for(const floor of walkableFloors)if(floor.userData.s!==undefined)floor.userData.theta=route(floor.userData.s).theta;
   windowLight.rotate(index=>towerDelta+(floorDeltas[index]??0));
 };
-const propBatches=new PropBatches((new URLSearchParams(location.search).has('prop-batches')&&!new URLSearchParams(location.search).has('batching-off')?walkableFloors:[]).filter(f=>!f.userData.secretStep).map(f=>f.parent),new Set(movingPlatforms.map(p=>p.group)));
-const stairBatches=new StairBatches((new URLSearchParams(location.search).has('batching-off')?[]:walkableFloors).filter(f=>!f.userData.secretStep).map(f=>f.parent),new Set(movingPlatforms.map(p=>p.group)));
+propBatches=new PropBatches((new URLSearchParams(location.search).has('prop-batches')&&!new URLSearchParams(location.search).has('batching-off')?walkableFloors:[]).filter(f=>!f.userData.secretStep).map(f=>f.parent),new Set(movingPlatforms.map(p=>p.group)));
+stairBatches=new StairBatches((new URLSearchParams(location.search).has('batching-off')?[]:walkableFloors).filter(f=>!f.userData.secretStep).map(f=>f.parent),new Set(movingPlatforms.map(p=>p.group)));
 scene.traverse(object=>{if(object.isLight)object.layers.enable(2);});
+await reportPreparation.prepare();
+await preparationStep('shaders');
 await warmupFirstActions(renderer,scene,camera,[...chestGemWarmup,...vitralEntryEffects.pool.map(effect=>effect.mesh),catcherRay.line,catcherRay.spark,phaseTrail.mesh,phaseTrail.halo,phaseTrail.sparks,landingEffects.group,vitralGlow.group,vineLeafWarmup,grassExitWarmup,secretDirtWarmup,...pickupWarmupRoots]);
+preparedResources=runResources(scene);
 for(const root of chestGemWarmup)root.removeFromParent();
 phaseTrail.reset();landingEffects.reset();pickupEffects.clear();vineLeaves.clear();grassExitParticles.clear();secretDirtParticles.clear();
 // Compile the actual full-scene and framebuffer variants while the loading UI is up.
@@ -1135,6 +1217,10 @@ renderer.setRenderTarget(atmosphericFocus.target);await renderer.compileAsync(sc
 scene.updateMatrixWorld();towerMist.renderDepth(renderer,scene,camera);
 atmosphericFocus.render(renderer,scene,camera,rabbit.position,depthLight(0),towerMist.depthTarget.depthTexture,0,null,phaseTrail,rabbitHitEffects);
 showLevelDiagnostics(LEVEL_DIAGNOSTICS);
+renderCulling=new RenderCulling(walkableFloors.filter(floor=>!floor.userData.secretStep).map(floor=>floor.parent));
+scene.matrixWorldAutoUpdate=false;
+}
+await prepareRunWorld();
 const runURL=new URL(location.href);
 runURL.searchParams.set('seed',randomManager.seed);history.replaceState(history.state,'',runURL.href);
 if(runURL.searchParams.has('sunny-reset')){runURL.searchParams.delete('sunny-reset');history.replaceState(history.state,'',runURL.href);}
@@ -1142,11 +1228,11 @@ if(runURL.searchParams.has('sunny-run')){
   start({boss:runURL.searchParams.has('sunny-boss')});update(0);state='loading';runURL.searchParams.delete('sunny-run');runURL.searchParams.delete('sunny-boss');
   history.replaceState(history.state,'',runURL.href);
 }else try{if(sessionStorage.getItem('sunny.next-run')==='1'){sessionStorage.removeItem('sunny.next-run');start();}}catch{}
-const renderCulling=new RenderCulling(walkableFloors.filter(floor=>!floor.userData.secretStep).map(floor=>floor.parent));
-scene.matrixWorldAutoUpdate=false;
-const performanceProbe=createPerformanceProbe(renderer,[
+let performanceProbe;
+function installPerformanceProbe(){performanceProbe=createPerformanceProbe(renderer,[
 ['props',propBatches,'update'],['batches',stairBatches,'update'],['matrices',scene,'updateMatrixWorld'],['culling',renderCulling,'begin'],['depth',towerMist,'renderDepth'],['composite',atmosphericFocus,'render'],['threats',threatVisuals,'update'],['hierarchy',towerHierarchy,'update'],['relicsDynamic',shelfRelics,'updateDynamic'],['relicsWind',shelfRelics,'updateWind'],['windowLight',windowLight,'update'],['lanterns',lanternLighting,'update'],['foliage',vineLeaves,'update'],['parchment',floatingParchment,'update'],['floorGates',floorGates,'update'],['secrets',secretLevels,'reveal'],['input',inputDevices,'sample'],['focus',focusIndicator,'update'],['comboHUD',comboHUD,'update']
-]);
+]);}
+installPerformanceProbe();
 requestAnimationFrame(frame);
 requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();inputDevices?.clear();inputManager.clear();frameClock.reset();state='playing';flashRunStart();}}));
 
@@ -1156,3 +1242,6 @@ if(new URLSearchParams(location.search).has('geometry-report')){
  const report=geometryInventory(scene,[['Библиотечные шкафы и книги',libraries],['Лестницы и фоновые пропсы',walkableFloors.filter(f=>!f.userData.secretStep).map(f=>f.parent)],['Камни',glints.map(g=>g.o)],['Сундуки',chests.map(c=>c.o)],['Враги',beasts.map(b=>b.o)],['Угрозы',threatVisuals.items.map(i=>i.group)],['Зайчик', [rabbit]],['Санкатчер',[catcher]],['Туман',[towerMist.mesh]],['Арены',arenas.arenas.map(a=>a.group)],['Ворота',floorGates.gates.map(g=>g.group)],['Фоновые пропсы',props],['Секретные дороги и комнаты',secretLevels.routes.flatMap(r=>[r.group,r.room])]]);
  const output=document.createElement('script');output.type='application/json';output.id='geometry-report';output.textContent=JSON.stringify(report);document.body.append(output);
 }
+
+export function startPreparedRun(options={}){start(options);}
+

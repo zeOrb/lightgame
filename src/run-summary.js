@@ -24,30 +24,50 @@ export class RunSummary {
   get isOpen(){return !this.element.hidden;}
   open(snapshot){this.snapshot=snapshot;this.element.hidden=false;this.render();}
   close(){this.element.hidden=true;}
-  buttons(){return [...this.element.querySelectorAll('button')];}
+  buttons(){return [...this.element.querySelectorAll('button')].filter(button=>!button.hidden&&!button.disabled);}
   navigate(direction){const buttons=this.buttons(),index=buttons.indexOf(document.activeElement);buttons[(index+direction+buttons.length)%buttons.length]?.focus();}
   handleInput(frame){const keys=frame.uiPressed;if(keys.has('down')||keys.has('right'))this.navigate(1);else if(keys.has('up')||keys.has('left'))this.navigate(-1);if(keys.has('submit')){const buttons=this.buttons();(buttons.includes(document.activeElement)?document.activeElement:buttons.at(-1))?.click();}}
+  prepare(){
+    if(this.panel)return;
+    const snapshot=this.snapshot;this.snapshot={duration:0,totals:{gems:0,points:0,kills:0},events:[],outcome:'lost'};
+    this.render();this.snapshot=snapshot;
+  }
   render(){
-    const snapshot=this.snapshot;this.element.replaceChildren();const panel=node('div','run-summary-panel');const title=node('h2',null,tr('Run summary'));title.id=this.element.id+'-title';panel.append(title,node('div','summary-ornament'),node('p','summary-outcome',tr(snapshot.outcome==='won'?'Crystal awakened':'Run ended')));
-    const metrics=node('div','summary-metrics');for(const [label,value] of [[tr('Run time'),runTime(snapshot.duration)],[tr('Gems collected'),snapshot.totals.gems],[tr('Run points'),snapshot.totals.points],[tr('Enemies defeated'),snapshot.totals.kills]]){const metric=node('div');metric.append(node('strong',null,String(value)),node('span',null,label));metrics.append(metric);}panel.append(metrics);
-    panel.append(node('h3',null,tr('Run points')));this.drawChart(panel);
-    const legend=node('div','summary-legend');for(const [kind,label] of [['kill',tr('Enemy defeated')],['chest',tr('Chest opened')],['floor',tr('Floor completed')],...(snapshot.outcome==='lost'?[['death',tr('Death')]]:[])]){const entry=node('span'),icon=svgNode('svg',{viewBox:'-12 -12 24 24','aria-hidden':'true'});icon.append(eventIcon(kind));entry.append(icon,document.createTextNode(label));legend.append(entry);}panel.append(legend,node('h3',null,tr('Collected items')));
-    const inventory=node('div','summary-inventory'),counts=new Map();for(const event of snapshot.events)if(event.type==='item.acquired')counts.set(event.data.id,(counts.get(event.data.id)??0)+1);
-    const detail=node('div','summary-item-detail');detail.setAttribute('aria-live','polite');let hovered=null,focused=null;
-    const show=id=>{detail.classList.toggle('is-visible',!!id);if(!id)return;const item=this.items.items.get(id);renderItemTooltip(detail,item,this.items.rarity(id),counts.get(id));};
-    for(const [id,count] of counts){const item=this.items.items.get(id);if(!item)continue;const button=node('button','summary-item');button.style.setProperty('--item-color',this.items.rarity(id).color);button.setAttribute('aria-label',tr(item.name)+' ×'+count);const icon=node('span','summary-diamond');icon.append(node('span',null,item.symbol));button.append(icon);button.onclick=()=>button.focus();button.onpointerenter=()=>{hovered=id;show(id)};button.onpointerleave=()=>{hovered=null;show(focused)};button.onfocus=()=>{focused=id;show(id)};button.onblur=()=>{focused=null;show(hovered)};inventory.append(button);}
-    if(!counts.size)inventory.append(node('p','summary-empty',tr('No items collected')));panel.append(inventory,detail);
-    if(this.history?.state.recent.length>1){const compare=node('button','summary-compare',tr('Compare recent runs'));compare.onclick=()=>this.onCompare?.();panel.append(compare);}
-    if(this.onRestart){
+    const snapshot=this.snapshot;if(this.panel){this.updateReport(snapshot);return;}
+    const panel=this.panel=node('div','run-summary-panel');const title=node('h2',null,tr('Run summary'));title.id=this.element.id+'-title';panel.append(title,node('div','summary-ornament'),node('p','summary-outcome',tr(snapshot.outcome==='won'?'Crystal awakened':'Run ended')));
+    const metrics=node('div','summary-metrics');for(const [label,value] of [[tr('Run time'),runTime(snapshot.duration)],[tr('Gems collected'),snapshot.totals.gems],[tr('Run points'),snapshot.totals.points],[tr('Enemies defeated'),snapshot.totals.kills]]){const metric=node('div');metric.append(node('strong',null,String(value)),node('span',null,label));metrics.append(metric);}panel.append(metrics);this.metrics=metrics;
+    panel.append(node('h3',null,tr('Run points')));this.chartSlot=node('div');panel.append(this.chartSlot);this.drawChart(this.chartSlot);
+    const legend=node('div','summary-legend');for(const [kind,label] of [['kill',tr('Enemy defeated')],['chest',tr('Chest opened')],['floor',tr('Floor completed')],['death',tr('Death')]]){const entry=node('span'),icon=svgNode('svg',{viewBox:'-12 -12 24 24','aria-hidden':'true'});icon.append(eventIcon(kind));entry.append(icon,document.createTextNode(label));entry.hidden=kind==='death'&&snapshot.outcome!=='lost';legend.append(entry);}this.legend=legend;panel.append(legend,node('h3',null,tr('Collected items')));
+    this.inventorySlot=node('div');panel.append(this.inventorySlot);this.renderInventory(snapshot);
+    {const compare=node('button','summary-compare',tr('Compare recent runs'));compare.onclick=()=>this.onCompare?.();compare.hidden=!(this.history?.state.recent.length>1);this.compareButton=compare;panel.append(compare);}
+    {
       const restart=node('button','summary-compare',tr('Restart run'));
-      restart.onclick=()=>{
+      restart.hidden=!this.onRestart;this.restartButton=restart;restart.onclick=()=>{
         if(restart.disabled)return;
         for(const button of this.buttons())button.disabled=true;
         this.onRestart();
       };
       panel.append(restart);
     }
-    const next=node('button','summary-continue',tr(this.continueLabel??'Continue to upgrades'));next.onclick=()=>{this.close();this.onContinue();};panel.append(next);this.element.append(panel);next.focus({preventScroll:true});
+    const next=node('button','summary-continue',tr(this.continueLabel??'Continue to upgrades'));next.onclick=()=>{this.close();this.onContinue();};panel.append(next);this.element.append(panel);if(this.isOpen)next.focus({preventScroll:true});
+  }
+  updateReport(snapshot){
+    const panel=this.panel;panel.querySelector('h2').textContent=tr('Run summary');panel.querySelector('.summary-outcome').textContent=tr(snapshot.outcome==='won'?'Crystal awakened':'Run ended');
+    const entries=[[tr('Run time'),runTime(snapshot.duration)],[tr('Gems collected'),snapshot.totals.gems],[tr('Run points'),snapshot.totals.points],[tr('Enemies defeated'),snapshot.totals.kills]];
+    [...this.metrics.children].forEach((metric,i)=>{metric.querySelector('strong').textContent=entries[i][1];metric.querySelector('span').textContent=entries[i][0];});
+    const headings=panel.querySelectorAll('h3');headings[0].textContent=tr('Run points');headings[1].textContent=tr('Collected items');
+    this.chartSlot.replaceChildren();this.drawChart(this.chartSlot);
+    [...this.legend.children].forEach((entry,i)=>{entry.lastChild.textContent=tr(['Enemy defeated','Chest opened','Floor completed','Death'][i]);entry.hidden=i===3&&snapshot.outcome!=='lost';});
+    this.renderInventory(snapshot);this.compareButton.hidden=!(this.history?.state.recent.length>1);this.restartButton.hidden=!this.onRestart;
+    for(const button of panel.querySelectorAll('button'))button.disabled=false;
+    const next=panel.querySelector('.summary-continue');next.textContent=tr(this.continueLabel??'Continue to upgrades');if(this.isOpen)next.focus({preventScroll:true});
+  }
+  renderInventory(snapshot){
+    const inventory=node('div','summary-inventory'),counts=new Map();for(const event of snapshot.events)if(event.type==='item.acquired')counts.set(event.data.id,(counts.get(event.data.id)??0)+1);
+    const detail=node('div','summary-item-detail');detail.setAttribute('aria-live','polite');let hovered=null,focused=null;
+    const show=id=>{detail.classList.toggle('is-visible',!!id);if(!id)return;const item=this.items.items.get(id);renderItemTooltip(detail,item,this.items.rarity(id),counts.get(id));};
+    for(const [id,count] of counts){const item=this.items.items.get(id);if(!item)continue;const button=node('button','summary-item');button.style.setProperty('--item-color',this.items.rarity(id).color);button.setAttribute('aria-label',tr(item.name)+' ×'+count);const icon=node('span','summary-diamond');icon.append(node('span',null,item.symbol));button.append(icon);button.onclick=()=>button.focus();button.onpointerenter=()=>{hovered=id;show(id)};button.onpointerleave=()=>{hovered=null;show(focused)};button.onfocus=()=>{focused=id;show(id)};button.onblur=()=>{focused=null;show(hovered)};inventory.append(button);}
+    if(!counts.size)inventory.append(node('p','summary-empty',tr('No items collected')));this.inventorySlot.replaceChildren(inventory,detail);
   }
   drawChart(panel,comparisons=[]){
     const snap=this.snapshot,series=summarySeries(snap),duration=Math.max(snap.duration,...comparisons.map(run=>run.duration),1),maximum=Math.max(snap.totals.points,...comparisons.map(run=>run.totals.points),1),x=t=>36+t/duration*850,y=v=>214-v/maximum*166,curve=summaryCurve(series,x,y);

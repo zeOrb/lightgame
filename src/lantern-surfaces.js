@@ -4,6 +4,7 @@ import {createVisualRandom} from './random-manager.js';
 import {TOWER_TOP,END,depthLight} from './game.js';
 let surfaces;
 const lanterns=[];
+export function registerLanternGlow(sprite){lanterns.push({sprite,point:new THREE.Vector3()});}
 const softGlow={lampDepth:{value:null},lampResolution:{value:new THREE.Vector2(1,1)},lampRange:{value:new THREE.Vector2(.1,240)},lampDepthReady:{value:false}};
 function softenGlow(material){
   material.onBeforeCompile=shader=>{
@@ -45,12 +46,13 @@ export function lanternGlow(height,size=1.3){
   softenGlow(sprite.material);
   sprite.scale.setScalar(size*1.4);sprite.layers.set(2);
   const bloom=new THREE.Sprite(sprite.material.clone());softenGlow(bloom.material);bloom.material.color.set('#ffab60');bloom.material.opacity*=.35;bloom.scale.setScalar(1.8);bloom.layers.set(2);sprite.add(bloom);
-  lanterns.push({sprite,point:new THREE.Vector3()});return sprite;
+  registerLanternGlow(sprite);return sprite;
 }
 
 // A bounded light pool makes nearby lanterns illuminate real geometry without
 // adding a dynamic light for every cabinet in the tower.
 export class LanternLighting {
+  static resetRegistry(){lanterns.length=0;}
   constructor(scene){
     this.lights=Array.from({length:4},()=>{const light=new THREE.PointLight('#ffbd78',0,27.5,2);scene.add(light);return light;});
   }

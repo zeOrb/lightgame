@@ -6,7 +6,9 @@ export function glassLayout(width,height){
   return {width:Math.round(width*192),height:Math.round(height*192),columns:Math.max(1,Math.round(width/.5)),rows:Math.max(1,Math.round(height/.5))};
 }
 
+let cachedGlassTextures;
 export function createGlassTextures(){
+  if(cachedGlassTextures)return cachedGlassTextures;
   const palette=['#f52c9e','#7244ff','#22bfff','#35e5ad','#ffcf38','#f54b42'];
   for(let i=palette.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[palette[i],palette[j]]=[palette[j],palette[i]];}
   const makeMosaics=(width,height)=>Array.from({length:4},(_,variant)=>{
@@ -32,5 +34,6 @@ export function createGlassTextures(){
   }
   ctx.beginPath();ctx.arc(128,128,19,0,Math.PI*2);ctx.fillStyle='#fff3a6';ctx.fill();
   const rose=new THREE.CanvasTexture(canvas);rose.colorSpace=THREE.SRGBColorSpace;
-  return {mosaics,wideMosaics,rose,palette};
+  for(const texture of [...mosaics,...wideMosaics,rose])texture.userData.persistentRunResource=true;
+  return cachedGlassTextures={mosaics,wideMosaics,rose,palette};
 }

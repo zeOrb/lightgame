@@ -54,6 +54,7 @@ export class RandomManager {
   stream(...path){const key=JSON.stringify(path.map(seedText));if(!this.streams.has(key))this.streams.set(key,this.create(...path));return this.streams.get(key);}
   sample(...path){return this.create(...path).float();}
   reset(){for(const stream of this.streams.values())stream.reset();}
+  reseed(seed){const next=seedText(seed);if(next.length>256)throw new TypeError('RNG seed is too long');this.seed=next;this.streams.clear();return this;}
   snapshot(){return {version:RNG_VERSION,seed:this.seed,streams:[...this.streams].map(([key,rng])=>({key,...rng.snapshot()}))};}
   restore(saved){
     if(!saved||saved.version!==RNG_VERSION||saved.seed!==this.seed||!Array.isArray(saved.streams))throw new TypeError('Incompatible RNG save');

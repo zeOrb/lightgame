@@ -4,7 +4,7 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {applyTowerDepth} from './tower-depth.js';
 import {createVisualRandom} from './random-manager.js';
 import {FLOOR_COUNT,TOWER_TOP} from './game.js';
-import {lanternSurfaces,lanternGlow} from './lantern-surfaces.js';
+import {lanternSurfaces,lanternGlow,registerLanternGlow} from './lantern-surfaces.js';
 import {libraryWindowOpenings,clipLibraryWindows} from './library-window-openings.js';
 import {WALL_BAY_ORIGIN,WALL_BAY_STEP} from './wall-layout.js';
 
@@ -51,7 +51,9 @@ export function libraryLayout(){
   }
   return {cases,books};
 }
-let sharedSpineAtlas,sharedLayout,sharedWallTexture;
+let sharedSpineAtlas,sharedLayout,sharedWallTexture,sharedLayoutKey;
+let cachedLibraryKey;
+const cachedLibraries=new Map();
 export function partitionLibraryLayout(source,minY,maxY){
   const owned=new Set(source.cases.map((c,i)=>c.base+(c.rows*1.18+.75)*.5>=minY&&c.base+(c.rows*1.18+.75)*.5<maxY?i:-1).filter(i=>i>=0));
   return {cases:source.cases.filter((_,i)=>owned.has(i)),books:source.books.filter(b=>owned.has(b.caseId))};
@@ -75,7 +77,18 @@ export function spineAtlas(){
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;sharedSpineAtlas=texture;return texture;
 }
 export function createAncientLibrary(scene,{minY=-Infinity,maxY=Infinity}={}){
-  const source=sharedLayout??=libraryLayout(),layout=partitionLibraryLayout(source,minY,maxY),group=new THREE.Group();group.name='Ancient library';scene.add(group);
+  const libraryKey=TOWER_TOP+':'+FLOORS.map(f=>f.count).join(',');
+  if(libraryKey!==cachedLibraryKey){cachedLibraries.clear();cachedLibraryKey=libraryKey;}
+  const partitionKey=minY+':'+maxY,cached=cachedLibraries.get(partitionKey);
+  if(cached){
+    const openings=libraryWindowOpenings().filter(o=>o.y+o.height/2>=minY&&o.y-o.height/2<=maxY);
+    cached.removeFromParent();cached.position.set(0,0,0);cached.quaternion.identity();cached.scale.setScalar(1);cached.updateMatrix();scene.add(cached);
+    const materials=new Set();cached.traverse(object=>{for(const material of [object.material].flat().filter(Boolean))materials.add(material);if(object.userData.libraryLantern)registerLanternGlow(object);});
+    for(const material of materials)material.userData.setLibraryOpenings?.(openings);
+    return cached;
+  }
+  const key=FLOORS.map(f=>f.count).join(',');if(key!==sharedLayoutKey){sharedLayout=libraryLayout();sharedLayoutKey=key;}
+  const source=sharedLayout,layout=partitionLibraryLayout(source,minY,maxY),group=new THREE.Group();group.name='Ancient library';scene.add(group);
   const openings=libraryWindowOpenings().filter(o=>o.y+o.height/2>=minY&&o.y-o.height/2<=maxY);
   const material=color=>clipLibraryWindows(applyTowerDepth(new THREE.MeshStandardMaterial({color,roughness:.85})),openings);
   const oak=material('#493a30'),recess=material('#231f1d'),brass=material('#8d7854');brass.metalness=.45;
@@ -146,9 +159,9 @@ export function createAncientLibrary(scene,{minY=-Infinity,maxY=Infinity}={}){
     piece(lanterns,0,5.05,-1,.35,.5,.35);
     for(const y of [4.8,5.29])piece(cages,0,y,-1,.48,.025,.48);
     piece(cages,0,5.43,-1,.38,.08,.38);piece(cages,0,5.5,-1,.2,.06,.2);
-    const halo=lanternGlow(cabinet.base+5.05,1.7);halo.position.set(0,5.05,-1).applyMatrix4(parent.matrix);group.add(halo);
+    const halo=lanternGlow(cabinet.base+5.05,1.7);halo.userData.libraryLantern=true;halo.position.set(0,5.05,-1).applyMatrix4(parent.matrix);group.add(halo);
   }
   for(const [list,mat] of [[lanterns,lanternMaterial],[cages,lanternMetal]]){const batch=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),mat,list.length);list.forEach((m,i)=>batch.setMatrixAt(i,m));batch.instanceMatrix.needsUpdate=true;group.add(batch);}
   group.userData.bookCount=layout.books.length;group.userData.caseCount=layout.cases.length;
-  return group;
+  cachedLibraries.set(partitionKey,group);return group;
 }

@@ -2,15 +2,19 @@ import {FLOORS,TOTAL_SECTIONS,floorForSection,stepAt} from './floor-config.js';
 import {randomManager} from './random-manager.js';
 import {RUN_UPGRADES} from './progression.js';
 import {SPIRAL_STEP_ANGLE,WALL_BAY_ORIGIN} from './wall-layout.js';
-export const FLOOR_COUNT = FLOORS.length;
-export const END = TOTAL_SECTIONS-1;
-export const TOWER_TOP=100+(TOTAL_SECTIONS-140)*.5;
+export let FLOOR_COUNT = FLOORS.length;
+export let END = TOTAL_SECTIONS-1;
+export let TOWER_TOP=100+(TOTAL_SECTIONS-140)*.5;
 export function floorAt(s) { return FLOOR_COUNT-floorForSection(clamp(s,0,END)).index; }
 export function depthLight(s) { return floorForSection(s).lighting?.daylight??Math.pow(1-clamp(s/END,0,1),1.25); }
 export function canStomp(previousFoot, foot, previousTop, top, velocity, overlaps) {
   return overlaps && velocity < 0 && previousFoot >= previousTop-.12 && foot <= top+.12;
 }
-export const gaps = FLOORS.flatMap(f=>f.holes.map(offset=>f.start+offset));
+export let gaps = FLOORS.flatMap(f=>f.holes.map(offset=>f.start+offset));
+export function refreshRunGeometry(){
+  FLOOR_COUNT=FLOORS.length;END=TOTAL_SECTIONS-1;TOWER_TOP=100+(TOTAL_SECTIONS-140)*.5;
+  gaps=FLOORS.flatMap(f=>f.holes.map(offset=>f.start+offset));routeYaw=()=>0;
+}
 export const ROUTE_ANGLE = SPIRAL_STEP_ANGLE;
 // A small seam overlap keeps the route continuous without burying neighbouring treads.
 export const SHELF_HALF_ANGLE = ROUTE_ANGLE*.52;

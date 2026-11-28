@@ -38,6 +38,7 @@ export class TowerDescentHUD {
     this.showStage(this.floors[0].stageIndex);
     this.update(0,this.floors[0]);
   }
+  setFloors(floors){this.floors=floors;this.stageCount=new Set(floors.map(floor=>floor.stageIndex)).size;this.reset();}
 
   completeFloor(floor){
     this.completed=Math.max(this.completed,floor.index+1);

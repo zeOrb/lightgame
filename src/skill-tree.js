@@ -7,6 +7,7 @@ import {createSkillStarfield} from './skill-stars.js';
 import {StarParallax} from './star-parallax.js';
 import {SkillComets} from './skill-comets.js';
 import {directionalTarget} from './menu-gamepad-navigation.js';
+import {UIPreparation,decodeUIImages} from './ui-preparation.js';
 export class SkillTree {
   constructor(onNext){
     this.treeId='light';this.onNext=onNext;this.selected=null;this.hovered=null;this.navKeys=new Set();this.panTail=new PanTail();this.smoothZoom=new SmoothTreeZoom();this.dragging=false;
@@ -43,6 +44,15 @@ export class SkillTree {
     this.render();
     const child=!skill.isRoot&&SKILLS.find(node=>node.requires===skill.id);
     if(child){this.smoothZoom.clear();this.interruptCamera();const p=skillPosition(child);this.map.classList.add('is-guiding');this.camera.x=this.viewport.clientWidth/2-p.x*this.camera.zoom;this.camera.y=this.viewport.clientHeight/2-p.y*this.camera.zoom;this.applyCamera();}
+  }
+  prepare(){
+    this.preparation??=new UIPreparation([
+      ()=>decodeUIImages(this.sky.layers.map(layer=>layer.style.backgroundImage.slice(5,-2))),
+      ()=>this.art.draw(),
+      ()=>{const rootId=this.art.rootId;this.art.rootId='treasurySource';try{this.art.draw();}finally{this.art.rootId=rootId;}},
+      ()=>this.art.draw()
+    ]);
+    return this.preparation.prepare();
   }
   focusPadButton(button){
     if(!button)return;

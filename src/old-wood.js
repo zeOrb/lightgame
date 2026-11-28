@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import {createVisualRandom,visualSample} from './random-manager.js';
+let cachedAtlas;
 export function createOldWoodAtlas(){
+  if(cachedAtlas)return cachedAtlas;
   const random=createVisualRandom('old-oak-atlas'),w=512,h=256;
   const canvas=document.createElement('canvas');canvas.width=w*4;canvas.height=h*4;
   const ctx=canvas.getContext('2d'),image=ctx.createImageData(canvas.width,canvas.height);
@@ -43,7 +45,8 @@ export function createOldWoodAtlas(){
   heightMap.flipY=true;heightMap.minFilter=THREE.LinearMipmapLinearFilter;heightMap.magFilter=THREE.LinearFilter;
   heightMap.generateMipmaps=true;heightMap.anisotropy=4;heightMap.needsUpdate=true;
   texture.userData.heightMap=heightMap;
-  return texture;
+  texture.userData.persistentRunResource=true;texture.userData.heightMap.userData.persistentRunResource=true;
+  return cachedAtlas=texture;
 }
 export function mapWoodPanel(geometry,section,inner,outer,angle){
   const variant=Math.floor(visualSample('wood-panel-atlas',section)*16),flip=visualSample('wood-panel-flip',section)>.5;
