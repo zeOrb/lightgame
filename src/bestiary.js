@@ -8,6 +8,7 @@ import {createBestiaryPedestal,addBestiaryShaft} from './bestiary-pedestal.js';
 import {createBestiaryBackdrop} from './bestiary-backdrop.js';
 import {bestiaryFog} from './bestiary-fog.js';
 import './bestiary.css';
+import {BESTIARY_THREATS,createThreatExhibit} from './bestiary-threats.js';
 
 export function initializeBestiary(){
   const trigger=document.createElement('button');trigger.textContent=tr("Bestiary");trigger.dataset.i18n="Bestiary";trigger.className='text-button';
@@ -16,10 +17,15 @@ export function initializeBestiary(){
   panel.setAttribute('aria-label',tr("Bestiary"));panel.innerHTML='<header><h1 data-i18n="Bestiary">Bestiary</h1><button type="button" data-i18n="Back to menu · Esc">Back to menu · Esc</button></header><div class="bestiary-stage"></div><div class="bestiary-name" aria-live="polite"></div>';
   document.body.append(panel);
   const stage=panel.querySelector('.bestiary-stage'),label=panel.querySelector('.bestiary-name'),back=panel.querySelector('button');
+  const tabs=document.createElement('nav');tabs.className='bestiary-tabs';tabs.setAttribute('role','tablist');
+  tabs.innerHTML='<button role="tab" aria-selected="true" data-i18n="Creatures">Creatures</button><button role="tab" aria-selected="false" data-i18n="Threats">Threats</button>';
+  const effectButton=document.createElement('button');effectButton.className='bestiary-effect';effectButton.dataset.i18n='Trigger effect';effectButton.textContent=tr('Trigger effect');effectButton.hidden=true;
+  panel.append(tabs,effectButton);
+  const description=document.createElement('p');description.className='bestiary-description';description.hidden=true;panel.append(description);
   const statsCard=document.createElement('aside');statsCard.className='bestiary-stats';statsCard.hidden=true;panel.append(statsCard);
   const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let pointerInside=false,hovered=null,wheelUntil=0;
   let renderer,scene,camera,fog,exhibits=[],active=false,target=0,position=0,time=0,last=0,drag=null;
-  const spacing=5.4,definitions=ENEMY_CONFIG.enemies;
+  const spacing=5.4;let definitions=ENEMY_CONFIG.enemies,category=0,creatureExhibits=[],threatExhibits=[];
   function build(){
     renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));stage.append(renderer.domElement);
     scene=new THREE.Scene();scene.background=new THREE.Color('#0c0c10');scene.fog=new THREE.Fog('#0c0c10',15,36);
@@ -40,6 +46,13 @@ export function initializeBestiary(){
       const rim=new THREE.PointLight('#b6c5e0',4,5);rim.position.set(i*spacing,3,-1.8);scene.add(rim);
       return {pivot,enemy,collision,pick};
     });
+    creatureExhibits=exhibits;
+    threatExhibits=BESTIARY_THREATS.map((definition,i)=>{
+      const pivot=new THREE.Group();pivot.position.x=i*spacing;pivot.visible=false;scene.add(pivot);
+      pivot.add(createBestiaryPedestal());
+      const preview=createThreatExhibit(definition);pivot.add(preview.group);
+      return {pivot,preview};
+    });
     fog=bestiaryFog(scene);
   }
   function resize(){if(!renderer||!active)return;const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
@@ -47,7 +60,7 @@ export function initializeBestiary(){
   function snap(){target=Math.round(target/spacing)*spacing;}
   function showStats(exhibit){
     if(hovered===exhibit)return;hovered=exhibit;
-    for(const entry of exhibits)entry.collision.visible=entry===exhibit;
+    for(const entry of creatureExhibits)entry.collision.visible=entry===exhibit;
     statsCard.hidden=!exhibit;if(!exhibit)return;
     const title=document.createElement('h2');title.textContent=tr(exhibit.enemy.definition.name);
     const rows=document.createElement('dl');
@@ -60,15 +73,26 @@ export function initializeBestiary(){
     if(wheelUntil&&now>wheelUntil){snap();wheelUntil=0;}
     position=THREE.MathUtils.damp(position,target,9,dt);
     camera.position.set(position,3.2,8.6+Math.max(0,1-camera.aspect)*3);camera.lookAt(position,.95,0);
-    for(const {pivot,enemy} of exhibits){pivot.rotation.y=time*.24;animateShadowBeast(enemy,time,0);}
-    const index=Math.round(position/spacing);label.textContent=tr(definitions[index].name);
+    for(const {pivot,enemy,preview} of exhibits){if(enemy){pivot.rotation.y=time*.24;animateShadowBeast(enemy,time,0);}else preview.update(dt);}
+    const index=Math.round(position/spacing);label.textContent=tr(definitions[index].name);if(category)description.textContent=tr(definitions[index].description);
     scene.updateMatrixWorld();camera.updateMatrixWorld();
-    if(!statsCard.matches(':hover')){if(pointerInside&&drag===null){raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(exhibits.map(entry=>entry.pick),false)[0];showStats(hit?exhibits.find(entry=>entry.pick===hit.object):null);}else showStats(null);}
+    if(!category&&!statsCard.matches(':hover')){if(pointerInside&&drag===null){raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(exhibits.map(entry=>entry.pick),false)[0];showStats(hit?exhibits.find(entry=>entry.pick===hit.object):null);}else showStats(null);}
     renderer.render(scene,camera);requestAnimationFrame(frame);
   }
   function close(){active=false;panel.hidden=true;document.body.classList.remove('bestiary-open');document.getElementById('intro').hidden=false;drag=null;pointerInside=false;showStats(null);snap();trigger.focus();}
   trigger.onclick=()=>{panel.hidden=false;document.getElementById('intro').hidden=true;document.body.classList.add('bestiary-open');active=true;if(!renderer)build();resize();last=performance.now();back.focus();requestAnimationFrame(frame);};
   back.onclick=close;
+  function selectCategory(index){
+    showStats(null);category=index;target=position=0;drag=null;wheelUntil=0;
+    definitions=category?BESTIARY_THREATS:ENEMY_CONFIG.enemies;
+    for(const entry of creatureExhibits)entry.pivot.visible=!category;
+    for(const entry of threatExhibits)entry.pivot.visible=!!category;
+    exhibits=category?threatExhibits:creatureExhibits;
+    effectButton.hidden=description.hidden=!category;
+    [...tabs.children].forEach((button,i)=>button.setAttribute('aria-selected',String(i===category)));
+  }
+  [...tabs.children].forEach((button,index)=>button.onclick=()=>selectCategory(index));
+  effectButton.onclick=()=>threatExhibits[Math.round(target/spacing)]?.preview.trigger();
   panel.addEventListener('wheel',event=>{if(statsCard.contains(event.target))return;event.preventDefault();const now=performance.now(),delta=Math.abs(event.deltaX)>Math.abs(event.deltaY)?event.deltaX:event.deltaY;if(!delta)return;if(now>wheelUntil){snap();move(Math.sign(delta)*spacing);}wheelUntil=now+180;},{passive:false});
   stage.addEventListener('pointerdown',event=>{if(event.button!==0)return;wheelUntil=0;drag={x:event.clientX,start:target,total:0};stage.setPointerCapture(event.pointerId);});
   stage.addEventListener('pointermove',event=>{const rect=stage.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);pointerInside=true;if(drag===null)return;const delta=drag.x-event.clientX;move(delta*.022);drag.total+=delta;drag.x=event.clientX;});
@@ -77,7 +101,9 @@ export function initializeBestiary(){
 
   document.addEventListener('sunny:bestiary-input',event=>{
     if(!active)return;const ui=event.detail.uiPressed;
-    if(ui.has('cancel')||ui.has('submit')||ui.has('menu'))close();
+    if(ui.has('cancel')||ui.has('menu'))close();
+    else if(ui.has('previousTab')||ui.has('nextTab'))selectCategory(1-category);
+    else if(ui.has('submit')){if(category)effectButton.click();else close();}
     else if(ui.has('left'))move(-spacing);else if(ui.has('right'))move(spacing);
   });
   onLanguageChange(()=>{localizeDOM(panel);panel.setAttribute('aria-label',tr("Bestiary"));const exhibit=hovered;hovered=null;if(exhibit)showStats(exhibit);});

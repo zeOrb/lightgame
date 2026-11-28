@@ -30,3 +30,42 @@ test('secret road collision follows the transformed parent without snapping to t
 
 test('extra-floor compilation does not mutate defaults or previous floors',()=>{const c=empty(),before=structuredClone(c);buildFloorLayout(c,12);assert.deepEqual(c,before);});
 test('authored loot remains safe when holes are generated',()=>{const c=empty();c.floors[0]={steps:{holes:{count:4,safeStart:0,safeEnd:1}},loot:{mode:'explicit',items:[{offset:3},{offset:5}]}};const f=buildFloorLayout(c)[0];assert.ok(!f.holes.includes(3)&&!f.holes.includes(5));});
+
+test('generic pools generate holes and shadows with safe reservations across seeds',()=>{
+ const c=empty();delete c.defaults.shadows;
+ c.defaults.threats={mode:'generated',count:3,pool:['hole','shadow','thorns']};
+ c.defaults.windows={mode:'generated',count:2};
+ c.defaults.loot={mode:'explicit',items:[{offset:9}]};
+ const found=new Set();
+ for(let seed=0;seed<100;seed++){
+  const floors=buildFloorLayout(c,0,String(seed));
+  assert.deepEqual(buildFloorLayout(c,0,String(seed)),floors);
+  for(const floor of floors){
+   assert.equal(floor.placements.threats.length,3);
+   for(const threat of floor.placements.threats){
+    found.add(threat.id);
+    assert.ok(!floor.placements.windows.some(item=>item.offset===threat.offset));
+    assert.ok(!floor.placements.loot.some(item=>item.offset===threat.offset));
+    assert.notEqual(threat.offset,floor.count-1);
+    if(threat.id==='hole')assert.ok(floor.holes.includes(threat.offset));
+    if(threat.id==='shadow')assert.ok(floor.placements.shadows.includes(threat));
+   }
+  }
+ }
+ assert.deepEqual(found,new Set(['hole','shadow','thorns']));
+});
+
+test('authored generic holes remove explicit treads and legacy hazards compile once',()=>{
+ const c=empty();
+ c.floors[0]={steps:{mode:'explicit',items:Array.from({length:14},(_,i)=>i)},threats:{mode:'explicit',items:[{id:'hole',offset:4},{id:'shadow',offset:7,lane:.5}]}};
+ let floor=buildFloorLayout(c)[0];
+ assert.deepEqual(floor.holes,[4]);assert.equal(floor.stepItems.has(4),false);
+ assert.equal(floor.placements.shadows[0].lane,.5);
+ c.floors[0]={steps:{mode:'explicit',items:Array.from({length:14},(_,i)=>i).filter(i=>i!==4)},shadows:{mode:'explicit',items:[7]}};
+ floor=buildFloorLayout(c)[0];
+ assert.deepEqual(floor.placements.threats.map(item=>item.id),['hole','shadow']);
+ c.floors[0]={threats:{mode:'explicit',items:[{id:'hole',offset:13}]}};
+ assert.throws(()=>buildFloorLayout(c),/final step/);
+ c.floors[0]={threats:{mode:'generated',count:1,pool:['missing-type']}};
+ assert.throws(()=>buildFloorLayout(c),/unknown threat/);
+});

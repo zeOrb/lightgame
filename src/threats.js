@@ -1,12 +1,16 @@
 import {route,ROUTE_RADIUS, END, GAP_HALF_WIDTH, ROUTE_ANGLE, SHELF_HALF_ANGLE, SHELF_OUTER_RADIUS, shelfInnerRadius, clamp } from './game.js';
 
-export const ThreatType=Object.freeze({HOLE:'hole',MOVING_PLATFORM:'moving-platform',PENDULUM:'pendulum',INK_WAVE:'ink-wave',THORNS:'thorns'});
+import {ThreatType} from './threat-types.js';
+import threatSettings from './threat-settings.json' with {type:'json'};
+export {ThreatType} from './threat-types.js';
 export const ThreatInfo=Object.freeze({
+  [ThreatType.VINE_TRAP]:{name:"Vine Trap",damage:threatSettings.types['vine-trap'].damage,hint:"Venom Vines · wait for them to retract, jump over, or use Phasing."},
   [ThreatType.PENDULUM]:{name:"Eclipse Bell",damage:10,hint:"Eclipse Bell · jump over it or pass through with {Phasing}."},
   [ThreatType.INK_WAVE]:{name:"Ink Wave",damage:8,hint:"Ink Wave · jump over the expanding ring."},
-  [ThreatType.THORNS]:{name:"Glass Spikes",damage:12,hint:"Glass Spikes · wait for them to retract, jump over, or use Phasing."},
+  [ThreatType.THORNS]:{name:"Venom Vines",damage:threatSettings.types.thorns.damage,hint:"Venom Vines · wait for them to retract, jump over, or use Phasing."},
 });
 export const PLATFORM_COOLDOWN=5;
+export const ThornSettings=Object.freeze({...threatSettings.types.thorns});
 const ease=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 
 export function platformTravel(section){return (SHELF_OUTER_RADIUS-shelfInnerRadius(section))*.5;}
@@ -23,7 +27,7 @@ export function createThreats(holes,end,reserved=new Set()){
     if(reserved.has(s)||holes.some(h=>Math.abs(h-s)<3))continue;
     threats.push({type:ThreatType.MOVING_PLATFORM,s,offset:0,group:null,indicator:null,warning:false,notified:false});
   }
-  const types=Object.keys(ThreatInfo);
+  const types=[ThreatType.PENDULUM,ThreatType.INK_WAVE,ThreatType.THORNS];
   for(let target=25,index=0;target<end-4;target+=14,index++){
     const candidates=Array.from({length:13},(_,i)=>target+(i%2?1:-1)*Math.ceil(i/2));
     const s=candidates.find(s=>s>8&&s<end-3&&!reserved.has(s)&&threats.every(t=>Math.abs(t.s-s)>=3));
@@ -39,13 +43,24 @@ export function threatState(threat,time){
     const swing=Math.sin(clock*Math.PI*2/3.6)*.72;
     return {swing,bobX:Math.sin(swing)*2.4,bobY:3-Math.cos(swing)*2.4,active:true,warning:Math.abs(swing)<.27};
   }
-  const cycle=clock%(threat.type===ThreatType.INK_WAVE?5.2:4.8);
-  if(threat.type===ThreatType.INK_WAVE)return {warning:cycle>=2.5&&cycle<3.4,active:cycle>=3.4&&cycle<4.4,radius:clamp((cycle-3.4)/1,0,1)*3.1};
-  if(threat.type===ThreatType.THORNS){
-    const rise=cycle<2.8?0:cycle<3?ease((cycle-2.8)/.2):cycle<3.9?1:1-ease((cycle-3.9)/.35);
-    return {warning:cycle>=2&&cycle<2.8,active:rise>.3,rise};
+  if(threat.type===ThreatType.INK_WAVE){
+    const cycle=clock%5.2;
+    return {warning:cycle>=2.5&&cycle<3.4,active:cycle>=3.4&&cycle<4.4,radius:clamp((cycle-3.4)/1,0,1)*3.1};
+  }
+  if(threat.type===ThreatType.THORNS||threat.type===ThreatType.VINE_TRAP){
+    const {warningDuration,extensionDuration,activeDuration,retractionDuration,activeThreshold}=threatSettings.types[threat.type];
+    const cycle=clock%(warningDuration+extensionDuration+activeDuration+retractionDuration);
+    const extensionStart=warningDuration,activeStart=extensionStart+extensionDuration,retractionStart=activeStart+activeDuration;
+    const rise=cycle<extensionStart?0:cycle<activeStart?ease((cycle-extensionStart)/extensionDuration):cycle<retractionStart?1:1-ease((cycle-retractionStart)/retractionDuration);
+    const growthSmoke=cycle<extensionStart?0:cycle<activeStart
+      ? ease((cycle-extensionStart)/Math.min(.08,extensionDuration))
+      : 1-ease((cycle-activeStart)/.25);
+    return {warning:cycle<extensionStart,active:rise>=activeThreshold,rise,growthSmoke};
   }
   return {};
+}
+export function thornFootprint(section){
+  return {inner:shelfInnerRadius(section)+.12,outer:SHELF_OUTER_RADIUS-.12,angle:SHELF_HALF_ANGLE*.94};
 }
 export function threatHits(threat,{s,lane,height}){
   if(!threat.active||!ThreatInfo[threat.type]||Math.abs(s-threat.s)>1.2)return false;
@@ -54,10 +69,11 @@ export function threatHits(threat,{s,lane,height}){
   const foot=height-(s-threat.s)*.5;
   if(threat.type===ThreatType.PENDULUM)return Math.hypot(x-threat.bobX,z)<.72&&Math.abs(foot+.45-threat.bobY)<.68;
   if(threat.type===ThreatType.INK_WAVE)return foot<.62&&Math.abs(Math.hypot(x,z)-threat.radius)<.24;
-  return Math.abs(x-threat.lane)<.86&&Math.abs(z)<.86&&foot<.95;
+  const bounds=thornFootprint(threat.s);
+  return radius>=bounds.inner&&radius<=bounds.outer&&Math.abs(angle)<=bounds.angle&&foot<.95;
 }
 export function consumeThreatHit(threats,player,time){
-  for(const threat of threats)if(threatHits(threat,player)&&time-(threat.lastHit??-Infinity)>=1.15){threat.lastHit=time;return threat;}
+  for(const threat of threats)if(threatHits(threat,player)&&time-(threat.lastHit??-Infinity)>=(threatSettings.types[threat.type]?.hitCooldown??1.15)){threat.lastHit=time;return threat;}
   return null;
 }
 export function resetThreats(threats){

@@ -32,6 +32,14 @@ export class RandomStream {
     return probability===1||probability!==0&&this.float()<probability;
   }
   pick(items){if(!items.length)throw new RangeError('Empty RNG pool');return items[this.int(0,items.length-1)];}
+  weightedPick(entries){
+    if(!Array.isArray(entries)||!entries.length||entries.some(entry=>!Number.isFinite(entry.weight)||entry.weight<0))throw new RangeError('Invalid RNG weights');
+    const total=entries.reduce((sum,entry)=>sum+entry.weight,0);
+    if(!Number.isFinite(total)||total<=0)throw new RangeError('Empty weighted RNG pool');
+    let roll=this.float()*total;
+    for(const entry of entries){roll-=entry.weight;if(roll<0)return entry.id;}
+    return entries.findLast(entry=>entry.weight>0).id;
+  }
   shuffle(items){const out=[...items];for(let i=out.length-1;i>0;i--){const j=this.int(0,i);[out[i],out[j]]=[out[j],out[i]];}return out;}
   snapshot(){return {state:this.state,calls:this.calls};}
   restore(saved){

@@ -17,7 +17,7 @@ function add(text,reference){
   const old=template.translations[''][text];
   template.translations[''][text]={...old,msgid:text,msgstr:[''],comments:{...old?.comments,reference}};
 }
-const files=['src/debug-options.js','src/run-statistics.js','src/run-summary.js','src/settings.js','src/run-item-ui.js','src/combo-hud.js','src/tower-descent-hud.js','src/main.js','src/skill-tree.js','src/bestiary.js','src/shard-counter.js','src/level-diagnostics.js','src/threats.js'];
+const files=['src/debug-options.js','src/run-statistics.js','src/run-summary.js','src/settings.js','src/run-item-ui.js','src/combo-hud.js','src/tower-descent-hud.js','src/main.js','src/skill-tree.js','src/bestiary.js','src/bestiary-threats.js','src/shard-counter.js','src/level-diagnostics.js','src/threats.js'];
 for(const file of files){
   const source=read(file),ast=parseAst(source);
   function visit(node){
@@ -28,7 +28,7 @@ for(const file of files){
       const collect=value=>{if(value?.type==='Literal'&&typeof value.value==='string')add(value.value,reference);else if(value?.type==='ConditionalExpression'){collect(value.consequent);collect(value.alternate);}};
       collect(node.arguments[0]);
     }
-    if(node.type==='Property'&&['name','hint'].includes(node.key?.name)&&typeof node.value?.value==='string')add(node.value.value,reference);
+    if(node.type==='Property'&&['name','hint','description'].includes(node.key?.name)&&typeof node.value?.value==='string')add(node.value.value,reference);
     for(const value of Object.values(node))if(Array.isArray(value))value.forEach(visit);else if(value&&typeof value==='object')visit(value);
   }
   visit(ast);

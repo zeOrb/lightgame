@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "types": {
+    "vine-trap": {"warningDuration": 1, "extensionDuration": 0.35, "activeDuration": 1.5, "retractionDuration": 0.35, "damage": 50, "hitCooldown": 1.15, "activeThreshold": 0.85},
+    "thorns": {"warningDuration": 1, "extensionDuration": 0.35, "activeDuration": 1.5, "retractionDuration": 0.35, "damage": 50, "hitCooldown": 1.15, "activeThreshold": 0.85}
+  },
+  "adjacency": {
+    "hole": {"cannotNeighbor": ["hole"]}
+  }
+}

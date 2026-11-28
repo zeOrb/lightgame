@@ -4,8 +4,30 @@
   "seed": "sunny-layout-v1",
   "stageSize": 10,
   "stages": {
-    "first": {"stairTheme": "wood"},
-    "later": {"stairTheme": "stone", "backgroundProps": {"types": ["urn", "hourglass", "candlestick", "scrolls", "books", "brick"], "weights": {"urn": 2, "hourglass": 2, "candlestick": 2, "scrolls": 3, "books": 2, "brick": 3}}}
+    "first": {
+      "stairTheme": "wood"
+    },
+    "later": {
+      "stairTheme": "stone",
+      "backgroundProps": {
+        "types": [
+          "urn",
+          "hourglass",
+          "candlestick",
+          "scrolls",
+          "books",
+          "brick"
+        ],
+        "weights": {
+          "urn": 2,
+          "hourglass": 2,
+          "candlestick": 2,
+          "scrolls": 3,
+          "books": 2,
+          "brick": 3
+        }
+      }
+    }
   },
   "tower": {
     "rotationYDegrees": 0,
@@ -14,7 +36,19 @@
   },
   "defaults": {
     "stairTheme": "wood",
-    "backgroundProps": {"density": 1, "types": ["books", "scrolls", "lantern"], "weights": {"books": 5, "scrolls": 4, "lantern": 0.6}},
+    "backgroundProps": {
+      "density": 1,
+      "types": [
+        "books",
+        "scrolls",
+        "lantern"
+      ],
+      "weights": {
+        "books": 5,
+        "scrolls": 4,
+        "lantern": 0.6
+      }
+    },
     "placementRules": [
       {
         "between": [
@@ -28,10 +62,7 @@
       "mode": "generated",
       "count": 14,
       "holes": {
-        "count": [
-          0,
-          1
-        ],
+        "count": 0,
         "safeStart": 3,
         "safeEnd": 3
       },
@@ -70,7 +101,7 @@
     },
     "shadows": {
       "mode": "generated",
-      "count": 1
+      "count": 0
     },
     "chests": {
       "mode": "generated",
@@ -92,14 +123,7 @@
       "count": 0
     },
     "threats": {
-      "mode": "generated",
-      "count": 1,
-      "pool": [
-        "moving-platform",
-        "pendulum",
-        "ink-wave",
-        "thorns"
-      ]
+      "presetPool": "standard"
     },
     "secret": {
       "enabled": false
@@ -121,7 +145,7 @@
         "count": 0
       },
       "threats": {
-        "count": 0
+        "preset": "test"
       },
       "shadows": {
         "count": 0

@@ -16,6 +16,7 @@ import {wallBayCenter,windowSteps} from './wall-layout.js';
 import {createChestModel} from './chest-model.js';
 import {ComboHUD} from './combo-hud.js';
 import {TowerDescentHUD} from './tower-descent-hud.js';
+import {addBrokenStairEdges} from './broken-stair-edge.js';
 import {tr,onLanguageChange,localizeDOM} from './i18n.js';
 import {InputManager} from './input/input-manager.js';
 import {FocusIndicator} from './input/focus-indicator.js';
@@ -180,7 +181,7 @@ catcher.traverse(object=>object.layers.set(2));
 const architecture=[...scene.children];
 const lipGeo = new THREE.CylinderGeometry(SHELF_OUTER_RADIUS+.05,SHELF_OUTER_RADIUS+.05,.1,12,1,true,Math.PI/2-SHELF_HALF_ANGLE,SHELF_HALF_ANGLE*2);
 const hazards=[], glints=[], bottles=[], beasts=[], books=[], chests=[];
-const threats=[...gaps.map(s=>({type:ThreatType.HOLE,s})),...FLOORS.flatMap(f=>f.placements.threats.map(item=>({type:item.id,s:item.s,lane:item.lane??0,offset:0,phase:item.phase??item.s*.371,lastHit:-Infinity,introduced:false,notified:false})))];
+const threats=FLOORS.flatMap(f=>f.placements.threats.map(item=>({type:item.id,s:item.s,lane:item.lane??0,offset:0,phase:item.phase??item.s*.371,lastHit:-Infinity,introduced:false,notified:false})));
 updateThreats(threats,0);
 const springboards=new Springboards(scene,threats);
 for(const threat of threats)if(threat.type===ThreatType.THORNS)threat.lane=0;
@@ -199,6 +200,7 @@ function shelfSegment(s) {
   const p=route(s); const group=new THREE.Group();group.position.y=p.y;group.rotation.y=-p.theta;scene.add(group);
   const tier=floorForSection(s),step=stepAt(s),stone=tier.stairTheme==='stone';
   const floor=stone?buildStoneStair(group,s,step.style):createEnchantedStep(group,s,stairMaterials);
+  addBrokenStairEdges(group,s,gaps,{stone,woodMaterial:stairMaterials.wood,sectionGeometry:floor.geometry});
   group.userData.floorIndex=tier.index;Object.assign(floor.userData,{s,theta:p.theta,y:p.y-.02});walkableFloors.push(floor);
   const platform=movingPlatforms.find(threat=>threat.s===s);
   if(!stone)shelfRelics.addShelf(group,s,!!platform);
@@ -229,8 +231,9 @@ for(let s=0;s<=END+1;s++) {
       scene.add(item.o);glints.push(item);
     }
   }
-  if(placementAt('shadows',s) && !isGap(s)) {
-    const lane=placementAt('shadows',s).lane??0,p=route(s,lane);
+  const shadowThreat=threats.find(threat=>threat.type===ThreatType.SHADOW&&threat.s===s);
+  if(shadowThreat && !isGap(s)) {
+    const lane=shadowThreat.lane,p=route(s,lane);
     const o=mesh(new THREE.PlaneGeometry(3,3),shadowMat,p.x,p.y+.06,p.z);o.rotation.x=-Math.PI/2;
     hazards.push({s,lane,o});
   }
@@ -702,6 +705,14 @@ function update(dt){
       beginRabbitFall(Math.cos((time+threatHit.phase)*Math.PI*2/3.6)>0,tr("The bell knocked you off the shelf…"));return;
     }
     combo.end();light=Math.max(0,light-ThreatInfo[threatHit.type].damage*RUN_UPGRADES.damageScale);shadowEffects.hit();tone(170,.15);toast(tr("{name} · −{damage} Light",{name:tr(ThreatInfo[threatHit.type].name),damage:ThreatInfo[threatHit.type].damage}));
+    const launchDirection=Math.abs(motion.rail)>.12?Math.sign(motion.rail):1;
+    const nextSection=clamp(threatHit.s+launchDirection,0,END);
+    const targetPoint=playerRoute(nextSection,lane);
+    const previousLaunch=JUMP_SPEED*RUN_UPGRADES.jump*(1.27+Math.min(1,Math.abs(motion.rail)/(1.6*RUN_UPGRADES.speed))*.035)*Math.sqrt(1.15);
+    const launch=chestBounce(previousLaunch,playerRoute(s,lane).y+height,targetPoint.y-.02,nextSection-s,forward*direction,(slow>0?.65:1.6)*RUN_UPGRADES.speed);
+    velocity=launch.velocity;motion.rail=launch.rail;
+    rescueInvul=Math.max(rescueInvul,1.15);
+    rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;motion.jumpBuffer=0;abilities.resetAirJump();
   }
   let inShadow=false;
   for(const h of hazards){const p=route(h.s,h.lane),player=playerRoute(s,lane);if(Math.hypot(player.x-p.x,player.z-p.z)<1.12&&Math.abs(player.y+height-p.y)<.8&&height<.8)inShadow=true;}

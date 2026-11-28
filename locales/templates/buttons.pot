@@ -45,7 +45,7 @@ msgstr ""
 msgid "Boss fight · debug"
 msgstr ""
 
-#: src/level-diagnostics.js:14
+#: src/level-diagnostics.js:15
 msgid "Close"
 msgstr ""
 
@@ -73,7 +73,7 @@ msgstr ""
 msgid "Pause menu"
 msgstr ""
 
-#: src/main.js:377
+#: src/main.js:380
 msgid "Preparing run…"
 msgstr ""
 

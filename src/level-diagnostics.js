@@ -1,6 +1,7 @@
 import {tr,onLanguageChange} from './i18n.js';
 const labels={windows:"stained glass",loot:"loot",enemies:"enemy",shadows:"shadow",chests:"chest",bottles:"bottle",books:"book",springboards:"springboard",threats:"hazard"};
 export function placementWarningText(warning){
+  if(warning.code==='threat-count-adjusted')return tr("Floor “{floor}”: threat count reduced from {from} to {to} to satisfy placement rules.",{floor:warning.floorId,from:warning.fromCount,to:warning.toCount});
   return tr("Floor “{floor}”: {category} #{index}, section {from} → {to}.",{floor:warning.floorId,category:tr(labels[warning.category]??warning.category),index:warning.index+1,from:warning.fromOffset,to:warning.toOffset});
 }
 export function showLevelDiagnostics(diagnostics){

@@ -48,7 +48,7 @@ msgstr "Бестиарий"
 msgid "Boss fight · debug"
 msgstr "Бой с боссом · debug"
 
-#: src/level-diagnostics.js:14
+#: src/level-diagnostics.js:15
 msgid "Close"
 msgstr "Закрыть"
 
@@ -76,7 +76,7 @@ msgstr "Пауза"
 msgid "Pause menu"
 msgstr "Меню паузы"
 
-#: src/main.js:377
+#: src/main.js:380
 msgid "Preparing run…"
 msgstr "Готовим забег…"
 

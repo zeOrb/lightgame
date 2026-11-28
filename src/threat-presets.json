@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "presets": {
+    "none": {"count": 0, "pool": []},
+    "test": {
+      "count": 3,
+      "pool": [
+        {"id": "thorns", "weight": 1}
+             ]
+    },
+    "mixed": {
+      "count": [2, 3],
+      "pool": [
+        {"id": "moving-platform", "weight": 1},
+        {"id": "pendulum", "weight": 1},
+        {"id": "ink-wave", "weight": 1},
+        {"id": "thorns", "weight": 1},
+        {"id": "hole", "weight": 1},
+        {"id": "shadow", "weight": 1}
+      ]
+    },
+    "gaps-and-shadows": {
+      "count": [2, 3],
+      "pool": [
+        {"id": "hole", "weight": 1},
+        {"id": "shadow", "weight": 2},
+        {"id": "moving-platform", "weight": 1}
+      ]
+    },
+    "mechanisms": {
+      "count": [2, 3],
+      "pool": [
+        {"id": "pendulum", "weight": 2},
+        {"id": "ink-wave", "weight": 1},
+        {"id": "thorns", "weight": 2}
+      ]
+    }
+  },
+  "pools": {
+    "standard": [{"id": "mixed", "weight": 1}],
+    "varied": [
+      {"id": "mixed", "weight": 3},
+      {"id": "gaps-and-shadows", "weight": 1},
+      {"id": "mechanisms", "weight": 1}
+    ]
+  }
+}

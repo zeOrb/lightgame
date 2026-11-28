@@ -70,9 +70,10 @@ test('layout is repeatable, independent of cosmetic draws, and safe across 200 s
   different ||= JSON.stringify(floors)!==JSON.stringify(baseline);
   for(const floor of floors){
    assert.equal(floor.placements.windows.length,3);
-   const positions=Object.values(floor.placements).flat().map(o=>o.offset);
+   const entries=Object.entries(floor.placements).filter(([key])=>key!=='shadows').flatMap(([,items])=>items);
+   const positions=entries.map(o=>o.offset);
    assert.equal(new Set(positions).size,positions.length);
-   assert.ok(positions.every(p=>!floor.holes.includes(p)));
+   assert.ok(entries.every(item=>item.id==='hole'||!floor.holes.includes(item.offset)));
   }
  }
  assert.ok(different);

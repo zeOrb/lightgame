@@ -13,10 +13,13 @@ function compatible(key,offset,placed,rules){
   }));
 }
 // Keep authored data in the JSON intact; corrections belong to the compiled floor.
-export function repairAuthoredPlacements(floor,rules,used){
+export function repairAuthoredPlacements(floor,rules,used,canPlace=()=>true){
   const items=Object.entries(floor.placements).flatMap(([key,entries])=>entries.map((item,index)=>({key,index,item,original:item.offset})));
   floor.placementWarnings=[];
-  if(items.every((entry,i)=>compatible(entry.key,entry.original,items.slice(0,i).map(e=>({key:e.key,offset:e.original})),rules)))return;
+  if(items.every((entry,i)=>{
+    const before=items.slice(0,i).map(e=>({...e,offset:e.original}));
+    return compatible(entry.key,entry.original,before,rules)&&canPlace(entry.key,entry.original,entry.item.id,before);
+  }))return;
   const blocked=new Set(floor.holes);blocked.add(floor.count-1);
   if(floor.secret?.enabled)blocked.add(floor.secret.offset??Math.min(5,floor.count-3));
   const placed=[];let visits=0,exhausted=false;
@@ -26,7 +29,7 @@ export function repairAuthoredPlacements(floor,rules,used){
     if(index===items.length)return true;
     const entry=items[index];
     for(const offset of domains[index]){
-      if(!compatible(entry.key,offset,placed,rules))continue;
+      if(!compatible(entry.key,offset,placed,rules)||!canPlace(entry.key,offset,entry.item.id,placed))continue;
       // Preserve existing permitted overlaps, but do not introduce new ones.
       if(placed.some(other=>other.offset===offset&&(offset!==entry.original||offset!==other.original)))continue;
       placed.push({...entry,offset});
@@ -42,15 +45,15 @@ export function repairAuthoredPlacements(floor,rules,used){
   }
   used.clear();for(const offset of blocked)used.add(offset);for(const entry of placed)used.add(entry.offset);
 }
-export function solveFloorPlacements(floor,requests,used,rules){
-  const placed=Object.entries(floor.placements).flatMap(([key,items])=>items.map(item=>({key,offset:item.offset})));
-  for(let i=0;i<placed.length;i++)if(!compatible(placed[i].key,placed[i].offset,placed.slice(0,i),rules))throw new Error('floors.json: authored placements violate placementRules on '+floor.id);
+export function solveFloorPlacements(floor,requests,used,rules,canPlace=()=>true){
+  const placed=Object.entries(floor.placements).flatMap(([key,items])=>items.map(item=>({key,offset:item.offset,id:item.id})));
+  for(let i=0;i<placed.length;i++)if(!compatible(placed[i].key,placed[i].offset,placed.slice(0,i),rules)||!canPlace(placed[i].key,placed[i].offset,placed[i].id,placed.slice(0,i)))throw new Error('floors.json: authored placements violate placementRules on '+floor.id);
   const available=Array.from({length:floor.count},(_,i)=>i).filter(i=>i>=1&&i<=floor.count-3&&!used.has(i));
   const domains=new Map(requests.map(r=>[r.key,r.random.shuffle(available)]));
   const selected=new Map(requests.map(r=>[r.key,[]])),last=new Map(requests.map(r=>[r.key,-1]));
   const occupied=new Set(used);let visits=0,exhausted=false;
-  function capacity(key,domain){
-    const distance=rules.reduce((n,r)=>r.between.every(k=>k===key)?Math.max(n,r.minDistance):n,1);
+  function capacity(key,domain,minDistance=1){
+    const distance=rules.reduce((n,r)=>r.between.every(k=>k===key)?Math.max(n,r.minDistance):n,minDistance);
     let count=0,previous=-Infinity;
     for(const {offset} of [...domain].sort((a,b)=>a.offset-b.offset))if(offset-previous>=distance){count++;previous=offset;}
     return count;
@@ -60,14 +63,19 @@ export function solveFloorPlacements(floor,requests,used,rules){
     let next=null;
     for(const r of requests){
       const remaining=r.count-selected.get(r.key).length;if(!remaining)continue;
-      const domain=domains.get(r.key).map((offset,rank)=>({offset,rank})).filter(({offset,rank})=>rank>last.get(r.key)&&!occupied.has(offset)&&compatible(r.key,offset,placed,rules));
-      const room=capacity(r.key,domain);if(room<remaining)return false;
+      const current=selected.get(r.key).length;
+      const uniform=r.ids?.slice(current).every(id=>id===r.ids[current]);
+      const domain=domains.get(r.key).map((offset,rank)=>({offset,rank})).filter(({offset,rank})=>(r.ids||rank>last.get(r.key))&&!occupied.has(offset)&&compatible(r.key,offset,placed,rules)&&(!uniform||(!r.allowedOffset||r.allowedOffset(offset,current))&&canPlace(r.key,offset,r.ids[current],placed)));
+      const room=capacity(r.key,domain,uniform?r.minDistance??1:1);if(room<remaining)return false;
       const slack=room-remaining;
       if(!next||slack<next.slack)next={...r,domain,slack};
     }
     if(!next)return true;
     for(const {offset,rank} of next.domain){
-      const prior=last.get(next.key);last.set(next.key,rank);selected.get(next.key).push(offset);placed.push({key:next.key,offset});occupied.add(offset);
+      if(next.allowedOffset&&!next.allowedOffset(offset,selected.get(next.key).length))continue;
+      const id=next.ids?.[selected.get(next.key).length];
+      if(!canPlace(next.key,offset,id,placed))continue;
+      const prior=last.get(next.key);last.set(next.key,rank);selected.get(next.key).push(offset);placed.push({key:next.key,offset,id});occupied.add(offset);
       if(search())return true;
       occupied.delete(offset);placed.pop();selected.get(next.key).pop();last.set(next.key,prior);
       if(exhausted)return false;
@@ -75,5 +83,5 @@ export function solveFloorPlacements(floor,requests,used,rules){
     return false;
   }
   if(!search())throw new Error('floors.json: '+floor.id+(exhausted?' placementRules search limit reached':' has no valid placement: no space satisfying placementRules'));
-  return new Map([...selected].map(([key,offsets])=>[key,offsets.sort((a,b)=>a-b)]));
+  return new Map([...selected].map(([key,offsets])=>[key,requests.find(r=>r.key===key).ids?offsets:offsets.sort((a,b)=>a-b)]));
 }

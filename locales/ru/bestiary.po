@@ -10,59 +10,63 @@ msgstr ""
 "X-Sunny-Category: Bestiary\n"
 "X-Source-Language: en\n"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Charge speed"
 msgstr "Скорость рывка"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Chase speed"
 msgstr "Скорость преследования"
 
-#: src/bestiary.js:55
+#: src/bestiary.js:68
 msgid "Collider"
 msgstr "Коллайдер"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact along the path (sections)"
 msgstr "Контакт вдоль пути (секции)"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact height"
 msgstr "Высота контакта"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact radius"
 msgstr "Радиус контакта"
 
-#: src/bestiary.js:54
+#: src/bestiary.js
+msgid "Creatures"
+msgstr "Существа"
+
+#: src/bestiary.js:67
 msgid "Damage"
 msgstr "Урон"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Health"
 msgstr "Здоровье"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Hop frequency"
 msgstr "Частота прыжков"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Jump height"
 msgstr "Высота прыжка"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Path blocking (sections)"
 msgstr "Блокировка пути (секции)"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Radius across the shelf"
 msgstr "Радиус поперёк полки"
 
-#: src/bestiary.js:56
+#: src/bestiary.js:69
 msgid "Red outline: contact damage area"
 msgstr "Красный контур — зона контактного урона"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Scale"
 msgstr "Масштаб"
 
@@ -86,26 +90,34 @@ msgstr "Теневой заяц"
 msgid "Shadow Reaper"
 msgstr "Теневой жнец"
 
-#: src/bestiary.js:55
+#: src/bestiary.js:68
 msgid "Sphere · R {radius}"
 msgstr "Сфера · R {radius}"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit (sections)"
 msgstr "Попадание сверху (секции)"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit across the shelf"
 msgstr "Попадание сверху поперёк"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit height"
 msgstr "Высота прыжкового попадания"
 
-#: src/bestiary.js:54
+#: src/bestiary.js
+msgid "Threats"
+msgstr "Угрозы"
+
+#: src/bestiary.js:67
 msgid "Tracking range"
 msgstr "Дальность слежения"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Tracking speed"
 msgstr "Скорость слежения"
+
+#: src/bestiary.js:22
+msgid "Trigger effect"
+msgstr "Запустить эффект"

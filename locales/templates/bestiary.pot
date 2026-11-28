@@ -7,59 +7,63 @@ msgstr ""
 "X-Sunny-Category: Bestiary\n"
 "X-Source-Language: en\n"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Charge speed"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Chase speed"
 msgstr ""
 
-#: src/bestiary.js:55
+#: src/bestiary.js:68
 msgid "Collider"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact along the path (sections)"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact height"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact radius"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js
+msgid "Creatures"
+msgstr ""
+
+#: src/bestiary.js:67
 msgid "Damage"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Health"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Hop frequency"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Jump height"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Path blocking (sections)"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Radius across the shelf"
 msgstr ""
 
-#: src/bestiary.js:56
+#: src/bestiary.js:69
 msgid "Red outline: contact damage area"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Scale"
 msgstr ""
 
@@ -83,26 +87,34 @@ msgstr ""
 msgid "Shadow Reaper"
 msgstr ""
 
-#: src/bestiary.js:55
+#: src/bestiary.js:68
 msgid "Sphere · R {radius}"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit (sections)"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit across the shelf"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit height"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js
+msgid "Threats"
+msgstr ""
+
+#: src/bestiary.js:67
 msgid "Tracking range"
 msgstr ""
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Tracking speed"
+msgstr ""
+
+#: src/bestiary.js:22
+msgid "Trigger effect"
 msgstr ""

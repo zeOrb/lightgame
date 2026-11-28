@@ -9,59 +9,63 @@ msgstr ""
 "X-Sunny-Category: Bestiary\n"
 "X-Source-Language: en\n"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Charge speed"
 msgstr "Charge speed"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Chase speed"
 msgstr "Chase speed"
 
-#: src/bestiary.js:55
+#: src/bestiary.js:68
 msgid "Collider"
 msgstr "Collider"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact along the path (sections)"
 msgstr "Contact along the path (sections)"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact height"
 msgstr "Contact height"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Contact radius"
 msgstr "Contact radius"
 
-#: src/bestiary.js:54
+#: src/bestiary.js
+msgid "Creatures"
+msgstr "Creatures"
+
+#: src/bestiary.js:67
 msgid "Damage"
 msgstr "Damage"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Health"
 msgstr "Health"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Hop frequency"
 msgstr "Hop frequency"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Jump height"
 msgstr "Jump height"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Path blocking (sections)"
 msgstr "Path blocking (sections)"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Radius across the shelf"
 msgstr "Radius across the shelf"
 
-#: src/bestiary.js:56
+#: src/bestiary.js:69
 msgid "Red outline: contact damage area"
 msgstr "Red outline: contact damage area"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Scale"
 msgstr "Scale"
 
@@ -85,26 +89,34 @@ msgstr "Shadow Hare"
 msgid "Shadow Reaper"
 msgstr "Shadow Reaper"
 
-#: src/bestiary.js:55
+#: src/bestiary.js:68
 msgid "Sphere · R {radius}"
 msgstr "Sphere · R {radius}"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit (sections)"
 msgstr "Stomp hit (sections)"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit across the shelf"
 msgstr "Stomp hit across the shelf"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Stomp hit height"
 msgstr "Stomp hit height"
 
-#: src/bestiary.js:54
+#: src/bestiary.js
+msgid "Threats"
+msgstr "Threats"
+
+#: src/bestiary.js:67
 msgid "Tracking range"
 msgstr "Tracking range"
 
-#: src/bestiary.js:54
+#: src/bestiary.js:67
 msgid "Tracking speed"
 msgstr "Tracking speed"
+
+#: src/bestiary.js:22
+msgid "Trigger effect"
+msgstr "Trigger effect"

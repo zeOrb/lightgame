@@ -17,9 +17,9 @@ msgstr "2 more floors: 16 in total."
 msgid "3D magical tower"
 msgstr "3D magical tower"
 
-#: src/combo-hud.js:12
-msgid "Gem pickup"
-msgstr "Gem pickup"
+#: src/bestiary-threats.js:6
+msgid "A gap in the staircase. Falling into it ends the run."
+msgstr "A gap in the staircase. Falling into it ends the run."
 
 #: src/run-statistics.js:13
 msgid "All runs"
@@ -29,15 +29,15 @@ msgstr "All runs"
 msgid "Amber Magnet"
 msgstr "Amber Magnet"
 
-#: src/main.js:525
+#: src/main.js:528
 msgid "Arena"
 msgstr "Arena"
 
-#: src/main.js:525
+#: src/main.js:528
 msgid "Arena cleared"
 msgstr "Arena cleared"
 
-#: src/level-diagnostics.js:15
+#: src/level-diagnostics.js:16
 msgid "Automatic level corrections"
 msgstr "Automatic level corrections"
 
@@ -97,7 +97,7 @@ msgstr "Compare recent runs"
 msgid "Continue to upgrades"
 msgstr "Continue to upgrades"
 
-#: src/main.js:779
+#: src/main.js:797
 msgid "Controls reversed"
 msgstr "Controls reversed"
 
@@ -125,7 +125,11 @@ msgstr "Dash kill"
 msgid "Death"
 msgstr "Death"
 
-#: src/threats.js:5
+#: src/bestiary-threats.js:9
+msgid "Drains Light and breaks the combo on contact."
+msgstr "Drains Light and breaks the combo on contact."
+
+#: src/threats.js:6
 msgid "Eclipse Bell"
 msgstr "Eclipse Bell"
 
@@ -133,7 +137,7 @@ msgstr "Eclipse Bell"
 msgid "Eclipse Bell · jump over it or pass through with Phasing."
 msgstr "Eclipse Bell · jump over it or pass through with Phasing."
 
-#: src/threats.js:5
+#: src/threats.js:6
 msgid "Eclipse Bell · jump over it or pass through with {Phasing}."
 msgstr "Eclipse Bell · jump over it or pass through with {Phasing}."
 
@@ -145,15 +149,23 @@ msgstr "Enemies defeated"
 msgid "Enemy defeated"
 msgstr "Enemy defeated"
 
-#: src/main.js:780
+#: src/main.js:798
 msgid "Entering floor {floor}"
 msgstr "Entering floor {floor}"
 
-#: src/main.js:421
+#: src/main.js:424
 msgid "Falling"
 msgstr "Falling"
 
-#: src/main.js:780
+#: src/bestiary-threats.js:10
+msgid "Falling book"
+msgstr "Falling book"
+
+#: src/bestiary-threats.js:10
+msgid "Falls after a warning. Contact drains Light."
+msgstr "Falls after a warning. Contact drains Light."
+
+#: src/main.js:798
 msgid "Final arch · the crystal is close"
 msgstr "Final arch · the crystal is close"
 
@@ -173,11 +185,19 @@ msgstr "Floor completed"
 msgid "Floor {floor}"
 msgstr "Floor {floor}"
 
-#: src/tower-descent-hud.js:46
+#: src/tower-descent-hud.js:64
 msgid "Floor {floor} / {total}"
 msgstr "Floor {floor} / {total}"
 
 #: src/level-diagnostics.js:4
+msgid ""
+"Floor “{floor}”: threat count reduced from {from} to {to} to satisfy "
+"placement rules."
+msgstr ""
+"Floor “{floor}”: threat count reduced from {from} to {to} to satisfy "
+"placement rules."
+
+#: src/level-diagnostics.js:5
 msgid "Floor “{floor}”: {category} #{index}, section {from} → {to}."
 msgstr "Floor “{floor}”: {category} #{index}, section {from} → {to}."
 
@@ -197,6 +217,10 @@ msgstr "Forward"
 msgid "Gem collection range +0.35."
 msgstr "Gem collection range +0.35."
 
+#: src/combo-hud.js:12
+msgid "Gem pickup"
+msgstr "Gem pickup"
+
 #: src/run-summary.js:31
 msgid "Gems collected"
 msgstr "Gems collected"
@@ -205,13 +229,13 @@ msgstr "Gems collected"
 msgid "Gems collected over run time"
 msgstr "Gems collected over run time"
 
-#: src/threats.js:7
-msgid "Glass Spikes"
-msgstr "Glass Spikes"
+#: src/threats.js:8
+msgid "Venom Vines"
+msgstr "Venom Vines"
 
-#: src/threats.js:7
-msgid "Glass Spikes · wait for them to retract, jump over, or use Phasing."
-msgstr "Glass Spikes · wait for them to retract, jump over, or use Phasing."
+#: src/threats.js:8
+msgid "Venom Vines · wait for them to retract, jump over, or use Phasing."
+msgstr "Venom Vines · wait for them to retract, jump over, or use Phasing."
 
 #: src/shard-counter.js:10
 msgid "Glints collected: {count}"
@@ -221,7 +245,7 @@ msgstr "Glints collected: {count}"
 msgid "Glints: 0"
 msgstr "Glints: 0"
 
-#: src/main.js:525
+#: src/main.js:528
 msgid "Guardian · {hp} / {maxHP} · Enemies: {count}"
 msgstr "Guardian · {hp} / {maxHP} · Enemies: {count}"
 
@@ -233,7 +257,7 @@ msgstr "Healing in stained-glass light +20%."
 msgid "Honey Shard"
 msgstr "Honey Shard"
 
-#: src/main.js:779
+#: src/main.js:797
 msgid "In the sunset light"
 msgstr "In the sunset light"
 
@@ -241,11 +265,11 @@ msgstr "In the sunset light"
 msgid "Initial jump force +15%."
 msgstr "Initial jump force +15%."
 
-#: src/threats.js:6
+#: src/threats.js:7
 msgid "Ink Wave"
 msgstr "Ink Wave"
 
-#: src/threats.js:6
+#: src/threats.js:7
 msgid "Ink Wave · jump over the expanding ring."
 msgstr "Ink Wave · jump over the expanding ring."
 
@@ -265,7 +289,7 @@ msgstr "Jump strength +8%."
 msgid "LEARNED"
 msgstr "LEARNED"
 
-#: src/main.js:781
+#: src/main.js:799
 msgid "Last Spark · light restored!"
 msgstr "Last Spark · light restored!"
 
@@ -297,6 +321,10 @@ msgstr "Maximum Light +20. Restore 20 Light."
 msgid "Maximum Light +25 HP."
 msgstr "Maximum Light +25 HP."
 
+#: src/bestiary-threats.js:6
+msgid "Missing step"
+msgstr "Missing step"
+
 #: src/run-items.json
 msgid "Moon Clover"
 msgstr "Moon Clover"
@@ -308,6 +336,10 @@ msgstr "Movement speed +10%."
 #: src/skill-tree.json
 msgid "Movement speed along the spiral +15%."
 msgstr "Movement speed along the spiral +15%."
+
+#: src/bestiary-threats.js:7
+msgid "Moving step"
+msgstr "Moving step"
 
 #: src/skill-tree.json
 msgid "Next run: 2 more floors with shelves and hazards."
@@ -321,7 +353,7 @@ msgstr "No completed runs yet"
 msgid "No items collected"
 msgstr "No items collected"
 
-#: src/main.js:109
+#: src/main.js:110
 msgid "Open the game in a browser with hardware acceleration enabled."
 msgstr "Open the game in a browser with hardware acceleration enabled."
 
@@ -349,11 +381,11 @@ msgstr "Phasing cooldown recovers 25% faster."
 msgid "Phasing distance +20%."
 msgstr "Phasing distance +20%."
 
-#: src/main.js:893
+#: src/main.js:911
 msgid "Phasing {seconds}s"
 msgstr "Phasing {seconds}s"
 
-#: src/level-diagnostics.js:14
+#: src/level-diagnostics.js:15
 msgid "Placement issues corrected: {count}"
 msgstr "Placement issues corrected: {count}"
 
@@ -368,6 +400,10 @@ msgstr "Points required: {cost} · available: {points}"
 #: src/run-statistics.js:16
 msgid "Points: {points} · {time}"
 msgstr "Points: {points} · {time}"
+
+#: src/bestiary-threats.js:11
+msgid "Potion trap"
+msgstr "Potion trap"
 
 #: index.html
 msgid ""
@@ -397,13 +433,17 @@ msgstr "RUN ENDED"
 msgid "Rare"
 msgstr "Rare"
 
-#: src/main.js:724
+#: src/main.js:751
 msgid "Refraction! Controls reversed for 2.5 seconds"
 msgstr "Refraction! Controls reversed for 2.5 seconds"
 
 #: src/run-item-ui.js:43
 msgid "Reroll · {count}"
 msgstr "Reroll · {count}"
+
+#: src/bestiary-threats.js:11
+msgid "Reverses controls or slows movement for a short time."
+msgstr "Reverses controls or slows movement for a short time."
 
 #: index.html
 msgid "Right"
@@ -445,17 +485,21 @@ msgstr "SUNCATCHER"
 msgid "Shadow begins below 30% Light"
 msgstr "Shadow begins below 30% Light"
 
-#: src/main.js:463
+#: src/main.js:466
 msgid "Shadow begins below {threshold}% Light"
 msgstr "Shadow begins below {threshold}% Light"
 
-#: src/main.js:748
+#: src/main.js:774
 msgid "Shadow dispelled!"
 msgstr "Shadow dispelled!"
 
-#: src/main.js:779
+#: src/main.js:797
 msgid "Shadow drains your light!"
 msgstr "Shadow drains your light!"
+
+#: src/bestiary-threats.js:9
+msgid "Shadow patch"
+msgstr "Shadow patch"
 
 #: index.html
 msgid "Shadow threshold: 30% Light"
@@ -465,7 +509,11 @@ msgstr "Shadow threshold: 30% Light"
 msgid "Silver Shell"
 msgstr "Silver Shell"
 
-#: src/main.js:779
+#: src/bestiary-threats.js:7
+msgid "Slides inward and returns. Carries the player standing on it."
+msgstr "Slides inward and returns. Carries the player standing on it."
+
+#: src/main.js:797
 msgid "Slowed by refraction"
 msgstr "Slowed by refraction"
 
@@ -477,19 +525,19 @@ msgstr "Space"
 msgid "Spring Leaf"
 msgstr "Spring Leaf"
 
-#: src/tower-descent-hud.js:45
+#: src/tower-descent-hud.js:63
 msgid "Stage {stage} / {total}"
 msgstr "Stage {stage} / {total}"
 
-#: src/main.js:779
+#: src/main.js:797
 msgid "Stained glass · +{amount}/s"
 msgstr "Stained glass · +{amount}/s"
 
-#: src/main.js:779
+#: src/main.js:797
 msgid "Stained glass · burst healing"
 msgstr "Stained glass · burst healing"
 
-#: src/main.js:742
+#: src/main.js:768
 msgid "Stained-glass breakthrough · shadow dispelled!"
 msgstr "Stained-glass breakthrough · shadow dispelled!"
 
@@ -505,7 +553,7 @@ msgstr "Stained-glass healing is 30% faster."
 msgid "Stained-glass light · healing accelerates while you stay in the light"
 msgstr "Stained-glass light · healing accelerates while you stay in the light"
 
-#: src/main.js:384
+#: src/main.js:387
 msgid "Statistics"
 msgstr "Statistics"
 
@@ -516,10 +564,6 @@ msgstr "Steady Flame"
 #: src/combo-hud.js:12
 msgid "Stomp"
 msgstr "Stomp"
-
-#: index.html
-msgid "Tower descent"
-msgstr "Tower descent"
 
 #: index.html
 msgid "Sun Bunny · Tower of the Last Light"
@@ -533,25 +577,29 @@ msgstr "Sunlight skill tree"
 msgid "Swift Thread"
 msgstr "Swift Thread"
 
-#: src/main.js:700
+#: src/main.js:703
 msgid "The bell knocked you off the shelf…"
 msgstr "The bell knocked you off the shelf…"
 
-#: src/main.js:605
+#: src/main.js:608
 msgid "The shelf is moving! It carries you inward — watch the edges."
 msgstr "The shelf is moving! It carries you inward — watch the edges."
 
-#: src/main.js:706
+#: src/main.js:709
 msgid "There is no shelf beneath your paws…"
 msgstr "There is no shelf beneath your paws…"
 
-#: src/main.js:724
+#: src/main.js:751
 msgid "Thick light · slowed for 3 seconds"
 msgstr "Thick light · slowed for 3 seconds"
 
 #: src/run-statistics.js:14
 msgid "Total run time"
 msgstr "Total run time"
+
+#: index.html
+msgid "Tower descent"
+msgstr "Tower descent"
 
 #: src/run-items.json
 msgid "Uncommon"
@@ -577,7 +625,7 @@ msgstr "View run"
 msgid "Warm Core"
 msgstr "Warm Core"
 
-#: src/main.js:109
+#: src/main.js:110
 msgid "WebGL required"
 msgstr "WebGL required"
 
@@ -585,11 +633,11 @@ msgstr "WebGL required"
 msgid "YOUR LIGHT"
 msgstr "YOUR LIGHT"
 
-#: src/level-diagnostics.js:11
+#: src/level-diagnostics.js:12
 msgid "[Sunny: level issue corrected]"
 msgstr "[Sunny: level issue corrected]"
 
-#: src/main.js:465
+#: src/main.js:468
 msgid "along the spiral"
 msgstr "along the spiral"
 
@@ -691,11 +739,11 @@ msgstr "{PassiveLightLoss} −10%."
 msgid "{StainedGlassHealing} +20%."
 msgstr "{StainedGlassHealing} +20%."
 
-#: src/main.js:767
+#: src/main.js:784
 msgid "{StainedGlassLight} · healing accelerates while you stay in the light"
 msgstr "{StainedGlassLight} · healing accelerates while you stay in the light"
 
-#: src/main.js:702
+#: src/main.js:705
 msgid "{name} · −{damage} Light"
 msgstr "{name} · −{damage} Light"
 

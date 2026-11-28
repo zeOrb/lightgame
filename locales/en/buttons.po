@@ -47,7 +47,7 @@ msgstr "Bestiary"
 msgid "Boss fight · debug"
 msgstr "Boss fight · debug"
 
-#: src/level-diagnostics.js:14
+#: src/level-diagnostics.js:15
 msgid "Close"
 msgstr "Close"
 
@@ -75,7 +75,7 @@ msgstr "Pause"
 msgid "Pause menu"
 msgstr "Pause menu"
 
-#: src/main.js:377
+#: src/main.js:380
 msgid "Preparing run…"
 msgstr "Preparing run…"
 

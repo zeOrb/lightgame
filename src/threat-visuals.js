@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { route } from './game.js';
 import { ThreatType,ThreatInfo } from './threats.js';
+import {createThornVines} from './thorn-vines.js';
 import { applyTowerDepth } from './tower-depth.js';
 
 const metal=applyTowerDepth(new THREE.MeshStandardMaterial({color:'#252234',metalness:.7,roughness:.42}));
@@ -34,13 +35,8 @@ export class ThreatVisuals {
         item.halo=ring(group,1,item.light.clone(),.15);
         for(let i=0;i<6;i++){const a=i*Math.PI/3;const shard=mesh(group,new THREE.OctahedronGeometry(.08),glass,Math.cos(a)*.55,.12,Math.sin(a)*.55);shard.rotation.z=a;}
       }else{
-        item.tray=new THREE.Group();item.tray.position.x=threat.lane;group.add(item.tray);
-        mesh(item.tray,new THREE.BoxGeometry(1.7,.08,1.7),metal,0,-.04);
-        item.mark=ring(item.tray,.8,item.light);
-        item.spikes=new THREE.Group();item.tray.add(item.spikes);
-        for(let i=0;i<9;i++){const x=(i%3-1)*.48,z=(Math.floor(i/3)-1)*.48;mesh(item.spikes,new THREE.ConeGeometry(.14,.8,5),glass,x,0,z);}
-        // Corner runes stay visible while the teeth are retracted.
-        for(const x of [-.72,.72])for(const z of [-.72,.72])mesh(item.tray,new THREE.OctahedronGeometry(.08),item.light,x,.08,z);
+        item.vines=createThornVines(threat.s,threat.type===ThreatType.VINE_TRAP);
+        group.add(item.vines.mesh);
       }
       this.items.push(item);
     }
@@ -48,6 +44,13 @@ export class ThreatVisuals {
   update(time){
     for(const item of this.items){
       const {threat,light,mark}=item;
+      if(item.vines){
+        item.vines.growth.value=.12+.88*threat.rise;
+        item.vines.updateShadow(time,threat.growthSmoke);
+        item.vines.mesh.material.emissive.setHex(0x687a17);
+        item.vines.mesh.material.emissiveIntensity=threat.warning?.42+.32*Math.sin(time*17):.08;
+        continue;
+      }
       light.opacity=threat.warning ? .65+.3*Math.sin(time*17) : threat.active ? .8 : .22;
       mark.rotation.z=time*.3;
       if(threat.type===ThreatType.PENDULUM){item.pivot.rotation.z=threat.swing;mark.position.x=threat.bobX;mark.scale.setScalar(threat.warning?1.1:.8);}
@@ -57,7 +60,7 @@ export class ThreatVisuals {
           wave.material.opacity=Math.max(0,1-threat.radius/3.3)*(i?.35:.95);
         }
         mark.scale.setScalar(threat.warning?1+.13*Math.sin(time*14):1);
-      }else item.spikes.position.y=-.43+threat.rise*.92;
+      }
     }
   }
 }
