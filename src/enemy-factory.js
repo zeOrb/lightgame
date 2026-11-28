@@ -1,3 +1,5 @@
+import {Monster} from './monster.js';
+import {EnemyBehavior} from './enemy-behavior.js';
 import {createShadowBeast,createShadowReaper,killShadowBeast} from './shadow-beast.js';
 import {enemyStats} from './enemy-config.js';
 import {bossReward} from './progression-balance.js';
@@ -7,7 +9,7 @@ export function createEnemy(id,{floorIndex=0,s=0}={}){
   const boss=definition.profile==='boss';
   const hp=boss?Math.min(stats.maxHP,stats.hp+Math.floor(floorIndex/stats.hpEveryFloors)):stats.hp;
   enemy.o.scale.set(...stats.scale);
-  return Object.assign(enemy,{definition,stats,boss,s,lane:0,hp,maxHP:hp,rewardPoints:boss?bossReward(stats,floorIndex):0,stompTop:stats.stompTop*stats.scale[1],hurt:0,attack:0});
+  return Object.assign(new Monster(),enemy,{definition,stats,boss,behavior:definition.stateTree?new EnemyBehavior(definition.stateTree):null,s,lane:0,hp,maxHP:hp,rewardPoints:boss?bossReward(stats,floorIndex):0,stompTop:stats.stompTop*stats.scale[1],hurt:0,attack:0});
 }
 export function damageEnemy(enemy,palette=null){
   if(enemy.dead||enemy.hurt>0)return false;

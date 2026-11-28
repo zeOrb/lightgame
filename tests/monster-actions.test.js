@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {Monster} from '../src/monster.js';
+test('common jump supports explicit parameters and monster overrides without mutating the tree',()=>{
+ class TallMonster extends Monster {modifyActionParameters(name,p){p=super.modifyActionParameters(name,p);if(name==='jump')p.height*=2;return p;}}
+ const monster=new TallMonster();monster.lane=0;monster.stats={actionModifiers:{jump:{height:{add:.5}}}};const requested={height:1.5,duration:1},context={playerLane:1,pose:{}},memory={};assert.ok(new Monster().actions.has('jump'));assert.equal(monster.performAction('jump',context,.5,memory,requested),'running');assert.equal(context.pose.height,4);assert.equal(monster.lane,.5);assert.deepEqual(requested,{height:1.5,duration:1});assert.equal(monster.performAction('jump',context,.5,memory,{height:100,duration:2}),'success');assert.equal(context.pose.height,0);assert.equal(monster.lane,1);
+});
+test('jump defaults use monster stats and invalid modified parameters are rejected',()=>{const monster=new Monster();monster.stats={hopHeight:2};assert.equal(monster.resolveActionParameters('jump').height,2);assert.throws(()=>monster.resolveActionParameters('jump',{duration:0}));monster.stats.actionModifiers={jump:{height:-1}};assert.throws(()=>monster.resolveActionParameters('jump'));});

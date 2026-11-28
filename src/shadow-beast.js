@@ -212,6 +212,7 @@ export function killShadowBeast(beast,palette=null){
   beast.deathMotes=beast.smoke.map((mote,i)=>({x:Math.sin(i*2.4)*(.25+i%3*.13),z:Math.cos(i*2.4)*(.3+i%4*.15)}));
 }
 export function resetShadowBeast(beast){
+  beast.behavior?.reset();
   clearBossFlash(beast);
   beast.dead=false;beast.deathAge=0;if(beast.maxHP!==undefined)beast.hp=beast.maxHP;beast.hurt=0;beast.lastTop=null;beast.o.visible=true;beast.lane=0;
   beast.dissolve.value=-10;

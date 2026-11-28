@@ -1,0 +1,21 @@
+{
+  "trees": {
+    "shadow-jump": {
+      "type": "sequence",
+      "children": [
+        { "type": "wait", "seconds": 1 },
+        { "type": "repeat", "child": {
+          "type": "selector",
+          "children": [
+            { "type": "sequence", "priority": 10, "children": [
+              { "type": "condition", "condition": "player-near", "sections": 1, "radius": 3.5, "verticalRange": 3 },
+              { "type": "action", "action": "jump", "params": { "height": 0.8, "duration": 0.6 } },
+              { "type": "wait", "seconds": 0.5 }
+            ]},
+            { "type": "wait", "seconds": 0.1, "priority": 0 }
+          ]
+        }}
+      ]
+    }
+  }
+}

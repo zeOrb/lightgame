@@ -1,8 +1,10 @@
+import {ENEMY_STATE_TREES} from './enemy-behavior.js';
 import {FLOORS,placementAt} from './floor-config.js';
 import config from './enemies.json' with {type:'json'};
 const models=new Set(['cat','wolf','fox','hare','reaper']),definitions=new Map();
 for(const enemy of config.enemies){
   if(!enemy.id||definitions.has(enemy.id)||!models.has(enemy.model)||!config.profiles[enemy.profile])throw new Error('enemies.json: неверный тип '+enemy.id);
+  if(enemy.stateTree&&!ENEMY_STATE_TREES[enemy.stateTree])throw Error('Unknown enemy state tree '+enemy.stateTree);
   const stats={...config.profiles[enemy.profile],...enemy.stats};
   if(!Number.isFinite(stats.hp)||stats.hp<1||!Number.isFinite(stats.stompTop)||stats.stompTop<=0||!Array.isArray(stats.scale)||stats.scale.length!==3||stats.scale.some(n=>!Number.isFinite(n)||n<=0))throw new Error('enemies.json: неверные характеристики '+enemy.id);
   if(enemy.profile==='boss'&&(!(stats.spawnDuration>0)||!(stats.attackCycle>stats.chargeStart)||!(stats.chargeStart>stats.windupStart)||!(stats.hpEveryFloors>0)))throw new Error('enemies.json: неверная логика босса '+enemy.id);

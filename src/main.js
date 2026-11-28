@@ -767,22 +767,24 @@ function update(dt){
   for(const b of beasts){
     if(b.dead){animateBeastDeath(b,dt);continue;}
     b.hurt=Math.max(0,b.hurt-dt);
-    if(Math.abs(s-b.s)<b.stats.trackRange)b.lane=THREE.MathUtils.damp(b.lane,lane,b.stats.trackRate,dt);
-    const leap=Math.max(0,Math.sin(time*b.stats.hopSpeed+b.s)),p=route(b.s,b.lane),prey=playerRoute(s,lane);
-    b.o.position.set(p.x,p.y+leap*b.stats.hopHeight,p.z);
+    if(!b.behavior&&Math.abs(s-b.s)<b.stats.trackRange)b.lane=THREE.MathUtils.damp(b.lane,lane,b.stats.trackRate,dt);
+    const prey=playerRoute(s,lane),beforeBehavior=route(b.s,b.lane);
+    const leap=b.behavior?b.behavior.update(b.hurt>0?0:dt,b,s,lane,prey.x-beforeBehavior.x,prey.y+height-beforeBehavior.y,prey.z-beforeBehavior.z).leap:Math.max(0,Math.sin(time*b.stats.hopSpeed+b.s)),p=route(b.s,b.lane);
+    const jumpHeight=b.behavior?b.behavior.pose.height:leap*b.stats.hopHeight;
+    b.o.position.set(p.x,p.y+jumpHeight,p.z);
     const yaw=Math.abs(s-b.s)<6?Math.atan2(prey.x-p.x,prey.z-p.z):-p.theta;
     b.o.rotation.y=turnTowards(b.o.rotation.y,yaw,dt);
     animateShadowBeast(b,time,leap);
     if(b.hurt>0)continue;
-    if(flareFrame&&Math.hypot(p.x-afterMove.x,p.z-afterMove.z)<3&&Math.abs(p.y+leap*b.stats.hopHeight-afterMove.y-height)<2){damageEnemy(b,glassGlowPalette);continue;}
+    if(flareFrame&&Math.hypot(p.x-afterMove.x,p.z-afterMove.z)<3&&Math.abs(p.y+jumpHeight-afterMove.y-height)<2){damageEnemy(b,glassGlowPalette);continue;}
     const sphereCollider=b.stats.collider?.type==='sphere'?b.stats.collider:null;
-    const contactCenterY=p.y+leap*b.stats.hopHeight+(sphereCollider?.centerY??.65);
+    const contactCenterY=p.y+jumpHeight+(sphereCollider?.centerY??.65);
     if(phasingFrame&&phaseHitsTarget({x:beforeMove.x,y:previousFoot+.33,z:beforeMove.z},{x:afterMove.x,y:afterMove.y+height+.45,z:afterMove.z},{x:p.x,y:contactCenterY,z:p.z},sphereCollider?sphereCollider.radius+.30:1.05)){
       if(!damageEnemy(b,rabbitState.dashPalette))continue;
       light=Math.min(RUN_UPGRADES.maxHP,light+RUN_UPGRADES.phaseHeal);if(RUN_UPGRADES.resonance)abilities.cooldowns.phasing=Math.max(0,abilities.cooldowns.phasing-.5);
       combo.add('dashKill',b);tone(640,.2);toast(tr("Stained-glass breakthrough · shadow dispelled!"));continue;
     }
-    const top=p.y+leap*b.stats.hopHeight+b.stompTop,foot=playerRoute(s,lane).y+height+.12;
+    const top=p.y+jumpHeight+b.stompTop,foot=playerRoute(s,lane).y+height+.12;
     const overlaps=sphereCollider?Math.hypot(afterMove.x-p.x,afterMove.z-p.z)<sphereCollider.radius:Math.abs(s-b.s)<b.stats.stompSection&&Math.abs(lane-b.lane)<b.stats.stompLaneRadius;
     if(!phasingFrame&&canStomp(previousFoot,foot,b.lastTop??top,top,velocity,overlaps)){
       combo.add('stomp',b);const killed=damageEnemy(b,(rabbitState.lightCharge>0?rabbitState.chargeZone?.palette:null)??currentVitralZone?.palette??(vitralGlow.strength>.01?vitralGlow.palette:null));height=Math.max(height,top-playerRoute(s,lane).y+.03);velocity=bounceVelocity(keys.has('Space'),RUN_UPGRADES.jump);rabbitAnimation.jump(velocity,moveSpeed);motion.cuttable=false;abilities.resetAirJump();

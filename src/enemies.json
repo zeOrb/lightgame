@@ -59,6 +59,7 @@
   "enemies": [
     {
       "id": "wolf",
+      "stateTree": "shadow-jump",
       "name": "Shadow",
       "model": "wolf",
       "profile": "animal",
