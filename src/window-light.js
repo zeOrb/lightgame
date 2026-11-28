@@ -139,7 +139,7 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
           #include <colorspace_fragment>
         }`,side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.NormalBlending,polygonOffset:true,polygonOffsetFactor:-1,
       });
-      floorMaterial.userData.baseOpacity=.8;materials.push(floorMaterial);floorMaterials.push(floorMaterial);data.patch.add(new THREE.Mesh(floorGeometry,floorMaterial));
+      floorMaterial.userData.isFloorProjection=true;floorMaterial.userData.baseOpacity=.8;materials.push(floorMaterial);floorMaterials.push(floorMaterial);data.patch.add(new THREE.Mesh(floorGeometry,floorMaterial));
       floorMaterial.uniforms.imageCrop={value:data.imageCrop};
       floorMaterial.fragmentShader='uniform vec2 imageCrop;\n'+floorMaterial.fragmentShader.replace('texture2D(glassMap,clamp(tileUV,vec2(.001),vec2(.999)))','texture2D(glassMap,clamp(vec2(.5)+(tileUV-vec2(.5))*imageCrop,vec2(.001),vec2(.999)))');
       floorMaterial.userData.windowData=data;
@@ -184,6 +184,6 @@ export function createWindowLight(panes,floors,reservedShelves = new Set()) {
         data.patch.visible=fade<1;data.beams.forEach(beam=>beam.visible=fade<1);
         for(const {pane,original} of data.replaced){pane.material.color.copy(original.color).lerp(new THREE.Color('#302a26'),fade);if(pane.material.emissive){pane.material.emissive.copy(original.emissive);pane.material.emissiveIntensity=original.emissiveIntensity*(1-fade);}}
       }
-      for(const material of materials){material.uniforms.strength.value=material.userData.baseOpacity*daylight*(material.userData.windowData.zone?.lightStrength??1)*(floorMaterials.includes(material)&&material.userData.windowData.floor?.parent?.visible===false?0:1);if(material.uniforms.clock)material.uniforms.clock.value=time;}
+      for(const material of materials){material.uniforms.strength.value=material.userData.baseOpacity*daylight*(material.userData.windowData.zone?.lightStrength??1)*(material.userData.isFloorProjection&&material.userData.windowData.floor?.parent?.visible===false?0:1);if(material.uniforms.clock)material.uniforms.clock.value=time;}
     }};
 }

@@ -9,7 +9,7 @@ export class TowerHierarchy{
     this.floors=FLOORS.map(f=>{const root=new THREE.Group();root.name='FloorRoot:'+f.id;root.position.y=TOWER_TOP-f.start*.5;root.userData={floorId:f.id,floorIndex:f.index};this.root.add(root);return root;});
     this.version='';this.onRotate=null;
   }
-  add(object,index){if(!object)return;this.root.updateMatrixWorld(true);object.updateWorldMatrix(true,false);this.floors[index].attach(object);}
+  add(object,index){if(!object)return;this.floors[index].updateWorldMatrix(true,false);object.updateWorldMatrix(true,false);this.floors[index].attach(object);}
   worldDriven(object,index){
     const position=object.position.clone(),quaternion=object.quaternion.clone(),scale=object.scale.clone();
     this.add(object,index);object.position.copy(position);object.quaternion.copy(quaternion);object.scale.copy(scale);

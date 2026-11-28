@@ -92,16 +92,17 @@ export class TowerMist {
     if(this.depthTarget.width!==this.bufferSize.x||this.depthTarget.height!==this.bufferSize.y)this.depthTarget.setSize(this.bufferSize.x,this.bufferSize.y);
     this.material.uniforms.resolution.value.copy(this.bufferSize);
     this.material.uniforms.cameraRange.value.set(camera.near,camera.far);
-    const hidden=[],previousMaterial=scene.overrideMaterial,previousTarget=renderer.getRenderTarget();
+    const hidden=this.hiddenDepth??=[],multi=this.multiDepth??=[];hidden.length=0;multi.length=0;const previousMaterial=scene.overrideMaterial,previousTarget=renderer.getRenderTarget();
     // Only solid surfaces belong in the depth buffer. VFX must not erase fog.
-    scene.traverse(object=>{
+    scene.traverseVisible(object=>{
       const transparent=object.material&&(Array.isArray(object.material)?object.material.some(m=>m.transparent):object.material.transparent);
-      if(object.visible&&(object.isSprite||object.isPoints||transparent)){hidden.push(object);object.visible=false;}
+      if(object.isSprite||object.isPoints||transparent){hidden.push(object);object.visible=false;}
+      else if(Array.isArray(object.material)){multi.push([object,object.material]);object.material=this.depthMaterial;}
     });
     try{
       scene.overrideMaterial=this.depthMaterial;renderer.setRenderTarget(this.depthTarget);renderer.clear();renderer.render(scene,camera);
     }finally{
-      scene.overrideMaterial=previousMaterial;renderer.setRenderTarget(previousTarget);for(const object of hidden)object.visible=true;
+      scene.overrideMaterial=previousMaterial;renderer.setRenderTarget(previousTarget);for(const object of hidden)object.visible=true;for(const [object,material] of multi)object.material=material;
     }
   }
 }

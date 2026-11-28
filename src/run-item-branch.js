@@ -4,7 +4,7 @@ import {addLeafGlint} from './ui-leaf-glints.js';
 const GROW_MS=900,RETRACT_MS=160;
 const clamp=value=>Math.max(0,Math.min(1,value));
 const unfold=value=>1-Math.pow(1-value,3);
-let nextId=0;
+let nextId=0,stemPoints=null;
 const SVG='http://www.w3.org/2000/svg';
 function node(name,attributes){const element=document.createElementNS(SVG,name);for(const [key,value] of Object.entries(attributes))element.setAttribute(key,String(value));return element;}
 
@@ -20,7 +20,7 @@ export class RunItemBranch{
     glow.append(node('feGaussianBlur',{in:'SourceGraphic',stdDeviation:1.1,result:'light'}));
     const merge=node('feMerge',{});merge.append(node('feMergeNode',{in:'light'}),node('feMergeNode',{in:'SourceGraphic'}));glow.append(merge);definitions.append(glow);
     const main=this.element.querySelector('[data-grow="stem"]');
-    const length=main.getTotalLength(),points=Array.from({length:97},(_,i)=>main.getPointAtLength(length*i/96));
+    const points=stemPoints??=(()=>{const length=main.getTotalLength();return Array.from({length:97},(_,i)=>main.getPointAtLength(length*i/96));})();
     this.parts=[...this.element.querySelectorAll('[data-grow]')].map((element,index)=>{
       const kind=element.dataset.grow,anchor=(element.dataset.anchor??'0 0').split(' ').map(Number);
       let nearest=0;
@@ -73,5 +73,6 @@ export class RunItemBranch{
     this.duration=Math.max(1,(active?GROW_MS:RETRACT_MS)*Math.abs(target-this.progress));
     this.raf=requestAnimationFrame(this.tick);
   }
+  reset(){cancelAnimationFrame(this.raf);this.raf=0;this.disposed=false;this.active=false;this.render(0);return this;}
   dispose(){this.disposed=true;cancelAnimationFrame(this.raf);this.raf=0;}
 }

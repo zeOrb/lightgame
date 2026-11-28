@@ -4,7 +4,7 @@ import * as THREE from 'three';
 // Real effect objects are restored afterwards; no particles or cooldowns are consumed.
 export async function warmupFirstActions(renderer,scene,camera,roots){
   const target=new THREE.WebGLRenderTarget(2,2,{type:THREE.HalfFloatType}),previousTarget=renderer.getRenderTarget(),previousLayers=camera.layers.mask,background=scene.background;
-  const screenTarget=new THREE.WebGLRenderTarget(2,2);screenTarget.texture.colorSpace=renderer.outputColorSpace;
+  const viewport=renderer.getViewport(new THREE.Vector4()),scissor=renderer.getScissor(new THREE.Vector4()),scissorTest=renderer.getScissorTest();
   const warmCamera=camera.clone();warmCamera.position.set(0,1,5);warmCamera.lookAt(0,0,0);warmCamera.updateMatrixWorld();
   const effects=new Set(),saved=new Map(),culled=new Map();
   for(const root of roots)root.traverse(o=>effects.add(o));
@@ -17,7 +17,7 @@ export async function warmupFirstActions(renderer,scene,camera,roots){
     // Precompile overlay effects on their actual render layers: pickup bursts
     // use layer 2 and the dash ribbons use layer 3.
     for(const layer of [2,3]){
-      renderer.setRenderTarget(screenTarget);camera.layers.set(layer);warmCamera.layers.set(layer);
+      renderer.setRenderTarget(null);renderer.setViewport(0,0,2,2);renderer.setScissor(0,0,2,2);renderer.setScissorTest(true);camera.layers.set(layer);warmCamera.layers.set(layer);
       // A root group can be on layer 0 while its effect meshes are on layers
       // 2/3, so let Three.js filter the descendants instead of filtering roots.
       for(const root of roots)await renderer.compileAsync(root,warmCamera,scene);
@@ -26,6 +26,6 @@ export async function warmupFirstActions(renderer,scene,camera,roots){
   }finally{
     for(const [object,visible] of saved)object.visible=visible;
     for(const [object,value] of culled)object.frustumCulled=value;
-    camera.layers.mask=previousLayers;scene.background=background;renderer.setRenderTarget(previousTarget);target.dispose();screenTarget.dispose();
+    camera.layers.mask=previousLayers;scene.background=background;renderer.setRenderTarget(previousTarget);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(scissorTest);target.dispose();
   }
 }

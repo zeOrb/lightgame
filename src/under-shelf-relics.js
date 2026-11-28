@@ -133,7 +133,7 @@ export class UnderShelfRelics {
     plank.computeVertexNormals();
     const sheet=new THREE.PlaneGeometry(1,1,8,2),sp=sheet.attributes.position;
     for(let i=0;i<sp.count;i++){const x=sp.getX(i),y=sp.getY(i);sp.setXYZ(i,x+y*.09,y,Math.sin(x*Math.PI*8)*.035+(y<0?.045:0));}sheet.computeVertexNormals();
-    const geometries=[plank,new THREE.BoxGeometry(1,1,1),new THREE.TorusGeometry(1,.16,4,10),new THREE.CylinderGeometry(.5,.5,1,6,6),sheet];
+    const geometries=[plank,new THREE.BoxGeometry(1,1,1),new THREE.TorusGeometry(1,.16,3,8),new THREE.CylinderGeometry(.5,.5,1,6,3),sheet];
     const size=64,data=new Uint8Array(size*size*4),random=createVisualRandom('relic-timber-grain');
     for(let y=0;y<size;y++)for(let x=0;x<size;x++){const value=.65+.16*Math.sin(x*.71+Math.sin(y*.14)*.6)+random()*.12,i=(y*size+x)*4;data[i]=value*230;data[i+1]=value*212;data[i+2]=value*184;data[i+3]=255;}
     const grain=new THREE.DataTexture(data,size,size);grain.colorSpace=THREE.SRGBColorSpace;grain.wrapS=grain.wrapT=THREE.RepeatWrapping;grain.generateMipmaps=true;grain.minFilter=THREE.LinearMipmapLinearFilter;grain.needsUpdate=true;
@@ -161,12 +161,12 @@ export class UnderShelfRelics {
   }
   updateWind(dt){this.windTime.value+=Math.max(0,dt);}
   updateDynamic(force=false){
-    const batches=new Set();
+    const batches=this.changedBatches??=new Set();batches.clear();const inverses=new Map();
     for(const part of this.dynamic){
       const visible=part.group.visible;
       if(!force&&visible===part.visible&&(!part.moving||!visible))continue;
       part.visible=visible;
-      if(visible){part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);part.batch.parent.updateWorldMatrix(true,false);this.matrix.premultiply(new THREE.Matrix4().copy(part.batch.parent.matrixWorld).invert());}
+      if(visible){part.group.updateWorldMatrix(true,false);this.matrix.multiplyMatrices(part.group.matrixWorld,part.local);let inverse=inverses.get(part.batch.parent);if(!inverse){part.batch.parent.updateWorldMatrix(true,false);inverse=new THREE.Matrix4().copy(part.batch.parent.matrixWorld).invert();inverses.set(part.batch.parent,inverse);}this.matrix.premultiply(inverse);}
       else this.matrix.makeScale(0,0,0);
       part.batch.setMatrixAt(part.index,this.matrix);batches.add(part.batch);
     }

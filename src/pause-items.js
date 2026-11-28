@@ -1,3 +1,4 @@
+import {renderItemTooltip} from './item-tooltip.js';
 import {tr,onLanguageChange} from './i18n.js';
 import {renderLocalized} from './localized-text.js';
 import './pause-items.css';
@@ -28,8 +29,7 @@ export class PauseItems {
   show(id){
     this.tooltip.classList.toggle('is-visible',!!id);this.tooltip.setAttribute('aria-hidden',String(!id));
     if(!id)return;
-    const item=this.items.items.get(id),name=document.createElement('h3'),effect=document.createElement('p'),count=document.createElement('small');
-    this.tooltip.dataset.rarity=item.rarity;this.tooltip.style.setProperty('--rarity-color',this.items.rarity(id).color);name.textContent=tr(item.name);const rarity=document.createElement('small');rarity.className='pause-item-rarity';rarity.textContent=tr(this.items.rarity(id).name);name.append(rarity);renderLocalized(effect,item.description);count.textContent=tr('Owned: {count}',{count:this.items.stacks.get(id)??0});this.tooltip.replaceChildren(name,effect,count);
+    const item=this.items.items.get(id);this.tooltip.dataset.rarity=item.rarity;renderItemTooltip(this.tooltip,item,this.items.rarity(id),this.items.stacks.get(id)??0);
   }
   handleInput(frame){
     const buttons=[...this.strip.querySelectorAll('button')],active=document.activeElement,keys=frame.uiPressed;

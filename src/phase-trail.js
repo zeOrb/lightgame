@@ -50,7 +50,7 @@ export class PhaseTrail {
         float endFalloff=mix(cap,1.,smoothstep(.18,.32,x))*headCap;
         gl_FragColor=vec4(light*1.5,(rim*.4+bloom*.2)*feather*smoothstep(0.,.3,x)*endFalloff*pow(max(alpha,0.),.45));
       }`}));this.halo.layers.set(3);this.halo.frustumCulled=false;this.halo.visible=false;this.halo.renderOrder=1;scene.add(this.halo);
-    this.side=new THREE.Vector3();this.direction=new THREE.Vector3();this.view=new THREE.Vector3();
+    this.previousSide=new THREE.Vector3();this.side=new THREE.Vector3();this.direction=new THREE.Vector3();this.view=new THREE.Vector3();
     const sparkGeometry=new THREE.BufferGeometry();this.sparkPositions=new Float32Array(240*3);this.sparkColors=new Float32Array(240*3);this.sparkFade=new Float32Array(240);
     sparkGeometry.setAttribute('position',new THREE.BufferAttribute(this.sparkPositions,3));sparkGeometry.setAttribute('color',new THREE.BufferAttribute(this.sparkColors,3));sparkGeometry.setAttribute('fade',new THREE.BufferAttribute(this.sparkFade,1));
     this.sparks=new THREE.Points(sparkGeometry,new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false,vertexShader:`attribute vec3 color;attribute float fade;varying vec3 tint;varying float alpha;void main(){tint=color;alpha=fade;vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;gl_PointSize=clamp(110./-p.z,2.5,8.);}`,fragmentShader:`varying vec3 tint;varying float alpha;void main(){float r=length(gl_PointCoord-.5)*2.;gl_FragColor=vec4(tint*2.8,exp(-r*r*5.)*alpha);}`}));this.sparks.layers.set(3);this.sparks.frustumCulled=false;scene.add(this.sparks);this.particles=[];
@@ -58,6 +58,7 @@ export class PhaseTrail {
   reset(){this.samples=[];this.particles=[];this.emission=0;this.mesh.visible=this.halo.visible=false;this.sparks.geometry.setDrawRange(0,0);}
   update(dt,position,active,camera,color=this.color,rainbow=false){
     this.clock+=dt;this.material.uniforms.clock.value=this.clock;
+    if(!active&&!this.samples.length&&!this.particles.length)return;
     for(const sample of this.samples)sample.age+=dt;
     this.samples=this.samples.filter(s=>s.age<TRAIL_LIFETIME);
     if(active){
@@ -77,7 +78,7 @@ export class PhaseTrail {
     }
     this.samples=this.samples.slice(-128);const samples=this.samples;this.mesh.visible=this.halo.visible=samples.length>1;
     const distances=[0];for(let i=1;i<samples.length;i++)distances[i]=distances[i-1]+samples[i].point.distanceTo(samples[i-1].point);
-    const totalDistance=Math.max(.001,distances.at(-1)??0),previousSide=new THREE.Vector3();
+    const totalDistance=Math.max(.001,distances.at(-1)??0),previousSide=this.previousSide.set(0,0,0);
     for(let i=0;i<samples.length;i++){
       const sample=samples[i],next=samples[Math.min(i+3,samples.length-1)],prev=samples[Math.max(0,i-3)],fade=1-THREE.MathUtils.smoothstep(sample.age,TRAIL_FADE_DELAY,TRAIL_LIFETIME);
       const along=distances[i]/totalDistance,width=.9*(.45+.85*THREE.MathUtils.smoothstep(along,.25,1))*(1.-.5*THREE.MathUtils.smoothstep(along,.45,1));
@@ -86,10 +87,10 @@ export class PhaseTrail {
       if(i&&this.side.dot(previousSide)<0)this.side.negate();
       if(i)this.side.lerp(previousSide,.35).normalize();previousSide.copy(this.side);
       this.side.multiplyScalar(width*(.7+.3*Math.sqrt(fade)));
-      for(let j=0;j<2;j++){const k=i*2+j,sign=j?1:-1;this.positions.set([sample.point.x+this.side.x*sign,sample.point.y+this.side.y*sign,sample.point.z+this.side.z*sign],k*3);this.colors.set(sample.color.toArray(),k*3);this.alphas[k]=fade;this.rainbows[k]=sample.rainbow?1:0;this.uvs.set([along,j],k*2);}
+      for(let j=0;j<2;j++){const k=i*2+j,sign=j?1:-1;this.positions.set([sample.point.x+this.side.x*sign,sample.point.y+this.side.y*sign,sample.point.z+this.side.z*sign],k*3);this.colors[k*3]=sample.color.r;this.colors[k*3+1]=sample.color.g;this.colors[k*3+2]=sample.color.b;this.alphas[k]=fade;this.rainbows[k]=sample.rainbow?1:0;this.uvs[k*2]=along;this.uvs[k*2+1]=j;}
     }
     this.geometry.setDrawRange(0,Math.max(0,samples.length-1)*6);for(const attr of Object.values(this.geometry.attributes))attr.needsUpdate=true;
-    this.particles=this.particles.filter(p=>(p.age+=dt)<p.life).slice(-240);this.particles.forEach((p,i)=>{p.point.addScaledVector(p.drift,dt);this.sparkPositions.set(p.point.toArray(),i*3);this.sparkColors.set(p.color.toArray(),i*3);this.sparkFade[i]=(1-p.age/p.life)**2;});this.sparks.geometry.setDrawRange(0,this.particles.length);for(const attr of Object.values(this.sparks.geometry.attributes))attr.needsUpdate=true;
+    this.particles=this.particles.filter(p=>(p.age+=dt)<p.life).slice(-240);this.particles.forEach((p,i)=>{p.point.addScaledVector(p.drift,dt);this.sparkPositions[i*3]=p.point.x;this.sparkPositions[i*3+1]=p.point.y;this.sparkPositions[i*3+2]=p.point.z;this.sparkColors[i*3]=p.color.r;this.sparkColors[i*3+1]=p.color.g;this.sparkColors[i*3+2]=p.color.b;this.sparkFade[i]=(1-p.age/p.life)**2;});this.sparks.geometry.setDrawRange(0,this.particles.length);for(const attr of Object.values(this.sparks.geometry.attributes))attr.needsUpdate=true;
   }
 }
 

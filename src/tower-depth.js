@@ -3,6 +3,9 @@ export function applyTowerDepth(material){
   material.onBeforeCompile=shader=>{
     shader.vertexShader='varying float towerWorldHeight;\n'+shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
       vec4 towerWorld=vec4(transformed,1.0);
+      #ifdef USE_BATCHING
+        towerWorld=batchingMatrix*towerWorld;
+      #endif
       #ifdef USE_INSTANCING
         towerWorld=instanceMatrix*towerWorld;
       #endif
@@ -13,6 +16,6 @@ export function applyTowerDepth(material){
       vec3 towerNavy=vec3(.016,.024,.040)+vec3(.05,.075,.12)*towerLuma;
       gl_FragColor.rgb=mix(gl_FragColor.rgb,towerNavy,towerDepth)*(1.0-towerDepth*.18);`);
   };
-  material.customProgramCacheKey=()=> 'tower-height-muted-blue-v2';
+  material.customProgramCacheKey=()=> 'tower-height-muted-blue-v3';
   return material;
 }

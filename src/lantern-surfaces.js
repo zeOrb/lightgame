@@ -61,7 +61,7 @@ export class LanternLighting {
   update(focus,time){
     const daylight=depthLight(Math.max(0,Math.min(END,(TOWER_TOP-focus.y)*2)));
     const darkness=1-THREE.MathUtils.smoothstep(daylight,.18,.35);
-    if(darkness<=0){for(const light of this.lights){light.intensity=0;light.visible=false;}return;}
+    if(darkness<=0){for(const light of this.lights){light.intensity=0;light.visible=true;}return;}
     const candidates=[];
     for(const lantern of lanterns){
       let visible=true;for(let node=lantern.sprite;node;node=node.parent)if(!node.visible){visible=false;break;}
@@ -72,7 +72,7 @@ export class LanternLighting {
     }
     candidates.sort((a,b)=>a.distance-b.distance);
     this.lights.forEach((light,i)=>{
-      const item=candidates[i];light.visible=!!item;if(!item){light.intensity=0;return;}
+      const item=candidates[i];light.visible=true;if(!item){light.intensity=0;return;}
       light.position.copy(item.lantern.point);
       const near=1-THREE.MathUtils.smoothstep(Math.sqrt(item.distance),20,30);
       light.intensity=darkness*near*(11+Math.sin(time*3.1+light.position.y)*.35+Math.sin(time*5.7+i)*.2);

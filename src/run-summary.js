@@ -1,3 +1,4 @@
+import {renderItemTooltip} from './item-tooltip.js';
 import {RandomManager} from './random-manager.js';
 import {summarySeries,summaryCurve} from './run-summary-chart.js';
 import {tr,onLanguageChange} from './i18n.js';
@@ -33,7 +34,7 @@ export class RunSummary {
     const legend=node('div','summary-legend');for(const [kind,label] of [['kill',tr('Enemy defeated')],['chest',tr('Chest opened')],['floor',tr('Floor completed')],...(snapshot.outcome==='lost'?[['death',tr('Death')]]:[])]){const entry=node('span'),icon=svgNode('svg',{viewBox:'-12 -12 24 24','aria-hidden':'true'});icon.append(eventIcon(kind));entry.append(icon,document.createTextNode(label));legend.append(entry);}panel.append(legend,node('h3',null,tr('Collected items')));
     const inventory=node('div','summary-inventory'),counts=new Map();for(const event of snapshot.events)if(event.type==='item.acquired')counts.set(event.data.id,(counts.get(event.data.id)??0)+1);
     const detail=node('div','summary-item-detail');detail.setAttribute('aria-live','polite');let hovered=null,focused=null;
-    const show=id=>{detail.classList.toggle('is-visible',!!id);if(!id)return;const item=this.items.items.get(id);detail.style.setProperty('--item-color',this.items.rarity(id).color);detail.replaceChildren(node('strong',null,tr(item.name)));const effect=node('p');renderLocalized(effect,item.description);detail.append(effect,node('small',null,'×'+counts.get(id)));};
+    const show=id=>{detail.classList.toggle('is-visible',!!id);if(!id)return;const item=this.items.items.get(id);renderItemTooltip(detail,item,this.items.rarity(id),counts.get(id));};
     for(const [id,count] of counts){const item=this.items.items.get(id);if(!item)continue;const button=node('button','summary-item');button.style.setProperty('--item-color',this.items.rarity(id).color);button.setAttribute('aria-label',tr(item.name)+' ×'+count);const icon=node('span','summary-diamond');icon.append(node('span',null,item.symbol));button.append(icon);button.onclick=()=>button.focus();button.onpointerenter=()=>{hovered=id;show(id)};button.onpointerleave=()=>{hovered=null;show(focused)};button.onfocus=()=>{focused=id;show(id)};button.onblur=()=>{focused=null;show(hovered)};inventory.append(button);}
     if(!counts.size)inventory.append(node('p','summary-empty',tr('No items collected')));panel.append(inventory,detail);
     if(this.history?.state.recent.length>1){const compare=node('button','summary-compare',tr('Compare recent runs'));compare.onclick=()=>this.onCompare?.();panel.append(compare);}

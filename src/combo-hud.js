@@ -8,9 +8,9 @@ export class ComboHUD {
   }
   update(combo,visible){
     this.element.hidden=!visible||!combo.enabled||!combo.count;if(this.element.hidden)return;
-    this.title.textContent=tr('Combo')+' ×'+combo.multiplier;this.count.textContent=combo.count;
+    const title=tr('Combo')+' ×'+combo.multiplier,count=String(combo.count);if(this.title.textContent!==title)this.title.textContent=title;if(this.count.textContent!==count)this.count.textContent=count;
     const names={gem:tr('Gem pickup'),stomp:tr('Stomp'),dashKill:tr('Dash kill'),vitral:tr('Stained-glass crossing'),chest:tr('Chest break')};
-    this.action.textContent=names[combo.lastAction]??'';this.bar.style.transform=`scaleX(${combo.fraction})`;
-    this.element.dataset.boosted=String(combo.multiplier>1);
+    const action=names[combo.lastAction]??'';if(this.action.textContent!==action)this.action.textContent=action;this.bar.style.transform=`scaleX(${combo.fraction})`;
+    const boosted=String(combo.multiplier>1);if(this.element.dataset.boosted!==boosted)this.element.dataset.boosted=boosted;
   }
 }

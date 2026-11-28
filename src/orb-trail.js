@@ -34,5 +34,6 @@ export class OrbTrail {
     for(const attr of [p,t,fade,edge])attr.needsUpdate=true;
     this.geometry.setDrawRange(0,Math.max(0,this.points.length-1)*6);
   }
+  reset(){this.clock=0;this.points.length=0;this.geometry.setDrawRange(0,0);}
   dispose(){this.mesh.removeFromParent();this.geometry.dispose();this.mesh.material.dispose();}
 }

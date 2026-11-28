@@ -11,10 +11,10 @@ function shadeBackgroundProps(material){
   const previousKey=material.customProgramCacheKey();
   material.onBeforeCompile=function(shader,...args){
     previous.call(this,shader,...args);
-    shader.vertexShader='varying float propCameraDepth; varying float propBaseHeight;\n'+shader.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
+    shader.vertexShader='attribute float propFloorY; varying float propCameraDepth; varying float propBaseHeight;\n'+shader.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
       propCameraDepth=-mvPosition.z;
       #ifdef USE_INSTANCING
-        propBaseHeight=(instanceMatrix*vec4(transformed,1.0)).y;
+        propBaseHeight=(instanceMatrix*vec4(transformed,1.0)).y-propFloorY;
       #else
         propBaseHeight=transformed.y;
       #endif`);
@@ -32,7 +32,11 @@ export function createBackgroundProps(){
   const pages=mat('#b9aa87'),brass=mat('#987044',{metalness:.55}),binding=mat('#593c29');
   const wax=mat('#c9b995'),pewter=mat('#8c9292',{metalness:.45,roughness:.48}),ceramic=mat('#676c70'),sand=mat('#c9ae7f');
   const marbleMap=pavingTexture(1),marbleBrick=mat('#b6b9be',{map:marbleMap,bumpMap:marbleMap,bumpScale:.022,roughness:.96});
-  const covers=Array.from({length:32},(_,tile)=>{const map=spineAtlas().clone();map.repeat.set(1/8,1/4);map.offset.set(tile%8/8,Math.floor(tile/8)/4);map.needsUpdate=true;return mat('#ffffff',{map});});
+  const coverMaterial=mat('#ffffff',{map:spineAtlas()});
+  const coverCompile=coverMaterial.onBeforeCompile,coverKey=coverMaterial.customProgramCacheKey();
+  coverMaterial.onBeforeCompile=function(shader,...args){coverCompile.call(this,shader,...args);shader.vertexShader='attribute vec2 coverTile;\n'+shader.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\nvMapUv=(vMapUv+coverTile)/vec2(8.,4.);');};
+  coverMaterial.customProgramCacheKey=()=>coverKey+'-instanced-cover-atlas-v1';
+  const covers=Array.from({length:32},(_,tile)=>({coverTile:tile}));
   const shapes={box:new THREE.BoxGeometry(1,1,1),roll:new THREE.CylinderGeometry(1,1,1,10),cone:new THREE.ConeGeometry(1,1,4),ring:new THREE.TorusGeometry(1,.18,4,12)};
   const arch=new THREE.Shape();arch.moveTo(-.5,0);arch.lineTo(-.5,.38);arch.quadraticCurveTo(-.5,.72,0,1);arch.quadraticCurveTo(.5,.72,.5,.38);arch.lineTo(.5,0);arch.lineTo(.36,0);arch.lineTo(.36,.36);arch.quadraticCurveTo(.36,.60,0,.82);arch.quadraticCurveTo(-.36,.60,-.36,.36);arch.lineTo(-.36,0);arch.closePath();
   shapes.arch=new THREE.ExtrudeGeometry(arch,{depth:.12,bevelEnabled:true,bevelSize:.025,bevelThickness:.025,bevelSegments:1,curveSegments:8});
@@ -64,10 +68,11 @@ export function createBackgroundProps(){
     const cluster=new THREE.Group();cluster.name='Background props';parent.add(cluster);
     const batches=new Map(),position=new THREE.Vector3(),rotation=new THREE.Euler(),quaternion=new THREE.Quaternion(),scale=new THREE.Vector3();
     const add=(shape,material,x,y,z,w,h,d,ry=0,rz=0)=>{
+      const tile=material.coverTile;if(tile!==undefined)material=coverMaterial;
       let byMaterial=batches.get(shape);if(!byMaterial)batches.set(shape,byMaterial=new Map());
       let matrices=byMaterial.get(material);if(!matrices)byMaterial.set(material,matrices=[]);
       position.set(x,y,z);rotation.set(0,ry,rz);quaternion.setFromEuler(rotation);scale.set(w,h,d);
-      matrices.push(new THREE.Matrix4().compose(position,quaternion,scale));
+      matrices.push(new THREE.Matrix4().compose(position,quaternion,scale));if(tile!==undefined)(matrices.tiles??=[]).push(tile%8,Math.floor(tile/8));
     };
     const halfWidth=SHELF_OUTER_RADIUS*Math.sin(SHELF_HALF_ANGLE)*.80;
     const count=10+Math.floor(r()*4),anchors=Array.from({length:4},(_,index)=>
@@ -146,7 +151,9 @@ export function createBackgroundProps(){
       }
     }
     for(const [shape,materials] of batches)for(const [material,matrices] of materials){
-      const mesh=new THREE.InstancedMesh(shapes[shape],material,matrices.length);
+      const geometry=matrices.tiles?shapes[shape].clone():shapes[shape];if(matrices.tiles)geometry.setAttribute('coverTile',new THREE.InstancedBufferAttribute(new Float32Array(matrices.tiles),2));
+      const instanceGeometry=geometry;if(!instanceGeometry.getAttribute('propFloorY'))instanceGeometry.setAttribute('propFloorY',new THREE.InstancedBufferAttribute(new Float32Array(Math.max(128,matrices.length)),1));
+      const mesh=new THREE.InstancedMesh(instanceGeometry,material,matrices.length);mesh.userData.propShape=shape;
       matrices.forEach((matrix,index)=>mesh.setMatrixAt(index,matrix));mesh.instanceMatrix.needsUpdate=true;
       mesh.computeBoundingSphere();cluster.add(mesh);
     }

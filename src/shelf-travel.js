@@ -29,7 +29,7 @@ export class ShelfTravel {
     return {s,lane:Math.hypot(point.x,point.z)-15};
   }
 }
-const ray=new THREE.Raycaster(),origin=new THREE.Vector3(),delta=new THREE.Vector3(),normal=new THREE.Vector3(),matrix=new THREE.Matrix3();
+const ray=new THREE.Raycaster(),origin=new THREE.Vector3(),delta=new THREE.Vector3(),normal=new THREE.Vector3(),matrix=new THREE.Matrix3();ray.layers.enable(7);
 export function sweepShelfLanding(before,after,floors){
   if(after.y>=before.y)return null;
   origin.set(before.x,before.y,before.z);delta.set(after.x-before.x,after.y-before.y,after.z-before.z);

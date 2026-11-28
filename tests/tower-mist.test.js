@@ -18,3 +18,10 @@ test('fog depth pass captures solid floors, excludes VFX and restores render sta
   fail=true;assert.throws(()=>mist.renderDepth(renderer,scene,camera));
   assert.equal(vfx.visible,true);assert.equal(mist.mesh.visible,true);assert.equal(target,null);assert.equal(scene.overrideMaterial,null);
 });
+
+test('depth pass collapses material groups and restores them even after render failure',()=>{
+  const scene=new THREE.Scene(),mist=new TowerMist(scene),camera=new THREE.PerspectiveCamera(),materials=[new THREE.MeshBasicMaterial(),new THREE.MeshBasicMaterial()];
+  const box=new THREE.Mesh(new THREE.BoxGeometry(),materials);scene.add(box);let target=null;
+  const renderer={getDrawingBufferSize(s){s.set(32,32)},getRenderTarget(){return target},setRenderTarget(t){target=t},clear(){},render(){assert.equal(box.material,mist.depthMaterial);throw Error('failed')}};
+  assert.throws(()=>mist.renderDepth(renderer,scene,camera));assert.equal(box.material,materials);assert.equal(target,null);assert.equal(scene.overrideMaterial,null);
+});

@@ -9,9 +9,16 @@ import sideArt from './run-item-frame-side.svg?raw';
 import './localized-text.css';
 import './run-item-ui.css';
 
+function createFrame(){
+    const frame=document.createElement('div');frame.className='run-item-frame';frame.setAttribute('aria-hidden','true');
+    for(const [corner,direction] of [['top-left','up'],['top-right','left'],['bottom-right','down'],['bottom-left','right']]){const detail=document.createElement('span');detail.className=`run-item-frame-corner ${corner}`;detail.append(createGlintOrnament(corner.startsWith('bottom')?lowerArt:cornerArt,direction));frame.append(detail);}
+    for(const side of ['left','right']){const rail=document.createElement('span');rail.className=`run-item-frame-rail ${side}`;frame.prepend(rail);const detail=document.createElement('span');detail.className=`run-item-frame-side ${side}`;detail.append(createGlintOrnament(sideArt));frame.append(detail);}
+    return frame;
+}
+
 export class RunItemUI {
   constructor(items,onChoose,onOpen=()=>{}){
-    this.items=items;this.onChoose=onChoose;this.onOpen=onOpen;this.version=-1;this.branches=new Map();
+    this.items=items;this.onChoose=onChoose;this.onOpen=onOpen;this.version=-1;this.branches=new Map();this.branchPool=Array.from({length:3},()=>new RunItemBranch());this.frame=createFrame();
     this.element=document.createElement('section');this.element.id='run-item-choice';this.element.hidden=true;this.element.setAttribute('role','dialog');this.element.setAttribute('aria-modal','true');this.element.setAttribute('aria-labelledby','run-item-title');
     document.body.append(this.element);
     this.element.addEventListener('keydown',event=>{if(event.key==='Tab'){event.preventDefault();this.navigate(event.shiftKey?-1:1);}});
@@ -21,7 +28,7 @@ export class RunItemUI {
   get isOpen(){return !this.element.hidden;}
   buttons(){return [...this.element.querySelectorAll('button:not(:disabled)')];}
   activateOption(target){for(const button of this.element.querySelectorAll('.run-item-option')){const active=button===target;if(button.hasAttribute('data-active')!==active)button.toggleAttribute('data-active',active);this.branches.get(button)?.setActive(active);}}
-  clearBranches(){for(const branch of this.branches.values())branch.dispose();this.branches.clear();}
+  clearBranches(){for(const branch of this.branches.values()){branch.dispose();this.branchPool.push(branch);}this.branches.clear();}
   navigate(step){const buttons=this.buttons(),index=buttons.indexOf(document.activeElement),target=buttons[(index+step+buttons.length)%buttons.length];target?.focus({preventScroll:true});this.activateOption(target?.closest('.run-item-option'));}
   handleInput(frame){
     if(this.element.contains(document.activeElement))this.activateOption(document.activeElement.closest('.run-item-option'));
@@ -37,9 +44,7 @@ export class RunItemUI {
     if(!pending){this.clearBranches();this.element.hidden=true;return false;}
     const opening=this.element.hidden;if(opening)this.onOpen();this.clearBranches();this.element.hidden=false;this.element.replaceChildren();
     const panel=document.createElement('div');panel.className='run-item-panel';
-    const frame=document.createElement('div');frame.className='run-item-frame';frame.setAttribute('aria-hidden','true');
-    for(const [corner,direction] of [['top-left','up'],['top-right','left'],['bottom-right','down'],['bottom-left','right']]){const detail=document.createElement('span');detail.className=`run-item-frame-corner ${corner}`;detail.append(createGlintOrnament(corner.startsWith('bottom')?lowerArt:cornerArt,direction));frame.append(detail);}panel.append(frame);
-    for(const side of ['left','right']){const rail=document.createElement('span');rail.className=`run-item-frame-rail ${side}`;frame.prepend(rail);const detail=document.createElement('span');detail.className=`run-item-frame-side ${side}`;detail.append(createGlintOrnament(sideArt));frame.append(detail);}
+    panel.append(this.frame);
     const title=document.createElement('h2');title.id='run-item-title';title.textContent=tr('Choose an item');panel.append(title);
     const options=document.createElement('div');options.className='run-item-options';
     for(const [index,id] of pending.options.entries()){const item=this.items.items.get(id),button=document.createElement('button');button.className='run-item-option';button.dataset.rarity=item.rarity;button.dataset.leaves=String(1+(index+[...String(pending.source)].reduce((sum,c)=>sum+c.charCodeAt(0),0))%4);button.style.setProperty('--rarity-color',this.items.rarity(id).color);
@@ -49,7 +54,7 @@ export class RunItemUI {
       if(item.rarity==='legendary'){const light=document.createElement('i');light.className='rim-border-light';light.setAttribute('aria-hidden','true');icon.append(light);}
       const name=document.createElement('strong');name.className='run-item-name';name.textContent=tr(item.name);const rarity=document.createElement('small');rarity.className='run-item-rarity';rarity.textContent=tr(this.items.rarity(id).name);name.append(rarity);const effect=document.createElement('span');effect.className='run-item-effect';renderLocalized(effect,item.description);
       button.append(icon,name,effect);
-      const branch=new RunItemBranch();this.branches.set(button,branch);button.append(branch.element);
+      const branch=(this.branchPool.pop()??new RunItemBranch()).reset();this.branches.set(button,branch);button.append(branch.element);
       button.onpointerenter=()=>{button.focus({preventScroll:true});this.activateOption(button);};
       if(item.rarity!=='common'){
         const rim=document.createElement('i');rim.className='run-item-rim-sweep';rim.setAttribute('aria-hidden','true');button.append(rim);

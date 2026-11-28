@@ -12,11 +12,12 @@ test('wood POM composes with tower shading and uses one march for albedo and bum
   assert.equal(shader.uniforms.woodHeight.value,map.userData.heightMap);
   assert.equal(shader.uniforms.woodDepth.value,.16);
   assert.match(shader.vertexShader,/towerWorldHeight/);
+  assert.match(shader.vertexShader,/towerWorld=batchingMatrix\*towerWorld/);
   assert.match(shader.vertexShader,/woodViewPosition=mvPosition.xyz/);
   assert.match(shader.fragmentShader,/texture2D\( map, woodShiftedUV \)/);
   assert.match(shader.fragmentShader,/dFdx\( woodShiftedUV \)/);
   assert.equal(shader.fragmentShader.split('woodParallax(vMapUv)').length-1,1);
-  assert.match(material.customProgramCacheKey(),/tower-height-muted-blue-v2-wood-pom-v2/);
+  assert.match(material.customProgramCacheKey(),/tower-height-muted-blue-v3-wood-pom-v2/);
 });
 
 test('untextured materials are unchanged',()=>{

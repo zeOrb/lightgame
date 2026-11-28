@@ -8,6 +8,7 @@ export class VitralEntryEffects {
     this.pool=Array.from({length:3},()=>{
       const material=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,fog:false,toneMapped:false});
       const mesh=new THREE.InstancedMesh(geometry,material,14);mesh.frustumCulled=false;mesh.visible=false;scene.add(mesh);
+      for(let i=0;i<14;i++)mesh.setColorAt(i,new THREE.Color(1,1,1));mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       return {mesh,age:1,rays:[]};
     });

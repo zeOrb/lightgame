@@ -1,3 +1,7 @@
+import {PropBatches} from './prop-batches.js';
+import {StairBatches} from './stair-batches.js';
+import {RenderCulling,freezeStaticKit} from './render-culling.js';
+import {createPerformanceProbe} from './performance-probe.js';
 import {debugOptions,initializeDebugOptions} from './debug-options.js';
 const generatedDebugOptions=debugOptions();
 import {runHistory} from './run-history.js';
@@ -150,7 +154,7 @@ for(let level=0;level<FLOOR_COUNT;level++) {
   ring(18.6,y,.14,edgeMat).userData.floorIndex=level;
 }
 const towerHierarchy=new TowerHierarchy(scene);
-for(const floor of FLOORS){const library=createAncientLibrary(scene,{minY:floor.index===FLOORS.length-1?-Infinity:TOWER_TOP-(floor.end+1)*.5,maxY:floor.index===0?Infinity:TOWER_TOP-floor.start*.5});towerHierarchy.add(library,floor.index);}
+for(const floor of FLOORS){const library=createAncientLibrary(scene,{minY:floor.index===FLOORS.length-1?-Infinity:TOWER_TOP-(floor.end+1)*.5,maxY:floor.index===0?Infinity:TOWER_TOP-floor.start*.5});towerHierarchy.add(library,floor.index);freezeStaticKit(library);}
 // Tall jewel windows, lead lattice and sunset beyond the panes.
 const glassTextures=createGlassTextures();
 const glassGlowPalette=glassTextures.palette.map(color=>new THREE.Color(color));
@@ -210,6 +214,7 @@ function shelfSegment(s) {
     platform.indicator.visible=false;
   }
   if(step.decorations!==false)decorateShelf(group,s,tier.backgroundProps,stone);
+  freezeStaticKit(group);
 }
 for(const floor of FLOORS){
   for(const id of [...(floor.loot.pool??[]),...floor.placements.loot.map(p=>p.id).filter(Boolean)])if(!COLLECTIBLES.variants.some(v=>v.id===id))throw new Error('floors.json: unknown gem '+id);
@@ -323,7 +328,7 @@ const rabbitShadowTexture=new THREE.CanvasTexture(rabbitShadowCanvas);
 const rabbitShadowMaterial=new THREE.MeshBasicMaterial({map:rabbitShadowTexture,color:'#fff',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,fog:false,polygonOffset:true,polygonOffsetFactor:-1});
 const rabbitShadow=mesh(new THREE.PlaneGeometry(1,1),rabbitShadowMaterial,0,0,0);
 rabbitShadow.rotation.x=-Math.PI/2;rabbitShadow.scale.set(1.35,.92,1);rabbitShadow.renderOrder=1;
-const shadowRaycaster=new THREE.Raycaster(),shadowRayOrigin=new THREE.Vector3(),shadowRayDown=new THREE.Vector3(0,-1,0);
+const shadowRaycaster=new THREE.Raycaster(),shadowRayOrigin=new THREE.Vector3(),shadowRayDown=new THREE.Vector3(0,-1,0);shadowRaycaster.layers.enable(7);
 const rabbitMat=new THREE.MeshStandardMaterial({color:'#fff1bc',emissive:'#ffe4a0',emissiveIntensity:1,roughness:1});
 const rabbitHPFade={value:1};
 const rabbitDissolve={value:0};
@@ -805,7 +810,7 @@ function update(dt){
   if(inShadow)combo.end();
   shadowEffects.setDamage(inShadow);
   $('effect').textContent=inShadow?tr("Shadow drains your light!"):currentVitralZone?(RUN_UPGRADES.rayEntryHeal?tr("Stained glass · burst healing"):tr("Stained glass · +{amount}/s",{amount:(Math.min(50,rabbitState.vitralTime*12.5)*RUN_UPGRADES.regen).toFixed(0)})):invert>0?tr("Controls reversed"):slow>0?tr("Slowed by refraction"):tr("In the sunset light");
-  if(height<3.8){const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){const floor=floorForSection(gate.plank);towerDescent.completeFloor(floor);runTelemetry.floorCompleted(floor.id,FLOORS.length-floor.index);tone(880,.35);toast(gate.plank===END?tr("Final arch · the crystal is close"):tr("Entering floor {floor}",{floor:gate.nextFloor}));}}
+  {const gate=floorGates.check(gatePreviousS,s,gatePreviousLane,lane);if(gate){const floor=floorForSection(gate.plank);towerDescent.completeFloor(floor);runTelemetry.floorCompleted(floor.id,FLOORS.length-floor.index);tone(880,.35);toast(gate.plank===END?tr("Final arch · the crystal is close"):tr("Entering floor {floor}",{floor:gate.nextFloor}));}}
   if(light<=0&&RUN_UPGRADES.lastLight&&!rescueUsed){rescueUsed=true;rescueInvul=1;light=RUN_UPGRADES.maxHP*.3;flareAge=0;flareBurst.start(new THREE.Vector3(afterMove.x,afterMove.y+.5,afterMove.z),glassGlowPalette);toast(tr("Last Spark · light restored!"));}
   if(light<=0)finish(false);else if(s>=END-.1)finish(true);
   updateHUD(dt);
@@ -883,8 +888,8 @@ registerInputContext('gameplay',()=>state==='playing',frame=>{
 });
 inputDevices=new BrowserInput({preferences:()=>preferences,onRaw:control=>inputManager.dispatchRaw(control),captureKeyboard:()=>inputManager.resolve()?.map==='gameplay',onBlur:()=>{keys.clear();inputManager.clear();if(state==='playing')pause();}});
 const focusIndicator=new FocusIndicator();
-function updateInput(){keys.clear();inputManager.update(inputDevices.sample());document.body.dataset.inputDevice=inputManager.scheme;focusIndicator.update(document.activeElement,inputManager.scheme);}
-function frame(now){requestAnimationFrame(frame);updateInput();const realDt=frameClock.step(now);runTelemetry.clock(now,state==='playing'&&!runItemUI.isOpen&&!runSummary.isOpen&&skillTree.element.hidden&&!document.body.classList.contains('bestiary-open'));if(runSummary.isOpen||statisticsUI.isOpen)return;pauseItems.sync(state==='paused');if(runItemUI.sync())return;towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
+function updateInput(){keys.clear();inputManager.update(inputDevices.sample());if(document.body.dataset.inputDevice!==inputManager.scheme)document.body.dataset.inputDevice=inputManager.scheme;focusIndicator.update(document.activeElement,inputManager.scheme);}
+function frame(now){requestAnimationFrame(frame);performanceProbe?.begin(now,state);updateInput();const realDt=frameClock.step(now);runTelemetry.clock(now,state==='playing'&&!runItemUI.isOpen&&!runSummary.isOpen&&skillTree.element.hidden&&!document.body.classList.contains('bestiary-open'));if(runSummary.isOpen||statisticsUI.isOpen)return;pauseItems.sync(state==='paused');if(runItemUI.sync())return;towerHierarchy.update(state==='paused'?0:realDt);if(!skillTree.element.hidden||document.body.classList.contains('bestiary-open'))return;visualTime+=realDt;
   const stopped=state==='playing'&&hitStop>0,dt=stopped?0:realDt;
   hitStop=state==='playing'?Math.max(0,hitStop-realDt):0;
   const previousJumpHeight=height,landingVelocity=velocity,landingFrom=rabbit.position.clone(),summaryPreviousS=s;
@@ -918,7 +923,7 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
   if(state==='intro'||state==='lost'||state==='won')bossHitEffects.reset();
   floorGates.update(state==='paused'?0:dt,rabbit.position);
   if(state!=='paused'&&flareAge<1.8){flareAge+=dt;flareBurst.update(flareAge);}
-  $('phase-status').textContent=abilities.cooldowns.phasing>.05?tr("Phasing {seconds}s",{seconds:abilities.cooldowns.phasing.toFixed(1)}):'Phasing';
+  const phaseLabel=abilities.cooldowns.phasing>.05?tr("Phasing {seconds}s",{seconds:abilities.cooldowns.phasing.toFixed(1)}):'Phasing';if($('phase-status').textContent!==phaseLabel)$('phase-status').textContent=phaseLabel;
   const sunMoving=state==='playing'&&Math.abs(light-previousSunLight)>dt*.01;
   previousSunLight=light;
   sunMotion=THREE.MathUtils.damp(sunMotion,sunMoving?1:0,sunMoving?7:9,dt);
@@ -1068,7 +1073,7 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
   vineLeaves.update(rabbit.position,foliageVelocity,state==='paused'?0:dt,state==='playing');
   lanternLighting.update(rabbit.position,visualTime);
   const desiredFov=58;
-  camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,6,dt);camera.updateProjectionMatrix();
+  if(Math.abs(camera.fov-desiredFov)>.0001){camera.fov=THREE.MathUtils.damp(camera.fov,desiredFov,6,dt);camera.updateProjectionMatrix();}
   camera.lookAt(target);
   catcherAura.update(visualTime,camera,$('vignette'),innerWidth,innerHeight);
   phaseTrailColor.setRGB(1,1,1);if(rabbitState.dashPalette)phaseTrailColor.copy(rabbitMat.color);phaseTrailColor.multiplyScalar(brightness);
@@ -1080,11 +1085,16 @@ function frame(now){requestAnimationFrame(frame);updateInput();const realDt=fram
   if(state==='playing')floorGates.applyShake(camera);
   arenaCameraCutaway.update(arenas.active?.secret&&['ascent','dropping'].includes(arenas.active.stage)?null:arenas.active,camera,ARENA_RADIUS);
   windowLight.setArenaMask(arenaView,camera);
+  scene.updateMatrixWorld();
+  renderCulling.begin(camera);stairBatches.update();propBatches.update();
+  try{
   towerMist.renderDepth(renderer,scene,camera);
   lanternLighting.setDepthSource(towerMist.depthTarget.depthTexture,camera,renderer);
   catcherRay.update(state==='paused'?0:dt,visualTime,rabbit,state==='playing'&&!falling&&!!currentVitralZone&&!currentVitralZone.extinguished,camera);
   const fallFade=falling&&!rabbitState.fall.recoverable?Math.min(.94,(1-Math.exp(-rabbitState.fall.time*1.2))*.48+rabbitState.fall.dissolve*.46):0;
   atmosphericFocus.render(renderer,scene,camera,rabbit.position,depthLight(s),towerMist.depthTarget.depthTexture,fallFade,arenaView,phaseTrail,rabbitHitEffects);
+  }finally{renderCulling.end();}
+  performanceProbe?.end();
 }
 $('phase-status').parentElement.hidden=!RUN_UPGRADES.dashEnabled;document.querySelector('[data-key=ShiftLeft]').hidden=!RUN_UPGRADES.dashEnabled;
 $('flare-hint').hidden=!RUN_UPGRADES.flare;$('flare-touch').hidden=!RUN_UPGRADES.flare;
@@ -1092,6 +1102,8 @@ camera.position.set(3,TOWER_TOP+4,16);
 phaseTrail.update(.016,new THREE.Vector3(0,.5,0),true,camera,phaseTrail.color,true);
 phaseTrail.update(.016,new THREE.Vector3(.4,.5,0),true,camera,phaseTrail.color,true);
 landingEffects.land(new THREE.Vector3(),1);landingEffects.update(.08);
+const chestGemWarmup=COLLECTIBLES.variants.map((_,index)=>createGemPickable(index,{s:0,lane:0,position:new THREE.Vector3()}).o);
+for(const root of chestGemWarmup)scene.add(root);
 const pickupWarmupRoots=pickupEffects.prepareWarmup(glints[0]?.o);
 const vineLeafWarmup=vineLeaves.prepareWarmup();
 const grassExitWarmup=grassExitParticles.prepareWarmup();
@@ -1110,8 +1122,16 @@ towerHierarchy.onRotate=({towerDelta=0,floorsChanged=false,floorDeltas=[]}={})=>
   for(const floor of walkableFloors)if(floor.userData.s!==undefined)floor.userData.theta=route(floor.userData.s).theta;
   windowLight.rotate(index=>towerDelta+(floorDeltas[index]??0));
 };
-await warmupFirstActions(renderer,scene,camera,[phaseTrail.mesh,phaseTrail.halo,phaseTrail.sparks,landingEffects.group,vitralGlow.group,vineLeafWarmup,grassExitWarmup,secretDirtWarmup,...pickupWarmupRoots]);
+const propBatches=new PropBatches((new URLSearchParams(location.search).has('prop-batches')&&!new URLSearchParams(location.search).has('batching-off')?walkableFloors:[]).filter(f=>!f.userData.secretStep).map(f=>f.parent),new Set(movingPlatforms.map(p=>p.group)));
+const stairBatches=new StairBatches((new URLSearchParams(location.search).has('batching-off')?[]:walkableFloors).filter(f=>!f.userData.secretStep).map(f=>f.parent),new Set(movingPlatforms.map(p=>p.group)));
+scene.traverse(object=>{if(object.isLight)object.layers.enable(2);});
+await warmupFirstActions(renderer,scene,camera,[...chestGemWarmup,...vitralEntryEffects.pool.map(effect=>effect.mesh),catcherRay.line,catcherRay.spark,phaseTrail.mesh,phaseTrail.halo,phaseTrail.sparks,landingEffects.group,vitralGlow.group,vineLeafWarmup,grassExitWarmup,secretDirtWarmup,...pickupWarmupRoots]);
+for(const root of chestGemWarmup)root.removeFromParent();
 phaseTrail.reset();landingEffects.reset();pickupEffects.clear();vineLeaves.clear();grassExitParticles.clear();secretDirtParticles.clear();
+// Compile the actual full-scene and framebuffer variants while the loading UI is up.
+renderer.setRenderTarget(atmosphericFocus.target);await renderer.compileAsync(scene,camera);renderer.setRenderTarget(null);
+scene.updateMatrixWorld();towerMist.renderDepth(renderer,scene,camera);
+atmosphericFocus.render(renderer,scene,camera,rabbit.position,depthLight(0),towerMist.depthTarget.depthTexture,0,null,phaseTrail,rabbitHitEffects);
 showLevelDiagnostics(LEVEL_DIAGNOSTICS);
 const runURL=new URL(location.href);
 runURL.searchParams.set('seed',randomManager.seed);history.replaceState(history.state,'',runURL.href);
@@ -1120,25 +1140,17 @@ if(runURL.searchParams.has('sunny-run')){
   start({boss:runURL.searchParams.has('sunny-boss')});update(0);state='loading';runURL.searchParams.delete('sunny-run');runURL.searchParams.delete('sunny-boss');
   history.replaceState(history.state,'',runURL.href);
 }else try{if(sessionStorage.getItem('sunny.next-run')==='1'){sessionStorage.removeItem('sunny.next-run');start();}}catch{}
+const renderCulling=new RenderCulling(walkableFloors.filter(floor=>!floor.userData.secretStep).map(floor=>floor.parent));
+scene.matrixWorldAutoUpdate=false;
+const performanceProbe=createPerformanceProbe(renderer,[
+['props',propBatches,'update'],['batches',stairBatches,'update'],['matrices',scene,'updateMatrixWorld'],['culling',renderCulling,'begin'],['depth',towerMist,'renderDepth'],['composite',atmosphericFocus,'render'],['threats',threatVisuals,'update'],['hierarchy',towerHierarchy,'update'],['relicsDynamic',shelfRelics,'updateDynamic'],['relicsWind',shelfRelics,'updateWind'],['windowLight',windowLight,'update'],['lanterns',lanternLighting,'update'],['foliage',vineLeaves,'update'],['parchment',floatingParchment,'update'],['floorGates',floorGates,'update'],['secrets',secretLevels,'reveal'],['input',inputDevices,'sample'],['focus',focusIndicator,'update'],['comboHUD',comboHUD,'update']
+]);
 requestAnimationFrame(frame);
 requestAnimationFrame(()=>revealNextRun(()=>{if(state==='loading'){keys.clear();inputDevices?.clear();inputManager.clear();frameClock.reset();state='playing';flashRunStart();}}));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if(new URLSearchParams(location.search).has('geometry-report')){
+ const {geometryInventory}=await import('./geometry-inventory.js');const libraries=[];scene.traverse(o=>{if(o.name==='Ancient library')libraries.push(o)});
+ const props=[];scene.traverse(o=>{if(o.name==='Background props')props.push(o)});
+ const report=geometryInventory(scene,[['Библиотечные шкафы и книги',libraries],['Лестницы и фоновые пропсы',walkableFloors.filter(f=>!f.userData.secretStep).map(f=>f.parent)],['Камни',glints.map(g=>g.o)],['Сундуки',chests.map(c=>c.o)],['Враги',beasts.map(b=>b.o)],['Угрозы',threatVisuals.items.map(i=>i.group)],['Зайчик', [rabbit]],['Санкатчер',[catcher]],['Туман',[towerMist.mesh]],['Арены',arenas.arenas.map(a=>a.group)],['Ворота',floorGates.gates.map(g=>g.group)],['Фоновые пропсы',props],['Секретные дороги и комнаты',secretLevels.routes.flatMap(r=>[r.group,r.room])]]);
+ const output=document.createElement('script');output.type='application/json';output.id='geometry-report';output.textContent=JSON.stringify(report);document.body.append(output);
+}
